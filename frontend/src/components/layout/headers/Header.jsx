@@ -1,0 +1,104 @@
+import { LAYOUT } from '../../../utils/emun/Enum';
+import GuestHeader from './GuestHeader';
+import EmployeeHeader from './EmployeeHeader';
+import EmployerHeader from './EmployerHeader';
+import StaffHeader from './StaffHeader';
+import AdminHeader from './AdminHeader';
+import { useState } from 'react';
+
+export default function Header({ role = 'guest' }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const Common = (
+    <div className="flex items-center gap-2 md:gap-4">
+      <a href="/" className="block">
+        <img
+          src="/image/Group 2.png"
+          alt="Logo"
+          className="w-16 h-12 md:w-40 md:h-16 object-contain"
+          style={{ minWidth: 48, minHeight: 48 }}
+        />
+      </a>
+    </div>
+  );
+
+  let RoleHeader = null;
+  switch (role) {
+    case 'employee':
+      RoleHeader = <EmployeeHeader />;
+      break;
+    case 'employer':
+      RoleHeader = <EmployerHeader />;
+      break;
+    case 'staff':
+      RoleHeader = <StaffHeader />;
+      break;
+    case 'admin':
+      RoleHeader = <AdminHeader />;
+      break;
+    default:
+      RoleHeader = <GuestHeader />;
+  }
+
+  return (
+    <header
+      className="w-full fixed left-0 z-50 bg-[#042852] shadow flex flex-col"
+      style={{ top: 0, height: LAYOUT.HEADER_HEIGHT, minHeight: LAYOUT.HEADER_HEIGHT }}
+    >
+      {/* Desktop */}
+      <div className="hidden md:flex items-center justify-between px-8 py-2 h-full">
+        {Common}
+        <div className="flex-1 flex justify-end">
+          <div className="flex gap-6 items-center flex-wrap">
+            {RoleHeader}
+          </div>
+        </div>
+      </div>
+      {/* Mobile */}
+      <div className="flex md:hidden items-center justify-between px-10 py-2 h-full">
+        <a href="/" className="block">
+          <img
+            src="/image/WorkVerseLogoCycle 1.png"
+            alt="Logo"
+            className="w-12 h-12 object-contain"
+            style={{ minWidth: 48, minHeight: 48 }}
+          />
+        </a>
+        <button className="text-white text-2xl focus:outline-none" onClick={() => setDrawerOpen(!drawerOpen)}>
+          ☰
+        </button>
+      </div>
+      {/* Drawer menu cho mobile */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="flex-1 bg-black bg-opacity-40"
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Đóng menu"
+          />
+          <div className="bg-[#042852] w-64 h-full p-6 flex flex-col gap-6 animate-slide-in-right">
+            <button
+              className="self-end text-white text-2xl mb-4"
+              onClick={() => setDrawerOpen(false)}
+              aria-label="Đóng menu"
+            >
+              ×
+            </button>
+            {RoleHeader}
+          </div>
+        </div>
+      )}
+      <style>
+        {`
+    .animate-slide-in-right {
+      animation: slideInRight 0.2s;
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  `}
+      </style>
+    </header>
+  );
+}
