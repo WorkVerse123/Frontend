@@ -1,11 +1,12 @@
 import { LAYOUT } from '../../../utils/emun/Enum';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import GuestEmployeeSidebar from './GuestEmployeeSidebar';
 import StaffAdminSidebar from './StaffAdminSidebar';
 import EmployerSidebar from './EmployerSidebar';
 
 export default function Sidebar({ role = 'guest' }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  
 
   let SidebarContent = null;
   if (role === 'guest' || role === 'employee') {
@@ -23,13 +24,13 @@ export default function Sidebar({ role = 'guest' }) {
   return (
     <>
       <aside
-        className="hidden md:flex fixed left-0 z-40 bg-white shadow flex-col px-6"
+        className="hidden md:flex fixed left-0 bg-white shadow flex-col px-6 py-10"
         style={{
           width: LAYOUT.SIDEBAR_WIDTH,
           top: LAYOUT.HEADER_HEIGHT,
-          bottom: LAYOUT.FOOTER_HEIGHT + 52,
-          maxHeight: `calc(100vh - ${LAYOUT.HEADER_HEIGHT + LAYOUT.FOOTER_HEIGHT}px)`,
+          height: '100vh',
           overflowY: 'auto',
+          zIndex: 40,
         }}
       >
         {role === 'guest' || role === 'employee' ? <GuestEmployeeSidebar /> :

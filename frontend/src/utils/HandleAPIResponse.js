@@ -1,8 +1,17 @@
 export const handleAsync = (promise) =>
   promise
     .then((res) => {
-      // Nếu res có dạng {statusCode, message, data, errors}
-      if (res && typeof res === 'object' && 'data' in res && 'statusCode' in res) {
+      // Nếu res có dạng {success, message, data: {companies: [...]}}
+      if (res && typeof res === 'object' && 'success' in res && 'data' in res) {
+        // Nếu res.data.companies là mảng, trả về đúng format
+        if (res.data && Array.isArray(res.data.companies)) {
+          return {
+            data: res.data.companies,
+            success: res.success,
+            message: res.message
+          };
+        }
+        // Nếu res.data là mảng hoặc object khác
         return {
           data: res.data,
           success: res.success,
