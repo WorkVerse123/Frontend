@@ -8,19 +8,19 @@ export async function fetchFeaturedCompanies() {
       .then(res => res.json()));
 }
 
-export default function FeaturedCompanies() {
+export default function FeaturedCompanies({setIsLoading}) {
   const [companies, setCompanies] = useState([]);
 
   useEffect(() => {
     fetchFeaturedCompanies().then(result => {
       // result là { data, success, message }
-      if (result.success && Array.isArray(result.data)) {
-        setCompanies(result.data);
-      } else {
-        setCompanies([]); // hoặc xử lý lỗi
-      }
+      setCompanies(result.data);
+      setIsLoading(false);
+    })
+    .catch(() => {
+      setCompanies([]);
     });
-  }, []);
+  }, [setIsLoading]);
 
   return (
     <section className="max-w-6xl mx-auto py-8 px-4">

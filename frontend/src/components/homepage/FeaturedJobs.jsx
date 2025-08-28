@@ -8,7 +8,7 @@ export async function fetchFeaturedJobs() {
   );
 }
 
-export default function FeaturedJobs() {
+export default function FeaturedJobs({ setIsLoading }) {
   const [jobs, setJobs] = useState([]);
 
   function getDaysLeft(jobExpireAt, jobStatus) {
@@ -22,13 +22,13 @@ export default function FeaturedJobs() {
   useEffect(() => {
     fetchFeaturedJobs().then(result => {
       // result.data là object, cần lấy ra jobs
-      if (result.success && result.data && Array.isArray(result.data.jobs)) {
-        setJobs(result.data.jobs);
-      } else {
-        setJobs([]);
-      }
+      setJobs(result.data.jobs);
+      setIsLoading(false);
+    })
+    .catch(() => {
+      setJobs([]);
     });
-  }, []);
+  }, [setIsLoading]);
 
 
   return (

@@ -7,11 +7,11 @@ import { LAYOUT } from '../../utils/emun/Enum';
 /**
  * Layout tổng quản lý header, sidebar, footer.
  */
-export default function MainLayout({ children, role = 'guest' }) {
+export default function MainLayout({ children, role = 'guest', hasSidebar = true }) {
   const rafRef = useRef(null);
   const tickingRef = useRef(false);
 
-useLayoutEffect(() => {
+  useLayoutEffect(() => {
     // Ngăn browser tự động restore scroll khi reload/F5
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
@@ -127,7 +127,7 @@ useLayoutEffect(() => {
     <div className="bg-[#eaf2fb] min-h-screen">
       <Header role={role} />
       <div>{/* wrapper (kept minimal) */}</div>
-      <Sidebar role={role} />
+      {hasSidebar && <Sidebar role={role} />}
       <main
         className="relative px-4 py-4 md:px-6 md:py-8"
         style={{
@@ -135,6 +135,7 @@ useLayoutEffect(() => {
           marginTop: '0',
           marginBottom: '0',
           minHeight: '100vh',
+          paddingTop: LAYOUT.HEADER_HEIGHT + 10,
         }}
       >
         <div
@@ -146,12 +147,12 @@ useLayoutEffect(() => {
           }}
         >
           <div
-            className="hidden md:block"
-            style={{
+            className={hasSidebar ? "hidden md:block" : ""}
+            style={hasSidebar ? {
               marginLeft: `${LAYOUT.SIDEBAR_WIDTH}px`,
               marginTop: `${LAYOUT.HEADER_HEIGHT}px`,
               minHeight: `calc(100vh - ${LAYOUT.HEADER_HEIGHT}px)`,
-            }}
+            } : {}}
           >
             {children}
           </div>
