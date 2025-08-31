@@ -156,9 +156,9 @@ export default function MainLayout({ children, role = 'guest', hasSidebar = true
           >
             {children}
           </div>
-          <div className="block md:hidden">
+          {/* <div className="block md:hidden">
             {children}
-          </div>
+          </div> */}
         </div>
       </main>
       <Footer />
