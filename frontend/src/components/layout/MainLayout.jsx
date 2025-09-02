@@ -147,7 +147,7 @@ export default function MainLayout({ children, role = 'guest', hasSidebar = true
           }}
         >
           <div
-            className={hasSidebar ? "hidden md:block" : ""}
+            className="hidden md:block"
             style={hasSidebar ? {
               marginLeft: `${LAYOUT.SIDEBAR_WIDTH}px`,
               marginTop: `${LAYOUT.HEADER_HEIGHT}px`,
@@ -156,9 +156,9 @@ export default function MainLayout({ children, role = 'guest', hasSidebar = true
           >
             {children}
           </div>
-          {/* <div className="block md:hidden">
+          <div className="block md:hidden">
             {children}
-          </div> */}
+          </div>
         </div>
       </main>
       <Footer />
