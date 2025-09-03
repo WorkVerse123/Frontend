@@ -66,7 +66,7 @@ export default function EmployerJobs() {
         {/* content */}
         <div className="bg-white shadow rounded p-4 min-h-[160px]">
           {loading ? (
-            <div className="py-12"><Loading /></div>
+            <Loading />
           ) : jobs.length === 0 ? (
             <div className="py-12 text-center">
               <Typography className="text-gray-600 mb-4">Không có tin tuyển dụng nào.</Typography>

@@ -1,19 +1,20 @@
 export default function Loading() {
   return (
-    <div
-      className="flex flex-col items-center justify-center py-12"
-      role="status"
-      aria-live="polite"
-    >
-      <div className="flex items-center gap-3">
-        <span className="dot bg-indigo-600" />
-        <span className="dot bg-teal-400" />
-        <span className="dot bg-green-400" />
-      </div>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white bg-opacity-100">
+      <div
+        className="flex flex-col items-center justify-center py-12"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="flex items-center gap-3">
+          <span className="dot bg-indigo-600" />
+          <span className="dot bg-teal-400" />
+          <span className="dot bg-green-400" />
+        </div>
 
-      <div className="mt-4 text-sm text-slate-700">Đang tải, vui lòng chờ...</div>
+        <div className="mt-4 text-sm text-slate-700">Đang tải, vui lòng chờ...</div>
 
-      <style>{`
+        <style>{`
         .dot {
           width: 12px;
           height: 12px;
@@ -37,6 +38,7 @@ export default function Loading() {
           .dot { animation: none !important; transform: none !important; opacity: 1; }
         }
       `}</style>
+      </div>
     </div>
   );
 }

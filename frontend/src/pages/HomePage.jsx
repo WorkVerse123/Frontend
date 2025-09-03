@@ -22,9 +22,7 @@ export default function HomePage() {
   return (
     <MainLayout role={role} hasSidebar={false}>
        {isLoading && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white bg-opacity-100">
           <Loading />
-        </div>
       )}
       <BannerSearch />
       <StatsPanel setIsLoading={setStatsLoading} />
