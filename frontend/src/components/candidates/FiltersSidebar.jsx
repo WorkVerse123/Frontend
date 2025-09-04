@@ -58,6 +58,7 @@ export default function FiltersSidebar({ query, setQuery, gender, setGender, edu
             <MenuItem value="any">Tất cả</MenuItem>
             <MenuItem value="THPT">THPT</MenuItem>
             <MenuItem value="Đại học">Đại học</MenuItem>
+            <MenuItem value="Cao đẳng">Cao đẳng</MenuItem>
           </Select>
         </FormControl>
       </div>
