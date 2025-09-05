@@ -6,13 +6,14 @@ import WorkCalendar from './pages/WorkCalendar'
 import EmployerJobs from './pages/EmployerJobs'
 import CandidatesPage from './pages/CandidatesPage'
 import CreateJob from './pages/creates/CreateJob/CreateJob'
+import EmployerProfile from './pages/EmployerProfile'
 import './App.css'
 
 function App() {
 
   return (
     <>
-    <CreateJob />
+    <EmployerProfile />
     </>
   )
 }
