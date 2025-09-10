@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { TextField, MenuItem } from '@mui/material';
 import MainLayout from '../components/layout/MainLayout';
-import { STEPS } from '../utils/emun/Enum';
+import { STEPS, TYPE_MAP } from '../utils/emun/Enum';
 
 
 
@@ -66,16 +66,7 @@ export default function EmployerSetup() {
             if (!validateStep(s)) { setStep(s); setValidationStep(s); return; }
         }
 
-        // map company type to numeric code (adjust if backend expects different)
-        const TYPE_MAP = {
-            'Private Limited': 1,
-            'Public Company': 2,
-            'Startup': 3,
-            'NGO': 4,
-            'Sole Proprietorship': 5,
-            'Partnership': 6,
-            'Other': 7,
-        };
+
         const employerType = TYPE_MAP[companyType] ?? null;
 
         // parse website and socials into URL list
