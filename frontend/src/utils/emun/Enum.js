@@ -13,3 +13,11 @@ export const DAY_MAP = {
   Saturday: 6,
   Sunday: 0
 };
+
+
+export const STEPS = [
+    { id: 0, title: 'Thông tin doanh nghiệp' },
+    { id: 1, title: 'Thông tin thành lập' },
+    { id: 2, title: 'Hình ảnh' },
+    { id: 3, title: 'Liên hệ' },
+];

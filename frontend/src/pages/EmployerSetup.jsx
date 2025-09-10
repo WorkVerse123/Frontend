@@ -1,13 +1,9 @@
 import { useState, useRef } from 'react';
 import { TextField, MenuItem } from '@mui/material';
 import MainLayout from '../components/layout/MainLayout';
+import { STEPS } from '../utils/emun/Enum';
 
-const STEPS = [
-    { id: 0, title: 'Thông tin doanh nghiệp' },
-    { id: 1, title: 'Thông tin thành lập' },
-    { id: 2, title: 'Hình ảnh' },
-    { id: 3, title: 'Liên hệ' },
-];
+
 
 export default function EmployerSetup() {
     const [step, setStep] = useState(0);
