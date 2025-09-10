@@ -3,6 +3,7 @@ import Header from './headers/Header';
 import Footer from './footers/Footer';
 import Sidebar from './sidebars/sidebar';
 import { LAYOUT } from '../../utils/emun/Enum';
+import AIChatWidget from '../common/AIChat/AIChatWidget';
 
 /**
  * Layout tổng quản lý header, sidebar, footer.
@@ -162,6 +163,7 @@ export default function MainLayout({ children, role = 'guest', hasSidebar = true
         </div>
       </main>
       <Footer />
+  <AIChatWidget />
     </div>
   );
 }
