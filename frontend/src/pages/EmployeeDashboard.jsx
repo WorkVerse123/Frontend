@@ -6,6 +6,7 @@ import ApplicationsList from '../components/employee/ApplicationsList';
 import AppliedJobs from '../components/employee/AppliedJobs';
 import SavedJobs from '../components/employee/SavedJobs';
 import Loading from '../components/common/loading/Loading';
+import EmployeeProfilePanel from '../components/employee/EmployeeProfilePanel';
 
 export default function EmployeeDashboard() {
   const [loading, setLoading] = useState(true);
@@ -87,7 +88,12 @@ export default function EmployeeDashboard() {
                 >
                   Công việc đã lưu
                 </li>
-                <li className="py-2 px-3 rounded hover:bg-slate-50">Thông báo</li>
+                <li
+                  onClick={() => setActiveTab('profile')}
+                  className={`py-2 px-3 rounded cursor-pointer ${activeTab === 'profile' ? 'bg-[#f3f7fb] font-medium' : 'hover:bg-slate-50'}`}
+                >
+                  Thông tin cá nhân
+                </li>
                 <li className="py-2 px-3 rounded hover:bg-slate-50">Cài đặt</li>
               </ul>
             </nav>
@@ -103,6 +109,8 @@ export default function EmployeeDashboard() {
                 onOpen={(b) => console.log('open bookmark', b)}
                 onRemove={(b) => setBookmarks(prev => prev.filter(x => x.bookmarkId !== b.bookmarkId))}
               />
+            ) : activeTab === 'profile' ? (
+              <EmployeeProfilePanel employee={null} onSave={(data) => console.log('save profile', data)} />
             ) : (
               <>
                 <div className="mb-6">
