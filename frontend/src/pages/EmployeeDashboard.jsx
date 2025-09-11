@@ -3,12 +3,17 @@ import MainLayout from '../components/layout/MainLayout';
 import ProfileCard from '../components/employee/ProfileCard';
 import StatsGrid from '../components/employee/StatsGrid';
 import ApplicationsList from '../components/employee/ApplicationsList';
+import AppliedJobs from '../components/employee/AppliedJobs';
+import SavedJobs from '../components/employee/SavedJobs';
+import Loading from '../components/common/loading/Loading';
 
 export default function EmployeeDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [bookmarks, setBookmarks] = useState([]);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     const ac = new AbortController();
@@ -21,6 +26,17 @@ export default function EmployeeDashboard() {
         if (!parsed || !parsed.data) throw new Error('Invalid data');
         setStats(parsed.data.stats || []);
         setApplications(parsed.data.applications || []);
+        // try to also fetch bookmarks (non-blocking)
+        try {
+          const bRes = await fetch('/mocks/JSON_DATA/responses/get_employee_id_bookmarks.json');
+          if (bRes && bRes.ok) {
+            const bParsed = await bRes.json();
+            setBookmarks((bParsed && bParsed.data && bParsed.data.bookmarks) || []);
+          }
+        } catch (e) {
+          // swallow bookmark fetch errors - non-critical
+          // console.debug('bookmark fetch failed', e);
+        }
       } catch (err) {
         if (err.name !== 'AbortError') setError(err);
       } finally {
@@ -33,7 +49,7 @@ export default function EmployeeDashboard() {
 
   if (loading) return (
     <MainLayout role="guest" hasSidebar={false}>
-      <div className="max-w-6xl mx-auto py-8 px-4">Đang tải...</div>
+      <Loading />
     </MainLayout>
   );
 
@@ -53,9 +69,24 @@ export default function EmployeeDashboard() {
 
             <nav className="bg-white rounded-lg shadow p-3 border">
               <ul className="space-y-2 text-sm">
-                <li className="py-2 px-3 rounded bg-[#f3f7fb] font-medium">Tổng quan</li>
-                <li className="py-2 px-3 rounded hover:bg-slate-50">Công việc đã ứng tuyển</li>
-                <li className="py-2 px-3 rounded hover:bg-slate-50">Công việc yêu thích</li>
+                <li
+                  onClick={() => setActiveTab('overview')}
+                  className={`py-2 px-3 rounded cursor-pointer ${activeTab === 'overview' ? 'bg-[#f3f7fb] font-medium' : ''}`}
+                >
+                  Tổng quan
+                </li>
+                <li
+                  onClick={() => setActiveTab('applied')}
+                  className={`py-2 px-3 rounded cursor-pointer ${activeTab === 'applied' ? 'bg-[#f3f7fb] font-medium' : 'hover:bg-slate-50'}`}
+                >
+                  Công việc đã ứng tuyển
+                </li>
+                <li
+                  onClick={() => setActiveTab('saved')}
+                  className={`py-2 px-3 rounded cursor-pointer ${activeTab === 'saved' ? 'bg-[#f3f7fb] font-medium' : 'hover:bg-slate-50'}`}
+                >
+                  Công việc đã lưu
+                </li>
                 <li className="py-2 px-3 rounded hover:bg-slate-50">Thông báo</li>
                 <li className="py-2 px-3 rounded hover:bg-slate-50">Cài đặt</li>
               </ul>
@@ -64,29 +95,41 @@ export default function EmployeeDashboard() {
 
           {/* Main content */}
           <main className="md:col-span-9">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-[#042852]">Xin chào, Tên người dùng</h2>
-              <p className="text-sm text-gray-600">Đây chính là trang tổng quan về hồ sơ cá nhân của bạn</p>
-            </div>
+            {activeTab === 'applied' ? (
+              <AppliedJobs items={applications} onView={(app) => console.log('view', app)} />
+            ) : activeTab === 'saved' ? (
+              <SavedJobs
+                items={bookmarks}
+                onOpen={(b) => console.log('open bookmark', b)}
+                onRemove={(b) => setBookmarks(prev => prev.filter(x => x.bookmarkId !== b.bookmarkId))}
+              />
+            ) : (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-[#042852]">Xin chào, Tên người dùng</h2>
+                  <p className="text-sm text-gray-600">Đây chính là trang tổng quan về hồ sơ cá nhân của bạn</p>
+                </div>
 
-            <StatsGrid items={stats} />
+                <StatsGrid items={stats} />
 
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center justify-between">
-              <div>
-                <div className="font-semibold">Hồ sơ của bạn chưa được hoàn thiện</div>
-                <div className="text-sm text-gray-600">Hoàn thiện việc chỉnh sửa hồ sơ cá nhân của bạn để tăng khả năng ứng tuyển</div>
-              </div>
-              <button className="bg-red-500 text-white px-4 py-2 rounded">Tùy chỉnh</button>
-            </div>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold">Hồ sơ của bạn chưa được hoàn thiện</div>
+                    <div className="text-sm text-gray-600">Hoàn thiện việc chỉnh sửa hồ sơ cá nhân của bạn để tăng khả năng ứng tuyển</div>
+                  </div>
+                  <button className="bg-red-500 text-white px-4 py-2 rounded">Tùy chỉnh</button>
+                </div>
 
-            <div className="bg-white rounded-lg border p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="font-semibold">Công việc ứng tuyển gần đây</div>
-                <div className="text-sm text-gray-500">Tất cả →</div>
-              </div>
+                <div className="bg-white rounded-lg border p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="font-semibold">Công việc ứng tuyển gần đây</div>
+                    <div className="text-sm text-gray-500">Tất cả →</div>
+                  </div>
 
-              <ApplicationsList items={applications} />
-            </div>
+                  <ApplicationsList items={applications} />
+                </div>
+              </>
+            )}
           </main>
         </div>
       </div>
