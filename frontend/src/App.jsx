@@ -8,6 +8,7 @@ import EmployerJobs from './pages/EmployerJobs'
 import CandidatesPage from './pages/CandidatesPage'
 import CreateJob from './pages/creates/CreateJob/CreateJob'
 import EmployerProfile from './pages/EmployerProfile'
+import EmployeeDashboard from './pages/EmployeeDashboard'
 import JobDetail from './pages/JobDetail'
 import EditEmployer from './pages/edits/EditEmployer'
 import './App.css'
@@ -16,7 +17,7 @@ function App() {
 
   return (
     <>
-      <EditEmployer />
+      <EmployeeDashboard />
     </>
   )
 }
