@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Grid, TextField, Paper, Avatar, IconButton, Button, Typography } from '@mui/material';
+import { Grid, TextField, Paper, Avatar, IconButton, Button, Typography, CircularProgress, Box, MenuItem } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -27,13 +27,16 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState(false);
 
+  const [loading, setLoading] = useState(!employee);
+
   useEffect(() => {
+    // If parent provided an employee, just populate the form from it.
     if (employee) {
       setForm(prev => ({ ...prev, ...{
-        employeeId: employee.employeeId || employee.employee_id || employee.employeeId || '',
+        employeeId: employee.employeeId || employee.employee_id || '',
         userId: employee.userId || employee.user_id || '',
-        fullName: employee.fullName || employee.full_name || employee.fullName || '',
-        dateOfBirth: employee.dateOfBirth || employee.date_of_birth || '',
+        fullName: employee.fullName || employee.full_name || '',
+        dateOfBirth: (employee.dateOfBirth || employee.date_of_birth || '').slice(0,10),
         gender: employee.gender || '',
         address: employee.address || '',
         avatarUrl: employee.avatarUrl || employee.avatar_url || '',
@@ -43,9 +46,51 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
         workExperience: employee.workExperience || employee.work_experience || '',
         mode: employee.mode || '',
       }}));
-    } else {
-      setForm(empty);
+      setLoading(false);
+      return;
     }
+
+    // No employee prop: fetch mock data from public/mocks.
+    let mounted = true;
+    const controller = new AbortController();
+
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await fetch('/mocks/JSON_DATA/responses/get_employee_id.json', { signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const emp = json.data || json.employee || json;
+        if (!mounted) return;
+        setForm(prev => ({ ...prev, ...{
+          employeeId: emp.employeeId || emp.employee_id || '',
+          userId: emp.userId || emp.user_id || '',
+          fullName: emp.fullName || emp.full_name || '',
+          dateOfBirth: (emp.dateOfBirth || emp.date_of_birth || '').slice(0,10),
+          gender: emp.gender || '',
+          address: emp.address || '',
+          avatarUrl: emp.avatarUrl || emp.avatar_url || '',
+          bio: emp.bio || '',
+          skills: emp.skills || '',
+          education: emp.education || '',
+          workExperience: emp.workExperience || emp.work_experience || '',
+          mode: emp.mode || '',
+        }}));
+      } catch (err) {
+        // keep console error for local debugging; UI stays with empty form
+        // eslint-disable-next-line no-console
+        console.error('Failed to load employee profile mock:', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
   }, [employee]);
 
   function change(field, value) {
@@ -56,6 +101,16 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
     // Caller can implement real save; here we just call onSave with form data
     onSave(form);
     setEditing(false);
+  }
+
+  if (loading) {
+    return (
+      <Paper className="p-6" elevation={1} sx={{ padding: 3 }}>
+        <Box className="flex items-center justify-center" sx={{ minHeight: 200 }}>
+          <CircularProgress />
+        </Box>
+      </Paper>
+    );
   }
 
   return (
@@ -98,7 +153,21 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
         </Grid>
 
         <Grid item xs={12} sm={6}>
-          <TextField fullWidth label="Giới tính" value={form.gender} onChange={e => change('gender', e.target.value)} disabled={!editing} />
+          <TextField
+            select
+            fullWidth
+            label="Giới tính"
+            value={form.gender}
+            onChange={e => change('gender', e.target.value)}
+            disabled={!editing}
+            SelectProps={{ native: false }}
+          >
+            <MenuItem value="">-- Chọn --</MenuItem>
+            <MenuItem value="Male">Nam</MenuItem>
+            <MenuItem value="Female">Nữ</MenuItem>
+            <MenuItem value="Other">Khác</MenuItem>
+            <MenuItem value="Prefer not to say">Không muốn tiết lộ</MenuItem>
+          </TextField>
         </Grid>
         <Grid item xs={12} sm={6}>
           <TextField fullWidth label="Địa chỉ" value={form.address} onChange={e => change('address', e.target.value)} disabled={!editing} />
