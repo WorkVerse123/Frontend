@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { TextField, MenuItem } from '@mui/material';
+import { TextField, MenuItem, FormControl, InputLabel, Select, FormHelperText } from '@mui/material';
 import MainLayout from '../components/layout/MainLayout';
 import { STEPS, TYPE_MAP } from '../utils/emun/Enum';
 
@@ -209,26 +209,32 @@ export default function EmployerSetup() {
                                     error={validationStep === 1 && establishedAt.trim() === ''}
                                     helperText={validationStep === 1 && establishedAt.trim() === '' ? 'Bắt buộc' : ''}
                                 />
-                                <TextField
-                                    required
-                                    select
-                                    label="Loại doanh nghiệp"
-                                    value={companyType}
-                                    onChange={e => setCompanyType(e.target.value)}
-                                    fullWidth
-                                    variant="outlined"
-                                    error={validationStep === 1 && companyType.trim() === ''}
-                                    helperText={validationStep === 1 && companyType.trim() === '' ? 'Bắt buộc' : ''}
-                                >
-                                    <MenuItem value="">-- Chọn --</MenuItem>
-                                    <MenuItem value="Private Limited">Private Limited</MenuItem>
-                                    <MenuItem value="Public Company">Public Company</MenuItem>
-                                    <MenuItem value="Startup">Startup</MenuItem>
-                                    <MenuItem value="NGO">NGO / Non-profit</MenuItem>
-                                    <MenuItem value="Sole Proprietorship">Sole Proprietorship</MenuItem>
-                                    <MenuItem value="Partnership">Partnership</MenuItem>
-                                    <MenuItem value="Other">Other</MenuItem>
-                                </TextField>
+                                <FormControl fullWidth variant="outlined" error={validationStep === 1 && companyType.trim() === ''}>
+                                    <InputLabel id="company-type-label">Loại doanh nghiệp</InputLabel>
+                                    <Select
+                                        labelId="company-type-label"
+                                        label="Loại doanh nghiệp"
+                                        required
+                                        value={companyType}
+                                        onChange={e => setCompanyType(e.target.value)}
+                                        MenuProps={{
+                                          // ensure menu is rendered in a portal (attach to body) to avoid parent clipping
+                                          disablePortal: false,
+                                          // make paper scrollable
+                                          PaperProps: { style: { maxHeight: 250, overflow: 'auto' } }
+                                        }}
+                                    >
+                                        <MenuItem value="">-- Chọn --</MenuItem>
+                                        <MenuItem value="Private Limited">Private Limited</MenuItem>
+                                        <MenuItem value="Public Company">Public Company</MenuItem>
+                                        <MenuItem value="Startup">Startup</MenuItem>
+                                        <MenuItem value="NGO">NGO / Non-profit</MenuItem>
+                                        <MenuItem value="Sole Proprietorship">Sole Proprietorship</MenuItem>
+                                        <MenuItem value="Partnership">Partnership</MenuItem>
+                                        <MenuItem value="Other">Other</MenuItem>
+                                    </Select>
+                                    {validationStep === 1 && companyType.trim() === '' && <FormHelperText>Bắt buộc</FormHelperText>}
+                                </FormControl>
                             </div>
                         )}
 

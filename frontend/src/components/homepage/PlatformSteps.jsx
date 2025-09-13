@@ -1,4 +1,34 @@
+import { useState, useEffect } from 'react';
+
 export default function PlatformSteps() {
+  // check auth from cookies (token or user)
+  const getAuthFromCookie = () => {
+    return document.cookie
+      .split(';')
+      .map(c => c.trim())
+      .some(c => c.startsWith('token=') || c.startsWith('user='));
+  };
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() => getAuthFromCookie());
+
+  useEffect(() => {
+    let last = document.cookie;
+    const id = setInterval(() => {
+      if (document.cookie !== last) {
+        last = document.cookie;
+        setIsLoggedIn(getAuthFromCookie());
+      }
+    }, 1000);
+    const onFocus = () => setIsLoggedIn(getAuthFromCookie());
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []);
+
+  if (isLoggedIn) return null;
+  
   return (
     <section className="bg-white py-8 border-t">
       <div className="max-w-6xl mx-auto px-4">

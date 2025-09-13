@@ -1,4 +1,39 @@
+import { useState, useEffect } from 'react';
+
 export default function RegisterBox() {
+  // check auth: prefer a real AuthContext; fallback to cookies 'token' or 'user'
+  const getAuthFromCookie = () => {
+    // look for either 'token' or 'user' cookie
+    return document.cookie
+      .split(';')
+      .map(c => c.trim())
+      .some(c => c.startsWith('token=') || c.startsWith('user='));
+  };
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() => getAuthFromCookie());
+
+  useEffect(() => {
+    // poll for cookie changes (no native cookie change event). Interval kept small.
+    let last = document.cookie;
+    const id = setInterval(() => {
+      if (document.cookie !== last) {
+        last = document.cookie;
+        setIsLoggedIn(getAuthFromCookie());
+      }
+    }, 1000);
+
+    // also update on focus in case cookies changed while in background
+    const onFocus = () => setIsLoggedIn(getAuthFromCookie());
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []);
+
+  if (isLoggedIn) return null; // hide register box when user is logged in
+
   return (
     <section className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 py-8 px-4">
       <div className="bg-white rounded-xl shadow p-6 border">

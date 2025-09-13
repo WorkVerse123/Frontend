@@ -24,16 +24,21 @@ export default function Sidebar({ role = 'guest' }) {
   return (
     <>
       <aside
-        className="hidden md:flex bg-white shadow flex-col px-6 py-10"
+        className="hidden md:block h-full"
         style={{
           width: LAYOUT.SIDEBAR_WIDTH,
+          position: 'sticky',
+          // dịch xuống nhiều hơn so với header
+          top: 100,
+          // lệch sang phải một chút
+          marginLeft: 50,
         }}
+        aria-label="Sidebar"
       >
-        {role === 'guest' || role === 'employee' ? <GuestEmployeeSidebar /> :
-         role === 'staff' ? <StaffAdminSidebar isAdmin={false} /> :
-         role === 'admin' ? <StaffAdminSidebar isAdmin={true} /> :
-         role === 'employer' ? <EmployerSidebar /> :
-         <GuestEmployeeSidebar />}
+        {/* Card wrapper — cao bằng nội dung bên trong */}
+        <div className="bg-white rounded-lg shadow p-4">
+          {SidebarContent}
+        </div>
       </aside>
       <button
         className="md:hidden fixed top-20 left-4 z-50 text-blue-500"
@@ -44,14 +49,12 @@ export default function Sidebar({ role = 'guest' }) {
       </button>
       {drawerOpen && (
         <div className="fixed inset-0 z-50 flex">
-          {/* Sidebar phủ toàn bộ, không có scroll, đè lên header/footer */}
+          {/* Mobile drawer — cho phép scroll nội dung nếu dài */}
           <div
-            className="bg-white shadow flex flex-col gap-6 animate-slide-in-left"
+            className="bg-white shadow flex flex-col gap-6 animate-slide-in-left overflow-auto"
             style={{
               width: LAYOUT.SIDEBAR_WIDTH,
-              height: '100vh',
               maxHeight: '100vh',
-              overflow: 'hidden',
             }}
           >
             {SidebarContent}
