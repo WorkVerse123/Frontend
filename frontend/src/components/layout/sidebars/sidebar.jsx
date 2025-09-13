@@ -24,13 +24,9 @@ export default function Sidebar({ role = 'guest' }) {
   return (
     <>
       <aside
-        className="hidden md:flex fixed left-0 bg-white shadow flex-col px-6 py-10"
+        className="hidden md:flex bg-white shadow flex-col px-6 py-10"
         style={{
           width: LAYOUT.SIDEBAR_WIDTH,
-          top: LAYOUT.HEADER_HEIGHT,
-          height: '100vh',
-          overflowY: 'auto',
-          zIndex: 40,
         }}
       >
         {role === 'guest' || role === 'employee' ? <GuestEmployeeSidebar /> :
