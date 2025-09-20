@@ -27,18 +27,9 @@ export default function JobDetailDialog({ jobId, open, onClose }) {
         setLoading(true);
         setError(null);
 
-        // NOTE: mock file is static in public; real API would use jobId
-        const res = await fetch('/mocks/JSON_DATA/responses/get_job_id.json', { signal: ac.signal });
-        if (!res.ok) {
-          const body = await res.text();
-          throw new Error(body || `HTTP ${res.status}`);
-        }
-
-        const parsed = await handleAsync(res.json());
-        if (!parsed.success) throw new Error(parsed.message || 'Lỗi khi tải chi tiết công việc');
-
-        // handleAsync returns { data: <parsedData>, success, message }
-        setJob(parsed.data || null);
+        const M = await import('../../../services/MocksService');
+        const parsed = await M.fetchMock('/mocks/JSON_DATA/responses/get_job_id.json', { signal: ac.signal });
+        setJob(parsed?.data || parsed || null);
       } catch (err) {
         if (err.name !== 'AbortError') setError(err);
       } finally {

@@ -21,19 +21,23 @@ export default function EmployerJobs() {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    handleAsync(fetch('/mocks/JSON_DATA/responses/get_employer_id_jobs.json').then(r => r.json()))
-      .then(res => {
-        if (!mounted) return;
-        setJobs(res?.data?.jobs || []);
-      })
-      .finally(() => mounted && setLoading(false));
+    (async () => {
+      const M = await import('../services/MocksService');
+      handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_employer_id_jobs.json'))
+        .then(res => {
+          if (!mounted) return;
+          setJobs(res?.data?.jobs || []);
+        })
+        .finally(() => mounted && setLoading(false));
+    })();
     return () => { mounted = false; };
   }, []);
 
   const viewApplications = async (job) => {
     setAppsOpen(true);
     setAppsLoading(true);
-    const res = await handleAsync(fetch('/mocks/JSON_DATA/responses/get_employer_id_jobs_id_applications.json').then(r => r.json()));
+  const M = await import('../services/MocksService');
+  const res = await handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_employer_id_jobs_id_applications.json'));
     const apps = res?.data?.applications || [];
     setApplications(Array.isArray(apps) ? apps.filter(a => !a.jobId || String(a.jobId) === String(job.jobId)) : []);
     setAppsLoading(false);

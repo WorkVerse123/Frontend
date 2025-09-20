@@ -21,25 +21,27 @@ export default function EmployeeDashboard() {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/mocks/JSON_DATA/responses/get_employee_id_dashboard.json', { signal: ac.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const parsed = await res.json();
+        const M = await import('../services/MocksService');
+        const parsed = await M.fetchMock('/mocks/JSON_DATA/responses/get_employee_id_dashboard.json', { signal: ac.signal });
         if (!parsed || !parsed.data) throw new Error('Invalid data');
         setStats(parsed.data.stats || []);
         setApplications(parsed.data.applications || []);
         // try to also fetch bookmarks (non-blocking)
         try {
-          const bRes = await fetch('/mocks/JSON_DATA/responses/get_employee_id_bookmarks.json');
-          if (bRes && bRes.ok) {
-            const bParsed = await bRes.json();
-            setBookmarks((bParsed && bParsed.data && bParsed.data.bookmarks) || []);
-          }
+          const bParsed = await M.fetchMock('/mocks/JSON_DATA/responses/get_employee_id_bookmarks.json');
+          setBookmarks((bParsed && bParsed.data && bParsed.data.bookmarks) || []);
         } catch (e) {
           // swallow bookmark fetch errors - non-critical
           // console.debug('bookmark fetch failed', e);
         }
       } catch (err) {
-        if (err.name !== 'AbortError') setError(err);
+        // Treat cancellation as non-fatal: some fetch utilities throw CanceledError
+        // instead of the standard AbortError. Ignore canceled requests so the
+        // UI doesn't display an error when the component unmounts.
+        const errName = err && err.name;
+        const errMsg = err && err.message ? String(err.message).toLowerCase() : '';
+        const isCanceled = errName === 'AbortError' || errName === 'CanceledError' || errMsg.includes('cancel');
+        if (!isCanceled) setError(err);
       } finally {
         setLoading(false);
       }

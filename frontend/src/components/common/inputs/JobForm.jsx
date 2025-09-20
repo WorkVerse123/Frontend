@@ -38,22 +38,13 @@ export default function JobForm() {
 
   async function handleAsync(payload) {
     try {
-      // Thay bằng endpoint thực tế của bạn
-      const res = await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || res.statusText);
-      }
-      const data = await res.json();
+      const { post } = await import('../../../services/ApiClient');
+      const data = await post('/api/jobs', payload);
       alert('Tạo tin thành công');
       return data;
     } catch (err) {
       console.error(err);
-      alert('Tạo tin thất bại: ' + err.message);
+      alert('Tạo tin thất bại: ' + (err.message || 'Lỗi'));
       throw err;
     }
   }
@@ -80,16 +71,6 @@ export default function JobForm() {
           onChange={(e) => onChange('jobTitle', e.target.value)}
           fullWidth
         />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <TextField
-          label="Địa điểm"
-          value={form.jobLocation}
-          onChange={(e) => onChange('jobLocation', e.target.value)}
-          fullWidth
-        />
-
         <FormControl fullWidth>
           <InputLabel id="currency-label">Loại tiền</InputLabel>
           <Select

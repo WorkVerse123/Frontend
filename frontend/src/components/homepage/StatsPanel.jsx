@@ -2,11 +2,8 @@ import { useEffect, useState } from 'react';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 
 export async function fetchStats() {
-  // Ví dụ gọi API, thay url bằng API thật
-  return handleAsync(
-    fetch('/mocks/JSON_DATA/responses/get_stats.json')
-      .then(res => res.json())
-  );
+  const M = await import('../../services/MocksService');
+  return M.fetchMock('/mocks/JSON_DATA/responses/get_stats.json');
 }
 
 export default function StatsPanel({ setIsLoading }) {
@@ -17,19 +14,19 @@ export default function StatsPanel({ setIsLoading }) {
     newJobs: 0,
   });
   useEffect(() => {
-    fetchStats().then(res => {
-      setStats(res.data.stats);
-      setIsLoading(false);
-    })
-    .catch(() => {
-      setStats({
-        jobs: 0,
-        companies: 0,
-        candidates: 0,
-        newJobs: 0,
+    let mounted = true;
+    fetchStats()
+      .then(res => {
+        if (!mounted) return;
+        setStats(res.data?.stats || res?.stats || res || {});
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setStats({ jobs: 0, companies: 0, candidates: 0, newJobs: 0 });
+        setIsLoading(false);
       });
-    })
-
+    return () => { mounted = false };
   }, [setIsLoading]);
 
   return (

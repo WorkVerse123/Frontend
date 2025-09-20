@@ -1,12 +1,5 @@
 import { useEffect, useState } from 'react';
-import { handleAsync } from '../../utils/HandleAPIResponse';
-
-export async function fetchFeaturedJobs() {
-  return handleAsync(
-    fetch('/mocks/JSON_DATA/responses/get_jobs.json')
-      .then(res => res.json())
-  );
-}
+import M from '../../services/MocksService';
 
 export default function FeaturedJobs({ setIsLoading }) {
   const [jobs, setJobs] = useState([]);
@@ -20,14 +13,27 @@ export default function FeaturedJobs({ setIsLoading }) {
   }
 
   useEffect(() => {
-    fetchFeaturedJobs().then(result => {
-      // result.data là object, cần lấy ra jobs
-      setJobs(result.data.jobs);
-      setIsLoading(false);
-    })
-    .catch(() => {
-      setJobs([]);
-    });
+    let mounted = true;
+    M.fetchMock('/mocks/JSON_DATA/responses/get_jobs.json')
+      .then(result => {
+        if (!mounted) return;
+        // Normalise response: most mocks return { data: { jobs: [...] } } — prefer that path
+        const arr = Array.isArray(result?.data?.jobs)
+          ? result.data.jobs
+          : Array.isArray(result?.data)
+          ? result.data
+          : Array.isArray(result)
+          ? result
+          : [];
+        setJobs(arr);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setJobs([]);
+        setIsLoading(false);
+      });
+    return () => { mounted = false };
   }, [setIsLoading]);
 
 

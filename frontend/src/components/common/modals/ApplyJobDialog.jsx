@@ -33,18 +33,9 @@ export default function ApplyJobDialog({ open, onClose, jobId }) {
         jobId,
       };
       console.log('Submitting job application:', payload);
-      // POST to mock endpoint (will respond as static file; we treat non-error as success)
-      const res = await fetch('/mocks/JSON_DATA/requests/post_job_id_apply.json', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        // try to read body for debug
-        const txt = await res.text().catch(() => '');
-        throw new Error(txt || 'Network error');
-      }
+      // POST to mock endpoint via ApiClient (will return parsed response)
+      const { post } = await import('../../../services/ApiClient');
+      await post('/mocks/JSON_DATA/requests/post_job_id_apply.json', payload);
 
       onClose?.({ success: true });
     } catch (err) {

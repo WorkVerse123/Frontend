@@ -21,8 +21,8 @@ export default function WorkCalendar() {
         let mounted = true;
         setLoading(true);
         Promise.all([
-            handleAsync(fetch('/mocks/JSON_DATA/responses/get_eployees_id_job_time.json').then(r => r.json())),
-            handleAsync(fetch('/mocks/JSON_DATA/responses/get_eployees_id_busy_time.json').then(r => r.json())),
+            (async () => { const M = await import('../services/MocksService'); return handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_eployees_id_job_time.json')); })(),
+                (async () => { const M = await import('../services/MocksService'); return handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_eployees_id_busy_time.json')); })(),
         ]).then(([jobsRes, busyRes]) => {
             if (!mounted) return;
             const jobEvents = mapApiTimesToEvents(jobsRes, 'jobTimes', 'job');

@@ -9,11 +9,14 @@ export default function EditEmployer() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch('/mocks/JSON_DATA/responses/get_employer_id.json')
-      .then(r => r.json())
-      .then(parsed => {
-        if (parsed && parsed.data) setValues(parsed.data);
-      }).catch(() => setValues(null)).finally(() => setLoading(false));
+    let mounted = true;
+    import('../../services/MocksService').then(({ fetchMock }) => {
+      fetchMock('/mocks/JSON_DATA/responses/get_employer_id.json')
+        .then(parsed => { if (!mounted) return; setValues(parsed.data || parsed || null); })
+        .catch(() => { if (!mounted) setValues(null); })
+        .finally(() => { if (mounted) setLoading(false); });
+    });
+    return () => { mounted = false };
   }, []);
 
   const handleChange = (e) => setValues(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -21,9 +24,8 @@ export default function EditEmployer() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await fetch('/mocks/JSON_DATA/requests/put_employer_id.json', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values)
-      });
+      const { put } = await import('../../services/ApiClient');
+      await put('/mocks/JSON_DATA/requests/put_employer_id.json', values);
       alert('Đã cập nhật nhà tuyển dụng (mock)');
     } catch (err) {
       alert('Lỗi khi cập nhật (mock)');

@@ -6,7 +6,8 @@ import Loading from '../components/common/loading/Loading';
 import ApplyJobDialog from '../components/common/modals/ApplyJobDialog';
 
 async function fetchJob(id = 1) {
-  return handleAsync(fetch(`/mocks/JSON_DATA/responses/get_job_id.json`).then(r => r.json()));
+  const M = await import('../services/MocksService');
+  return handleAsync(M.fetchMock(`/mocks/JSON_DATA/responses/get_job_id.json`));
 }
 
 export default function JobDetail() {

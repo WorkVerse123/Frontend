@@ -30,9 +30,8 @@ export default function useCandidates({ pageSize = 10, apiFetch } = {}) {
           const data = await apiFetch();
           if (!cancelled) setAll(data?.data?.candidates || []);
         } else {
-          const res = await fetch('/mocks/JSON_DATA/responses/get_candidates.json');
-          if (!res.ok) throw new Error('Failed to load mock data');
-          const json = await res.json();
+          const M = await import('../services/MocksService');
+          const json = await M.fetchMock('/mocks/JSON_DATA/responses/get_candidates.json');
           if (!cancelled) setAll(json?.data?.candidates || []);
         }
       } catch (err) {

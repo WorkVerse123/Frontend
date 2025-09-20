@@ -1,25 +1,35 @@
-import { useEffect, useState } from 'react';
-import { handleAsync } from '../../utils/HandleAPIResponse';
-
-export async function fetchFeaturedCompanies() {
-  // Thay url bằng API thật
-  return handleAsync(
-    fetch('/mocks/JSON_DATA/responses/get_featured_companies.json')
-      .then(res => res.json()));
-}
+import React, { useEffect, useState } from 'react';
 
 export default function FeaturedCompanies({setIsLoading}) {
   const [companies, setCompanies] = useState([]);
 
   useEffect(() => {
-    fetchFeaturedCompanies().then(result => {
-      // result là { data, success, message }
-      setCompanies(result.data);
-      setIsLoading(false);
-    })
-    .catch(() => {
-      setCompanies([]);
-    });
+    let mounted = true;
+    import('../../services/MocksService')
+      .then((M) => M.fetchMock('/mocks/JSON_DATA/responses/get_featured_companies.json'))
+      .then(parsed => {
+        if (!mounted) return;
+        // If the mock returns { data: { companies: [...] } }, use that; otherwise fall back to array shapes
+        const arr = Array.isArray(parsed?.data?.companies)
+          ? parsed.data.companies
+          : Array.isArray(parsed?.data)
+          ? parsed.data
+          : Array.isArray(parsed)
+          ? parsed
+          : [];
+        console.log('Featured companies:', arr);
+        setCompanies(arr);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setCompanies([]);
+        setIsLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [setIsLoading]);
 
   return (

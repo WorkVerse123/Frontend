@@ -49,9 +49,8 @@ export default function CandidateProfileModal({ open, onClose, employeeId }) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/mocks/JSON_DATA/responses/get_employee_id.json');
-        if (!res.ok) throw new Error('Failed to load profile mock');
-        const json = await res.json();
+        const M = await import('../../services/MocksService');
+        const json = await M.fetchMock('/mocks/JSON_DATA/responses/get_employee_id.json');
         if (!cancelled) setData(json?.data || null);
       } catch (err) {
         if (!cancelled) setError(err.message || 'Unknown');

@@ -14,51 +14,21 @@ export default function useSubscriptionPlans(apiUrl) {
       setLoading(true);
       setError(null);
       try {
-        if (apiUrl) {
-          const res = await fetch(apiUrl, { signal: controller.signal });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const json = await res.json();
-          if (mounted) setPlans(json.data || json.plans || json);
-        } else {
-          // fallback mock
-          const mock = [
-            {
-              id: 'free',
-              name: 'Miễn phí',
-              price: 0,
-              currency: '$',
-              period: ' / tháng',
-              features: [
-                'Tạo hồ sơ miễn phí',
-                'Ứng tuyển không giới hạn',
-                'Nhận thông báo việc làm',
-                'Hỗ trợ cơ bản'
-              ]
-            },
-            {
-              id: 'premium',
-              name: 'Premium',
-              price: 19,
-              currency: '$',
-              period: ' / tháng',
-              features: [
-                'Nổi bật hồ sơ',
-                'Tăng cơ hội được phỏng vấn',
-                'Hỗ trợ ưu tiên',
-                'Xem báo cáo ứng tuyển'
-              ]
-            }
-          ];
-          await new Promise(r => setTimeout(r, 150));
-          if (mounted) setPlans(mock);
-        }
+        const M = await import('../services/MocksService');
+        // If no apiUrl provided, fall back to a known mock file to avoid 404s
+        const path = apiUrl || '/mocks/JSON_DATA/responses/get_plans.json';
+        const res = await M.fetchMock(path, { signal: controller.signal });
+        if (mounted) setPlans(res?.data || res || []);
       } catch (err) {
-        if (mounted) setError(err.message || 'Lỗi khi tải dữ liệu');
+        // Treat cancellation as non-fatal (Abort/Canceled). Only surface other errors.
+        const name = err && err.name;
+        const msg = err && err.message ? String(err.message).toLowerCase() : '';
+        const isCanceled = name === 'AbortError' || name === 'CanceledError' || msg.includes('cancel');
+        if (mounted && !isCanceled) setError(err.message || 'Lỗi khi tải dữ liệu');
       } finally {
         if (mounted) setLoading(false);
       }
     }
-
     load();
 
     return () => {

@@ -57,9 +57,8 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
     async function load() {
       setLoading(true);
       try {
-        const res = await fetch('/mocks/JSON_DATA/responses/get_employee_id.json', { signal: controller.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
+        const M = await import('../../services/MocksService');
+        const json = await M.fetchMock('/mocks/JSON_DATA/responses/get_employee_id.json', { signal: controller.signal });
         const emp = json.data || json.employee || json;
         if (!mounted) return;
         setForm(prev => ({ ...prev, ...{

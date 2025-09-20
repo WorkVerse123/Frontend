@@ -5,7 +5,8 @@ import { handleAsync } from '../utils/HandleAPIResponse';
 import Loading from '../components/common/loading/Loading';
 
 async function fetchJobs() {
-  return handleAsync(fetch('/mocks/JSON_DATA/responses/get_jobs.json').then(r => r.json()));
+  const M = await import('../services/MocksService');
+  return handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_jobs.json'));
 }
 
 export default function JobsPage() {

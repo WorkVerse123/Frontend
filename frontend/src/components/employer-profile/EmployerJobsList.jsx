@@ -3,6 +3,7 @@ import { Card, Box, Typography } from '@mui/material';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 import { formatSalary } from '../../utils/formatSalary';
 import JobDetailDialog from '../../components/common/modals/JobDetailDialog';
+import M from '../../services/MocksService';
 
 export default function EmployerJobsList({ employerId }) {
   const [jobs, setJobs] = useState([]);
@@ -13,20 +14,21 @@ export default function EmployerJobsList({ employerId }) {
 
   useEffect(() => {
     const ac = new AbortController();
+    // If no employerId provided yet, skip loading — avoids spurious errors while parent loads
+    if (!employerId) {
+      setJobs([]);
+      setLoading(false);
+      return () => {};
+    }
+
     const load = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/mocks/JSON_DATA/responses/get_employer_id_jobs.json', { signal: ac.signal });
-        if (!res.ok) {
-          const body = await res.text();
-          throw new Error(body || `HTTP ${res.status}`);
-        }
-        const parsed = await handleAsync(res.json());
-        if (!parsed.success) throw new Error(parsed.message || 'Lỗi khi tải danh sách việc làm');
-        // parsed.data should contain { employerId, paging, jobs: [...] }
-        setJobs((parsed.data && parsed.data.jobs) || []);
+        const parsed = await M.fetchMock('/mocks/JSON_DATA/responses/get_employer_id_jobs.json', { signal: ac.signal });
+        setJobs((parsed?.data && parsed.data.jobs) || parsed?.jobs || []);
       } catch (err) {
-        if (err.name !== 'AbortError') setError(err);
+        const isCanceled = err?.name === 'AbortError' || err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError';
+        if (!isCanceled) setError(err);
       } finally {
         setLoading(false);
       }

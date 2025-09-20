@@ -3,7 +3,8 @@ import JobCard from './JobCard';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 
 async function fetchJobs() {
-  return handleAsync(fetch('/mocks/JSON_DATA/responses/get_jobs.json').then(r => r.json()));
+  const M = await import('../../services/MocksService');
+  return handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_jobs.json'));
 }
 
 export default function JobsBoard() {
