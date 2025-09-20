@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { handleAsync } from '../utils/HandleAPIResponse';
+import EndpointResolver from '../services/EndpointResolver';
 import JobSidebarInfo from '../components/jobs/JobSidebarInfo';
 import MainLayout from '../components/layout/MainLayout';
 import Loading from '../components/common/loading/Loading';
 import ApplyJobDialog from '../components/common/modals/ApplyJobDialog';
 
 async function fetchJob(id = 1) {
-  const M = await import('../services/MocksService');
-  return handleAsync(M.fetchMock(`/mocks/JSON_DATA/responses/get_job_id.json`));
+  return handleAsync(EndpointResolver.get(`/mocks/JSON_DATA/responses/get_job_id.json`));
 }
 
 export default function JobDetail() {
@@ -16,16 +16,23 @@ export default function JobDetail() {
   const [applyOpen, setApplyOpen] = useState(false);
 
   useEffect(() => {
-    fetchJob(1).then(res => {
-      // res may be { data: { ... } } or the object itself depending on mock shape
-      if (!res) {
-        setJob(null);
-      } else if (res.data) {
-        setJob(res.data);
-      } else {
-        setJob(res);
+    const ac = new AbortController();
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await handleAsync(EndpointResolver.get(`/mocks/JSON_DATA/responses/get_job_id.json`, { signal: ac.signal }));
+        if (!mounted) return;
+        if (!res) setJob(null);
+        else if (res.data) setJob(res.data);
+        else setJob(res);
+      } catch (err) {
+        const isCanceled = err?.name === 'AbortError' || (err?.message && String(err.message).toLowerCase().includes('cancel'));
+        if (!isCanceled) setJob(null);
+      } finally {
+        if (mounted) setLoading(false);
       }
-    }).catch(() => setJob(null)).finally(() => setLoading(false));
+    })();
+    return () => { mounted = false; ac.abort(); };
   }, []);
 
   return (

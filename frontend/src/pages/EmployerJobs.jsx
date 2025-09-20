@@ -20,27 +20,34 @@ export default function EmployerJobs() {
 
   useEffect(() => {
     let mounted = true;
+    const ac = new AbortController();
     setLoading(true);
     (async () => {
-      const M = await import('../services/MocksService');
-      handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_employer_id_jobs.json'))
+      const EndpointResolver = (await import('../services/EndpointResolver')).default;
+      handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_employer_id_jobs.json', { signal: ac.signal }))
         .then(res => {
           if (!mounted) return;
           setJobs(res?.data?.jobs || []);
         })
         .finally(() => mounted && setLoading(false));
     })();
-    return () => { mounted = false; };
+    return () => { mounted = false; ac.abort(); };
   }, []);
 
   const viewApplications = async (job) => {
     setAppsOpen(true);
     setAppsLoading(true);
-  const M = await import('../services/MocksService');
-  const res = await handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_employer_id_jobs_id_applications.json'));
+  const ac = new AbortController();
+  try {
+    const EndpointResolver = (await import('../services/EndpointResolver')).default;
+    const res = await handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_employer_id_jobs_id_applications.json', { signal: ac.signal }));
     const apps = res?.data?.applications || [];
-    setApplications(Array.isArray(apps) ? apps.filter(a => !a.jobId || String(a.jobId) === String(job.jobId)) : []);
-    setAppsLoading(false);
+    if (!ac.signal.aborted) setApplications(Array.isArray(apps) ? apps.filter(a => !a.jobId || String(a.jobId) === String(job.jobId)) : []);
+  } catch (err) {
+    // ignore canceled or non-critical errors; keep applications empty
+  } finally {
+    if (!ac.signal.aborted) setAppsLoading(false);
+  }
   };
 
   const openMenu = (e, job) => {

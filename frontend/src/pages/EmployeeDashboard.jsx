@@ -18,17 +18,20 @@ export default function EmployeeDashboard() {
 
   useEffect(() => {
     const ac = new AbortController();
+    let mounted = true;
     const load = async () => {
       try {
         setLoading(true);
-        const M = await import('../services/MocksService');
-        const parsed = await M.fetchMock('/mocks/JSON_DATA/responses/get_employee_id_dashboard.json', { signal: ac.signal });
+        const EndpointResolver = (await import('../services/EndpointResolver')).default;
+        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employee_id_dashboard.json', { signal: ac.signal });
         if (!parsed || !parsed.data) throw new Error('Invalid data');
+        if (!mounted) return;
         setStats(parsed.data.stats || []);
         setApplications(parsed.data.applications || []);
         // try to also fetch bookmarks (non-blocking)
         try {
-          const bParsed = await M.fetchMock('/mocks/JSON_DATA/responses/get_employee_id_bookmarks.json');
+          const bParsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employee_id_bookmarks.json', { signal: ac.signal });
+          if (!mounted) return;
           setBookmarks((bParsed && bParsed.data && bParsed.data.bookmarks) || []);
         } catch (e) {
           // swallow bookmark fetch errors - non-critical
@@ -47,7 +50,7 @@ export default function EmployeeDashboard() {
       }
     };
     load();
-    return () => ac.abort();
+    return () => { mounted = false; ac.abort(); };
   }, []);
 
   if (loading) return (

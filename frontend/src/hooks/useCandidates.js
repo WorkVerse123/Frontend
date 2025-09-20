@@ -22,6 +22,7 @@ export default function useCandidates({ pageSize = 10, apiFetch } = {}) {
 
   useEffect(() => {
     let cancelled = false;
+    const ac = new AbortController();
     async function load() {
       setLoading(true);
       setError(null);
@@ -30,9 +31,9 @@ export default function useCandidates({ pageSize = 10, apiFetch } = {}) {
           const data = await apiFetch();
           if (!cancelled) setAll(data?.data?.candidates || []);
         } else {
-          const M = await import('../services/MocksService');
-          const json = await M.fetchMock('/mocks/JSON_DATA/responses/get_candidates.json');
-          if (!cancelled) setAll(json?.data?.candidates || []);
+          const EndpointResolver = (await import('../services/EndpointResolver')).default;
+          const json = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_candidates.json', { signal: ac.signal });
+          if (!cancelled) setAll(json?.data?.candidates || json?.data || json || []);
         }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Unknown error');
@@ -41,7 +42,7 @@ export default function useCandidates({ pageSize = 10, apiFetch } = {}) {
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; ac.abort(); };
   }, [apiFetch, reloadCounter]);
 
   const filtered = useMemo(() => {

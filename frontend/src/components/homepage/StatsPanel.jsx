@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 
 export async function fetchStats() {
-  const M = await import('../../services/MocksService');
-  return M.fetchMock('/mocks/JSON_DATA/responses/get_stats.json');
+  const EndpointResolver = (await import('../../services/EndpointResolver')).default;
+  return EndpointResolver.get('/mocks/JSON_DATA/responses/get_stats.json');
 }
 
 export default function StatsPanel({ setIsLoading }) {

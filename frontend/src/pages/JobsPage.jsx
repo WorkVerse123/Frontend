@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import JobCard from '../components/jobs/JobCard';
 import { handleAsync } from '../utils/HandleAPIResponse';
+import EndpointResolver from '../services/EndpointResolver';
 import Loading from '../components/common/loading/Loading';
 
 async function fetchJobs() {
-  const M = await import('../services/MocksService');
-  return handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_jobs.json'));
+  return handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_jobs.json'));
 }
 
 export default function JobsPage() {
@@ -20,9 +20,12 @@ export default function JobsPage() {
   const [type, setType] = useState('');
 
   useEffect(() => {
+    let mounted = true;
     fetchJobs().then(res => {
+      if (!mounted) return;
       if (res && res.data && Array.isArray(res.data.jobs)) setAllJobs(res.data.jobs);
-    }).catch(() => setAllJobs([])).finally(() => setLoading(false));
+    }).catch(() => { if (mounted) setAllJobs([]); }).finally(() => { if (mounted) setLoading(false); });
+    return () => { mounted = false; };
   }, []);
 
   const locations = useMemo(() => {

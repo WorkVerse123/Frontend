@@ -19,19 +19,20 @@ export default function WorkCalendar() {
 
     useEffect(() => {
         let mounted = true;
-        setLoading(true);
-        Promise.all([
-            (async () => { const M = await import('../services/MocksService'); return handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_eployees_id_job_time.json')); })(),
-                (async () => { const M = await import('../services/MocksService'); return handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_eployees_id_busy_time.json')); })(),
-        ]).then(([jobsRes, busyRes]) => {
-            if (!mounted) return;
-            const jobEvents = mapApiTimesToEvents(jobsRes, 'jobTimes', 'job');
-            const busyEvents = mapApiTimesToEvents(busyRes, 'busyTimes', 'busy');
-            setEvents([...jobEvents, ...busyEvents]);
-        }).catch(err => {
-            console.error(err);
-        }).finally(() => mounted && setLoading(false));
-        return () => { mounted = false; };
+            setLoading(true);
+            const ac = new AbortController();
+            Promise.all([
+                (async () => { const EndpointResolver = (await import('../services/EndpointResolver')).default; return handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_eployees_id_job_time.json', { signal: ac.signal })); })(),
+                (async () => { const EndpointResolver = (await import('../services/EndpointResolver')).default; return handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_eployees_id_busy_time.json', { signal: ac.signal })); })(),
+            ]).then(([jobsRes, busyRes]) => {
+                if (!mounted) return;
+                const jobEvents = mapApiTimesToEvents(jobsRes, 'jobTimes', 'job');
+                const busyEvents = mapApiTimesToEvents(busyRes, 'busyTimes', 'busy');
+                setEvents([...jobEvents, ...busyEvents]);
+            }).catch(err => {
+                console.error(err);
+            }).finally(() => mounted && setLoading(false));
+            return () => { mounted = false; ac.abort(); };
     }, []);
 
     const eventStyleGetter = (event) => {

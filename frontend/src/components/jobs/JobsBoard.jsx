@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import JobCard from './JobCard';
 import { handleAsync } from '../../utils/HandleAPIResponse';
+import EndpointResolver from '../../services/EndpointResolver';
 
 async function fetchJobs() {
-  const M = await import('../../services/MocksService');
-  return handleAsync(M.fetchMock('/mocks/JSON_DATA/responses/get_jobs.json'));
+  return handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_jobs.json'));
 }
 
 export default function JobsBoard() {
   const [jobs, setJobs] = useState([]);
 
   useEffect(() => {
+    let mounted = true;
     fetchJobs().then(res => {
+      if (!mounted) return;
       if (res && res.data && Array.isArray(res.data.jobs)) setJobs(res.data.jobs);
-    }).catch(() => setJobs([]));
+    }).catch(() => { if (mounted) setJobs([]); }).finally(() => { /* no loading state here but keep mounted guard */ });
+    return () => { mounted = false; };
   }, []);
 
   return (

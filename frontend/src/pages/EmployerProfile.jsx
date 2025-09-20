@@ -6,7 +6,7 @@ import EmployerDetails from '../components/employer-profile/EmployerDetails';
 import EmployerJobsList from '../components/employer-profile/EmployerJobsList';
 import { Container } from '@mui/material';
 import { handleAsync } from '../utils/HandleAPIResponse';
-import M from '../services/MocksService';
+import EndpointResolver from '../services/EndpointResolver';
 
 export default function EmployerProfile() {
   const [employer, setEmployer] = useState(null);
@@ -16,22 +16,24 @@ export default function EmployerProfile() {
 
   useEffect(() => {
     const ac = new AbortController();
+    let mounted = true;
     const load = async () => {
       try {
           setLoading(true);
           setError(null);
-        const parsed = await M.fetchMock('/mocks/JSON_DATA/responses/get_employer_id.json', { signal: ac.signal });
+        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employer_id.json', { signal: ac.signal });
           const employerObj = parsed?.data?.data ?? parsed?.data ?? parsed ?? null;
+          if (!mounted) return;
           setEmployer(employerObj);
       } catch (err) {
         const isCanceled = err?.name === 'AbortError' || err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError';
         if (!isCanceled) setError(err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
     load();
-    return () => ac.abort();
+    return () => { mounted = false; ac.abort(); };
   }, []);
 
   // Render layout first. Show loading spinner when initially loading.

@@ -3,7 +3,7 @@ import { Card, Box, Typography } from '@mui/material';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 import { formatSalary } from '../../utils/formatSalary';
 import JobDetailDialog from '../../components/common/modals/JobDetailDialog';
-import M from '../../services/MocksService';
+import EndpointResolver from '../../services/EndpointResolver';
 
 export default function EmployerJobsList({ employerId }) {
   const [jobs, setJobs] = useState([]);
@@ -13,29 +13,31 @@ export default function EmployerJobsList({ employerId }) {
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
     const ac = new AbortController();
     // If no employerId provided yet, skip loading — avoids spurious errors while parent loads
     if (!employerId) {
       setJobs([]);
       setLoading(false);
-      return () => {};
+      return () => { mounted = false; ac.abort(); };
     }
 
     const load = async () => {
       try {
         setLoading(true);
-        const parsed = await M.fetchMock('/mocks/JSON_DATA/responses/get_employer_id_jobs.json', { signal: ac.signal });
+        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employer_id_jobs.json', { signal: ac.signal });
+        if (!mounted) return;
         setJobs((parsed?.data && parsed.data.jobs) || parsed?.jobs || []);
       } catch (err) {
-        const isCanceled = err?.name === 'AbortError' || err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError';
+        const isCanceled = err?.name === 'AbortError' || err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError' || (err?.message && err.message.toLowerCase().includes('cancel'));
         if (!isCanceled) setError(err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     load();
-    return () => ac.abort();
+    return () => { mounted = false; ac.abort(); };
   }, [employerId]);
 
 

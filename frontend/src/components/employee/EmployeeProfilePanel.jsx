@@ -57,8 +57,8 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
     async function load() {
       setLoading(true);
       try {
-        const M = await import('../../services/MocksService');
-        const json = await M.fetchMock('/mocks/JSON_DATA/responses/get_employee_id.json', { signal: controller.signal });
+        const EndpointResolver = (await import('../../services/EndpointResolver')).default;
+        const json = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employee_id.json', { signal: controller.signal });
         const emp = json.data || json.employee || json;
         if (!mounted) return;
         setForm(prev => ({ ...prev, ...{

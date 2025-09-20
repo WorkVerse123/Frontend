@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import M from '../../services/MocksService';
+// dynamically import EndpointResolver in the effect to keep SSR-friendly patterns
 
 export default function FeaturedJobs({ setIsLoading }) {
   const [jobs, setJobs] = useState([]);
@@ -14,8 +14,10 @@ export default function FeaturedJobs({ setIsLoading }) {
 
   useEffect(() => {
     let mounted = true;
-    M.fetchMock('/mocks/JSON_DATA/responses/get_jobs.json')
-      .then(result => {
+    (async () => {
+      try {
+        const EndpointResolver = (await import('../../services/EndpointResolver')).default;
+        const result = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_jobs.json');
         if (!mounted) return;
         // Normalise response: most mocks return { data: { jobs: [...] } } — prefer that path
         const arr = Array.isArray(result?.data?.jobs)
@@ -26,13 +28,13 @@ export default function FeaturedJobs({ setIsLoading }) {
           ? result
           : [];
         setJobs(arr);
-        setIsLoading(false);
-      })
-      .catch(() => {
+      } catch (err) {
         if (!mounted) return;
         setJobs([]);
+      } finally {
         setIsLoading(false);
-      });
+      }
+    })();
     return () => { mounted = false };
   }, [setIsLoading]);
 

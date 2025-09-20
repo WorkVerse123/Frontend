@@ -27,11 +27,14 @@ export default function JobDetailDialog({ jobId, open, onClose }) {
         setLoading(true);
         setError(null);
 
-        const M = await import('../../../services/MocksService');
-        const parsed = await M.fetchMock('/mocks/JSON_DATA/responses/get_job_id.json', { signal: ac.signal });
+        const EndpointResolver = (await import('../../../services/EndpointResolver')).default;
+        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_job_id.json', { signal: ac.signal });
         setJob(parsed?.data || parsed || null);
       } catch (err) {
-        if (err.name !== 'AbortError') setError(err);
+        // treat abort/cancel as non-fatal
+        if (err?.name && err.name === 'AbortError') return;
+        if (err?.message && err.message.toLowerCase().includes('cancel')) return;
+        setError(err);
       } finally {
         setLoading(false);
       }

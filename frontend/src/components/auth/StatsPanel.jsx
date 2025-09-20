@@ -13,19 +13,23 @@ export default function StatsPanel({ setIsLoading }) {
   });
 
   useEffect(() => {
+    let mounted = true;
+    const ac = new AbortController();
     if (typeof setIsLoading === 'function') setIsLoading(true);
-    fetchStats()
-      .then((res) => {
-        if (res && res.data && res.data.stats) {
-          setStats(res.data.stats);
-        }
-      })
-      .catch(() => {
-        // giữ giá trị mặc định khi lỗi
-      })
-      .finally(() => {
+    (async () => {
+      try {
+        const EndpointResolver = (await import('../../services/EndpointResolver')).default;
+        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_stats.json', { signal: ac.signal });
+        if (!mounted) return;
+        setStats(parsed?.data || parsed || {});
+      } catch (err) {
+        if (!mounted) return;
+        setStats({});
+      } finally {
         if (typeof setIsLoading === 'function') setIsLoading(false);
-      });
+      }
+    })();
+    return () => { mounted = false; ac.abort(); };
   }, [setIsLoading]);
 
   return (

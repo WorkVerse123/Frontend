@@ -10,12 +10,18 @@ export default function EditEmployer() {
 
   useEffect(() => {
     let mounted = true;
-    import('../../services/MocksService').then(({ fetchMock }) => {
-      fetchMock('/mocks/JSON_DATA/responses/get_employer_id.json')
-        .then(parsed => { if (!mounted) return; setValues(parsed.data || parsed || null); })
-        .catch(() => { if (!mounted) setValues(null); })
-        .finally(() => { if (mounted) setLoading(false); });
-    });
+    (async () => {
+  try {
+    const EndpointResolver = (await import('../../services/EndpointResolver')).default;
+    const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employer_id.json', { signal: ac.signal });
+    if (!mounted) return;
+    setValues(parsed.data || parsed || null);
+      } catch (err) {
+        if (!mounted) setValues(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
     return () => { mounted = false };
   }, []);
 

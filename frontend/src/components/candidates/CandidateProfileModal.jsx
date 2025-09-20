@@ -49,11 +49,15 @@ export default function CandidateProfileModal({ open, onClose, employeeId }) {
       setLoading(true);
       setError(null);
       try {
-        const M = await import('../../services/MocksService');
-        const json = await M.fetchMock('/mocks/JSON_DATA/responses/get_employee_id.json');
-        if (!cancelled) setData(json?.data || null);
+        const EndpointResolver = (await import('../../services/EndpointResolver')).default;
+        const json = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employee_id.json');
+        if (!cancelled) setData(json?.data || json || null);
       } catch (err) {
-        if (!cancelled) setError(err.message || 'Unknown');
+        if (!cancelled) {
+          // treat cancellations as non-fatal
+          if (err?.name === 'AbortError' || (err?.message && err.message.toLowerCase().includes('cancel'))) return;
+          setError(err.message || 'Unknown');
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

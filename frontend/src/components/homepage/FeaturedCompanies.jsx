@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 
-export default function FeaturedCompanies({setIsLoading}) {
+export default function FeaturedCompanies({ setIsLoading }) {
   const [companies, setCompanies] = useState([]);
 
   useEffect(() => {
     let mounted = true;
-    import('../../services/MocksService')
-      .then((M) => M.fetchMock('/mocks/JSON_DATA/responses/get_featured_companies.json'))
-      .then(parsed => {
+    (async () => {
+      try {
+        const EndpointResolver = (await import('../../services/EndpointResolver')).default;
+        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_featured_companies.json');
         if (!mounted) return;
         // If the mock returns { data: { companies: [...] } }, use that; otherwise fall back to array shapes
         const arr = Array.isArray(parsed?.data?.companies)
@@ -17,15 +18,15 @@ export default function FeaturedCompanies({setIsLoading}) {
           : Array.isArray(parsed)
           ? parsed
           : [];
-        console.log('Featured companies:', arr);
+        // console.debug('Featured companies:', arr);
         setCompanies(arr);
         setIsLoading(false);
-      })
-      .catch(() => {
+      } catch (e) {
         if (!mounted) return;
         setCompanies([]);
         setIsLoading(false);
-      });
+      }
+    })();
 
     return () => {
       mounted = false;
