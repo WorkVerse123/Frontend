@@ -11,13 +11,14 @@ import EmployerProfile from './pages/EmployerProfile'
 import EmployeeDashboard from './pages/EmployeeDashboard'
 import JobDetail from './pages/JobDetail'
 import EditEmployer from './pages/edits/EditEmployer'
+import Subscription from './pages/Subscription'
 import './App.css'
 
 function App() {
 
   return (
     <>
-      <CandidatesPage />
+      <Subscription />
     </>
   )
 }
