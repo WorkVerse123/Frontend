@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import JobCard from './JobCard';
 import { handleAsync } from '../../utils/HandleAPIResponse';
-import EndpointResolver from '../../services/EndpointResolver';
+import ApiEndpoints from '../../services/ApiEndpoints';
+import { get as apiGet } from '../../services/ApiClient';
 
-async function fetchJobs() {
-  return handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_jobs.json'));
+async function fetchJobs(page = 1, size = 10) {
+  return handleAsync(apiGet(ApiEndpoints.JOBS_LIST(page, size)));
 }
 
 export default function JobsBoard() {
@@ -14,7 +15,8 @@ export default function JobsBoard() {
     let mounted = true;
     fetchJobs().then(res => {
       if (!mounted) return;
-      if (res && res.data && Array.isArray(res.data.jobs)) setJobs(res.data.jobs);
+      const maybe = res?.data?.jobs || res?.data || res;
+      if (Array.isArray(maybe)) setJobs(maybe);
     }).catch(() => { if (mounted) setJobs([]); }).finally(() => { /* no loading state here but keep mounted guard */ });
     return () => { mounted = false; };
   }, []);

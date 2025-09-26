@@ -1,16 +1,61 @@
-// Centralized API endpoint paths. Update as your backend grows.
+// Centralized API endpoint paths generated from swagger.json
 const ApiEndpoints = {
   // Auth
-  LOGIN: '/auth/login',
-  REGISTER: '/auth/register',
-  // Users
-  ME: '/me',
-  // Subscription
-  SUBSCRIPTION_PLANS: '/subscription/plans',
-  USER_SUBSCRIPTION: '/subscription/user',
-  // Jobs (examples)
-  JOBS: '/jobs',
-  JOB_DETAIL: (id) => `/jobs/${id}`,
+  LOGIN: '/api/auth/login',
+  REGISTER: '/api/auth/register',
+
+  // // Users / Profile
+  // ME: '/api/me',
+
+  // Jobs
+  JOBS: '/api/jobs',
+    JOB_DETAIL: (id) => `/api/jobs/${id}`,
+    JOBS_LIST: (page = 1, size = 10) => `/api/jobs?pageNumber=${page}&pageSize=${size}`,
+    JOB_CANDIDATES: '/api/jobs/cadidates',
+  JOB_REVIEWS: (id) => `/api/jobs/${id}/reviews`,
+  JOB_CATEGORIES: '/api/jobs/categories',
+
+  // Employer
+  EMPLOYER: (id) => `/api/employer/${id}`,
+  EMPLOYER_JOBS: (id) => `/api/employer/${id}/jobs`,
+  EMPLOYER_JOB: (id, jobId) => `/api/employer/${id}/jobs/${jobId}`,
+
+  // Employee
+  EMPLOYEE_PROFILE_CREATE: (userId) => `/api/employees/${userId}`,
+  EMPLOYEE_PROFILE: (id) => `/api/employees/${id}`,
+  EMPLOYEE_BUSY_TIMES: (id) => `/api/employees/${id}/busy-times`,
+  EMPLOYEE_BUSY_TIME: (id, busyTimeId) => `/api/employees/${id}/busy-times/${busyTimeId}`,
+  EMPLOYEE_BOOKMARKS: (id) => `/api/employees/${id}/bookmarks`,
+  EMPLOYEE_BOOKMARK_JOB: (id, jobId) => `/api/employees/${id}/bookmarks/jobs/${jobId}`,
+  EMPLOYEE_APPLICATIONS: (id) => `/api/employees/${id}/applications`,
+
+  // Applications
+  APPLICATION_GET: (id) => `/api/applications/${id}`,
+  APPLICATION_WITHDRAW: (id) => `/api/applications/${id}/withdrawn`,
+  APPLICATION_STATUS: (id) => `/api/applications/${id}/status`,
+  APPLICATIONS_FOR_EMPLOYER_JOB: (employerId, jobId) => `/api/applications/employers/${employerId}/job/${jobId}/applications`,
+  APPLICATION_STATS: '/api/applications/stats',
+
+  // Blogs
+  BLOGS: '/api/blogs',
+  BLOGS_PUBLISHED: '/api/blogs-published',
+  BLOG_BY_SLUG: (slug) => `/api/blogs/${slug}`,
+  BLOG_BY_ID: (id) => `/api/blogs/${id}`,
+
+  // Companies
+  COMPANIES: (page = 1, pageSize = 10) => `/api/companies?pageNumber=${page}&pageSize=${pageSize}`,
+  COMPANY_SETUP: '/api/companies/company-setup',
+
+  // Feedbacks
+  FEEDBACKS: '/api/feedbacks',
+  FEEDBACK_HANDLE: (id) => `/api/feedbacks/${id}/handle`,
+
+  // Reports
+  REPORTS: '/api/reports',
+  REPORT_BY_ID: (id) => `/api/reports/${id}`,
+
+  // Misc / Employee dashboard
+  EMPLOYEE_DASHBOARD: (id) => `/employee-dashboard/${id}`,
 };
 
 export default ApiEndpoints;

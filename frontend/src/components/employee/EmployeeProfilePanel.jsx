@@ -8,7 +8,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import EditIcon from '@mui/icons-material/Edit';
 
 // A simple editable panel for employee profile. Shows provided `employee` or empty fields.
-export default function EmployeeProfilePanel({ employee = null, onSave = () => {} }) {
+export default function EmployeeProfilePanel({ employee = null, onSave = () => {}, userId = null, initialForceCreate = false }) {
   const empty = {
     employeeId: '',
     userId: '',
@@ -50,25 +50,32 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
       return;
     }
 
-    // No employee prop: fetch mock data from public/mocks.
+    // No employee prop: fetch real employee profile
+    // If initialForceCreate is true (coming from registration flow), skip fetching — we expect a fresh profile create
+    if (initialForceCreate) {
+      setLoading(false);
+      return;
+    }
     let mounted = true;
     const controller = new AbortController();
 
     async function load() {
       setLoading(true);
       try {
-        const EndpointResolver = (await import('../../services/EndpointResolver')).default;
-        const json = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employee_id.json', { signal: controller.signal });
-        const emp = json.data || json.employee || json;
+        const { get: apiGet } = await import('../../services/ApiClient');
+        const ApiEndpoints = (await import('../../services/ApiEndpoints')).default;
+        const idToFetch = userId || 'me';
+        const res = await apiGet(ApiEndpoints.EMPLOYEE_PROFILE(idToFetch), { signal: controller.signal });
+        const emp = res?.data || res;
         if (!mounted) return;
         setForm(prev => ({ ...prev, ...{
-          employeeId: emp.employeeId || emp.employee_id || '',
+          employeeId: emp.employeeId || emp.employee_id || emp.id || '',
           userId: emp.userId || emp.user_id || '',
-          fullName: emp.fullName || emp.full_name || '',
-          dateOfBirth: (emp.dateOfBirth || emp.date_of_birth || '').slice(0,10),
+          fullName: emp.fullName || emp.full_name || emp.fullName || '',
+          dateOfBirth: (emp.dateOfBirth || emp.date_of_birth || emp.dob || '').slice(0,10),
           gender: emp.gender || '',
           address: emp.address || '',
-          avatarUrl: emp.avatarUrl || emp.avatar_url || '',
+          avatarUrl: emp.avatarUrl || emp.avatar_url || emp.avatar || '',
           bio: emp.bio || '',
           skills: emp.skills || '',
           education: emp.education || '',
@@ -78,7 +85,7 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
       } catch (err) {
         // keep console error for local debugging; UI stays with empty form
         // eslint-disable-next-line no-console
-        console.error('Failed to load employee profile mock:', err);
+        console.error('Failed to load employee profile:', err);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -90,7 +97,9 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
       mounted = false;
       controller.abort();
     };
-  }, [employee]);
+  }, [employee, userId, initialForceCreate]);
+
+  // Panel is update-only; creation flow should be handled elsewhere.
 
   function change(field, value) {
     setForm(f => ({ ...f, [field]: value }));

@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function JobCard({ job }) {
+  const navigate = useNavigate();
   return (
     <div className="bg-white rounded-xl shadow p-4 border hover:shadow-md transition">
       <div className="flex items-start gap-4">
@@ -31,7 +33,7 @@ export default function JobCard({ job }) {
                 <span className="text-xs text-gray-500">{job.jobType}</span>
               )}
             </div>
-            <button className="bg-[#2563eb] text-white px-3 py-1 rounded text-sm font-semibold hover:bg-blue-700">Ứng Tuyển</button>
+            <button onClick={() => navigate(`/jobs/${job.jobId || job.id}`)} className="bg-[#2563eb] text-white px-3 py-1 rounded text-sm font-semibold hover:bg-blue-700">Ứng Tuyển</button>
           </div>
         </div>
       </div>

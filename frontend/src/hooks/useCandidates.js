@@ -31,8 +31,9 @@ export default function useCandidates({ pageSize = 10, apiFetch } = {}) {
           const data = await apiFetch();
           if (!cancelled) setAll(data?.data?.candidates || []);
         } else {
-          const EndpointResolver = (await import('../services/EndpointResolver')).default;
-          const json = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_candidates.json', { signal: ac.signal });
+          const { get: apiGet } = await import('../services/ApiClient');
+          const ApiEndpoints = (await import('../services/ApiEndpoints')).default;
+          const json = await apiGet(ApiEndpoints.JOBS + '/candidates', { signal: ac.signal });
           if (!cancelled) setAll(json?.data?.candidates || json?.data || json || []);
         }
       } catch (err) {

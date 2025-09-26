@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
-import JobCard from '../components/jobs/JobCard';
 import { handleAsync } from '../utils/HandleAPIResponse';
 import ApiEndpoints from '../services/ApiEndpoints';
 import { get as apiGet } from '../services/ApiClient';
 import Loading from '../components/common/loading/Loading';
+import CompanyCard from '../components/companies/CompanyCard';
 import Pagination from '@mui/material/Pagination';
 
-export default function JobsPage() {
-  const [allJobs, setAllJobs] = useState([]);
+export default function CompaniesPage() {
+  const [allCompanies, setAllCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(5);
@@ -17,27 +17,25 @@ export default function JobsPage() {
   // filters
   const [keyword, setKeyword] = useState('');
   const [location, setLocation] = useState('');
-  const [category, setCategory] = useState('');
-  const [type, setType] = useState('');
+  const [companyType, setCompanyType] = useState('');
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
-        const res = await handleAsync(apiGet(ApiEndpoints.JOBS_LIST(page, pageSize)));
+        const res = await handleAsync(apiGet(ApiEndpoints.COMPANIES(page, pageSize)));
         if (!mounted) return;
         const data = res?.data?.data || res?.data || res || {};
-        const arr = Array.isArray(data?.jobs)
-          ? data.jobs
+        const arr = Array.isArray(data?.companies)
+          ? data.companies
           : Array.isArray(data?.items)
           ? data.items
           : Array.isArray(data)
           ? data
           : [];
-        if (Array.isArray(arr)) setAllJobs(arr);
+        if (Array.isArray(arr)) setAllCompanies(arr);
         const tp = data?.paging?.totalPages || data?.paging?.total || data?.totalPages || 1;
-        // if server returns total items, compute pages
         if (!data?.paging?.totalPages && data?.paging?.total && pageSize) {
           setTotalPages(Math.max(1, Math.ceil(data.paging.total / pageSize)));
         } else if (typeof tp === 'number') {
@@ -46,7 +44,7 @@ export default function JobsPage() {
           setTotalPages(1);
         }
       } catch (e) {
-        if (mounted) setAllJobs([]);
+        if (mounted) setAllCompanies([]);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -56,46 +54,44 @@ export default function JobsPage() {
 
   const locations = useMemo(() => {
     const set = new Set();
-    allJobs.forEach(j => j.jobLocation && set.add(j.jobLocation));
+    allCompanies.forEach(c => c.location && set.add(c.location));
     return Array.from(set);
-  }, [allJobs]);
-
-  const categories = useMemo(() => {
-    const set = new Set();
-    allJobs.forEach(j => j.jobCategory && set.add(j.jobCategory));
-    return Array.from(set);
-  }, [allJobs]);
+  }, [allCompanies]);
 
   const types = useMemo(() => {
     const set = new Set();
-    allJobs.forEach(j => j.jobType && set.add(j.jobType));
+    allCompanies.forEach(c => {
+      const t = c.companyType || c.type || c.industry || c.employerType;
+      if (t) set.add(t);
+    });
     return Array.from(set);
-  }, [allJobs]);
+  }, [allCompanies]);
 
   const filtered = useMemo(() => {
-    return allJobs.filter(j => {
+    return allCompanies.filter(c => {
       if (keyword) {
         const k = keyword.toLowerCase();
-        if (!((j.jobTitle || '').toLowerCase().includes(k) || (j.companyName || '').toLowerCase().includes(k))) return false;
+        if (!((c.name || '').toLowerCase().includes(k))) return false;
       }
-      if (location && j.jobLocation !== location) return false;
-      if (category && j.jobCategory !== category) return false;
-      if (type && j.jobType !== type) return false;
+      if (location && c.location !== location) return false;
+      if (companyType) {
+        const t = c.companyType || c.type || c.industry || c.employerType || '';
+        if (t !== companyType) return false;
+      }
       return true;
     });
-  }, [allJobs, keyword, location, category, type]);
+  }, [allCompanies, keyword, location, companyType]);
 
   function clearFilters() {
     setKeyword('');
     setLocation('');
-    setCategory('');
-    setType('');
+    setCompanyType('');
   }
 
   // reset to first page when filters change
   useEffect(() => {
     setPage(1);
-  }, [keyword, location, category, type]);
+  }, [keyword, location, companyType]);
 
   return (
     <MainLayout hasSidebar={false}>
@@ -105,7 +101,7 @@ export default function JobsPage() {
           <h3 className="font-semibold text-lg mb-3">Bộ lọc</h3>
           <div className="mb-3">
             <label className="block text-sm text-gray-600 mb-1">Từ khóa</label>
-            <input value={keyword} onChange={e => setKeyword(e.target.value)} className="w-full border rounded px-3 py-2" placeholder="Chức danh hoặc công ty" />
+            <input value={keyword} onChange={e => setKeyword(e.target.value)} className="w-full border rounded px-3 py-2" placeholder="Tên công ty" />
           </div>
           <div className="mb-3">
             <label className="block text-sm text-gray-600 mb-1">Khu vực</label>
@@ -115,15 +111,8 @@ export default function JobsPage() {
             </select>
           </div>
           <div className="mb-3">
-            <label className="block text-sm text-gray-600 mb-1">Ngành nghề</label>
-            <select value={category} onChange={e => setCategory(e.target.value)} className="w-full border rounded px-3 py-2">
-              <option value="">Tất cả</option>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="mb-3">
             <label className="block text-sm text-gray-600 mb-1">Loại hình</label>
-            <select value={type} onChange={e => setType(e.target.value)} className="w-full border rounded px-3 py-2">
+            <select value={companyType} onChange={e => setCompanyType(e.target.value)} className="w-full border rounded px-3 py-2">
               <option value="">Tất cả</option>
               {types.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
@@ -138,17 +127,17 @@ export default function JobsPage() {
         {/* Main results */}
         <div className="col-span-1 lg:col-span-3">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-[#042852]">Tìm việc</h2>
+            <h2 className="text-xl font-bold text-[#042852]">Danh sách doanh nghiệp</h2>
             <div className="text-sm text-gray-500">Hiển thị {filtered.length} kết quả</div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            {loading ? (
-              <div className="col-span-full p-6 text-center text-gray-500">Đang tải...</div>
-            ) : (
-              filtered.map(job => <JobCard key={job.jobId} job={job} />)
-            )}
-          </div>
+          {loading ? (
+            <div className="col-span-full p-6 text-center text-gray-500">Đang tải...</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {filtered.map(c => <CompanyCard key={c.companyId || c.id} company={c} />)}
+            </div>
+          )}
 
           <div className="mt-6 flex items-center justify-center">
             <Pagination count={totalPages} page={page} onChange={(e, v) => setPage(v)} color="primary" />

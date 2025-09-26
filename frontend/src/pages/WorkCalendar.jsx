@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { format, parse, setHours, setMinutes } from 'date-fns';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -22,18 +23,40 @@ export default function WorkCalendar() {
             setLoading(true);
             const ac = new AbortController();
             Promise.all([
-                (async () => { const EndpointResolver = (await import('../services/EndpointResolver')).default; return handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_eployees_id_job_time.json', { signal: ac.signal })); })(),
-                (async () => { const EndpointResolver = (await import('../services/EndpointResolver')).default; return handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_eployees_id_busy_time.json', { signal: ac.signal })); })(),
+                    (async () => { const { get: apiGet } = await import('../services/ApiClient'); const ApiEndpoints = (await import('../services/ApiEndpoints')).default; return handleAsync(apiGet(ApiEndpoints.JOBS + '/times', { signal: ac.signal })); })(),
+                    (async () => { const { get: apiGet } = await import('../services/ApiClient'); const ApiEndpoints = (await import('../services/ApiEndpoints')).default; const { useAuth } = await import('../contexts/AuthContext'); const { user } = useAuth(); const empId = user?.employeeId ?? user?._raw?.EmployeeId ?? null; if (!empId) return []; return handleAsync(apiGet(ApiEndpoints.EMPLOYEE_BUSY_TIMES(empId), { signal: ac.signal })); })(),
             ]).then(([jobsRes, busyRes]) => {
                 if (!mounted) return;
-                const jobEvents = mapApiTimesToEvents(jobsRes, 'jobTimes', 'job');
-                const busyEvents = mapApiTimesToEvents(busyRes, 'busyTimes', 'busy');
+                const jobEvents = mapApiTimesToEvents(jobsRes?.data || jobsRes, 'jobTimes', 'job');
+                const busyEvents = mapApiTimesToEvents(busyRes?.data || busyRes, 'busyTimes', 'busy');
                 setEvents([...jobEvents, ...busyEvents]);
             }).catch(err => {
                 console.error(err);
             }).finally(() => mounted && setLoading(false));
             return () => { mounted = false; ac.abort(); };
     }, []);
+
+    // normalize role from auth
+    const { user } = useAuth();
+    const normalizeRole = (r) => {
+        if (!r) return 'guest';
+        if (typeof r === 'number') {
+            if (r === 1) return 'admin';
+            if (r === 2) return 'staff';
+            if (r === 3) return 'employer';
+            if (r === 4) return 'employee';
+            return 'guest';
+        }
+        if (typeof r === 'string') return r.toLowerCase();
+        if (typeof r === 'object') {
+            const id = r.roleId || r.RoleId || r.role_id || r.roleID;
+            if (id) return normalizeRole(Number(id));
+            const name = r.role || r.roleName || r.role_name;
+            if (name) return String(name).toLowerCase();
+        }
+        return 'guest';
+    };
+    const normalizedRole = normalizeRole(user?.roleId || user);
 
     const eventStyleGetter = (event) => {
         const base = { borderRadius: 8, padding: '4px 6px', color: '#fff' };
@@ -123,7 +146,7 @@ export default function WorkCalendar() {
     };
 
     return (
-        <MainLayout role="employee" hasSidebar={false}>
+        <MainLayout role={normalizedRole} hasSidebar={false}>
             <div className="p-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-4">

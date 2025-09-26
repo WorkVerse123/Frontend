@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import WorkIcon from '@mui/icons-material/Work';
 import BusinessIcon from '@mui/icons-material/Business';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import { fetchStats } from '../homepage/StatsPanel';
+import ApiEndpoints from '../../services/ApiEndpoints';
+import { get as apiGet } from '../../services/ApiClient';
+import { handleAsync } from '../../utils/HandleAPIResponse';
 
 export default function StatsPanel({ setIsLoading }) {
   const [stats, setStats] = useState({
@@ -18,13 +20,20 @@ export default function StatsPanel({ setIsLoading }) {
     if (typeof setIsLoading === 'function') setIsLoading(true);
     (async () => {
       try {
-        const EndpointResolver = (await import('../../services/EndpointResolver')).default;
-        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_stats.json', { signal: ac.signal });
+        const res = await handleAsync(apiGet(ApiEndpoints.APPLICATION_STATS, { signal: ac.signal }));
         if (!mounted) return;
-        setStats(parsed?.data || parsed || {});
+        const body = res?.data ?? res ?? {};
+        const payload = body?.data ?? body?.stats ?? body;
+
+        const jobs = Number(payload?.jobs ?? payload?.totalJobs ?? payload?.jobCount ?? 0) || 0;
+        const companies = Number(payload?.companies ?? payload?.companyCount ?? 0) || 0;
+        const candidates = Number(payload?.candidates ?? payload?.candidateCount ?? 0) || 0;
+        const newJobs = Number(payload?.newJobs ?? payload?.newJobsThisWeek ?? payload?.recentJobs ?? 0) || 0;
+
+        setStats({ jobs, companies, candidates, newJobs });
       } catch (err) {
         if (!mounted) return;
-        setStats({});
+        setStats({ jobs: 0, companies: 0, candidates: 0, newJobs: 0 });
       } finally {
         if (typeof setIsLoading === 'function') setIsLoading(false);
       }

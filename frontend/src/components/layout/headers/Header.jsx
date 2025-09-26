@@ -5,9 +5,101 @@ import EmployerHeader from './EmployerHeader';
 import StaffHeader from './StaffHeader';
 import AdminHeader from './AdminHeader';
 import { useState } from 'react';
+import { getCookie } from '../../../services/AuthCookie';
+
+// Map numeric RoleId in token to string role used by UI
+const ROLE_MAP = {
+  '1': 'admin',
+  '2': 'staff',
+  '3': 'employer',
+  '4': 'employee',
+};
+
+function mapRoleIdToName(n) {
+  const num = Number(n);
+  if (Number.isNaN(num)) return null;
+  return ROLE_MAP[String(num)] || null;
+}
+
+function parseRoleFromToken() {
+  try {
+    const raw = getCookie('token') || getCookie('user');
+    if (!raw) return null;
+
+    const decodePayload = (payload) => {
+      try {
+        return JSON.parse(decodeURIComponent(atob(payload).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join('')));
+      } catch (e) {
+        return null;
+      }
+    };
+
+    // If token looks like JWT (three parts separated by .), decode payload
+    if (raw.split && raw.split('.').length === 3) {
+      const payload = raw.split('.')[1];
+      const decoded = decodePayload(payload);
+      if (decoded) {
+        const roleId = decoded?.RoleId || decoded?.roleId;
+        if (roleId) return mapRoleIdToName(roleId);
+        const roleStr = decoded?.role || decoded?.role_name || decoded?.roleName || decoded?.role_id;
+        if (roleStr) return String(roleStr).toLowerCase();
+      }
+      return null;
+    }
+
+    // Otherwise, if it's a JSON string with token/user object, try parse
+    let obj = null;
+    try { obj = JSON.parse(raw); } catch (e) { obj = null; }
+    if (obj) {
+      // token inside object
+      const token = obj.token || obj.accessToken;
+      if (token && token.split && token.split('.').length === 3) {
+        const payload = token.split('.')[1];
+        const decoded = decodePayload(payload);
+        if (decoded) {
+          const roleId = decoded?.RoleId || decoded?.roleId;
+          if (roleId) return mapRoleIdToName(roleId);
+          const roleStr = decoded?.role || decoded?.role_name || decoded?.roleName;
+          if (roleStr) return String(roleStr).toLowerCase();
+        }
+      }
+
+      // direct fields on object
+      const roleId = obj.RoleId || obj.roleId || (obj.user && (obj.user.RoleId || obj.user.roleId));
+      if (roleId) return mapRoleIdToName(roleId);
+      const roleStr = obj.role || obj.roleName || obj.role_name || (obj.user && (obj.user.role || obj.user.roleName));
+      if (roleStr) return String(roleStr).toLowerCase();
+    }
+  } catch (e) {
+    // ignore parse errors
+  }
+  return null;
+}
 
 export default function Header({ role = 'guest' }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // If a valid role can be parsed from token, prefer it over passed prop
+  const detected = parseRoleFromToken();
+
+  const normalizeRoleProp = (r) => {
+    if (r === null || r === undefined) return 'guest';
+    // numeric RoleId -> name
+    const n = Number(r);
+    if (!Number.isNaN(n) && n > 0) return mapRoleIdToName(n) || 'guest';
+    // object shape
+    if (typeof r === 'object') {
+      const candidate = r.RoleId || r.roleId || (r.user && (r.user.RoleId || r.user.roleId));
+      if (candidate) return mapRoleIdToName(candidate) || 'guest';
+      const str = r.role || r.roleName || r.role_name;
+      if (str) return String(str).toLowerCase();
+      return 'guest';
+    }
+    return String(r).toLowerCase();
+  };
+
+  const finalRole = detected || normalizeRoleProp(role) || 'guest';
 
   const Common = (
     <div className="flex items-center gap-2 md:gap-4">
@@ -23,7 +115,7 @@ export default function Header({ role = 'guest' }) {
   );
 
   let RoleHeader = null;
-  switch (role) {
+  switch (finalRole) {
     case 'employee':
       RoleHeader = <EmployeeHeader />;
       break;

@@ -6,16 +6,40 @@ import EmployerSidebar from './EmployerSidebar';
 
 export default function Sidebar({ role = 'guest' }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  
+
+  const normalizedRole = (() => {
+    if (role === null || role === undefined) return 'guest';
+    const n = Number(role);
+    if (!Number.isNaN(n) && n > 0) {
+      switch (n) {
+        case 1: return 'admin';
+        case 2: return 'staff';
+        case 3: return 'employer';
+        case 4: return 'employee';
+        default: return 'guest';
+      }
+    }
+    if (typeof role === 'object') {
+      const candidate = role.RoleId || role.roleId || (role.user && (role.user.RoleId || role.user.roleId));
+      if (candidate) {
+        const num = Number(candidate);
+        if (!Number.isNaN(num)) return num === 1 ? 'admin' : num === 2 ? 'staff' : num === 3 ? 'employer' : num === 4 ? 'employee' : 'guest';
+      }
+      const str = role.role || role.roleName || role.role_name;
+      if (str) return String(str).toLowerCase();
+      return 'guest';
+    }
+    return String(role).toLowerCase();
+  })();
 
   let SidebarContent = null;
-  if (role === 'guest' || role === 'employee') {
+  if (normalizedRole === 'guest' || normalizedRole === 'employee') {
     SidebarContent = <GuestEmployeeSidebar mobile />;
-  } else if (role === 'staff') {
+  } else if (normalizedRole === 'staff') {
     SidebarContent = <StaffAdminSidebar isAdmin={false} mobile />;
-  } else if (role === 'admin') {
+  } else if (normalizedRole === 'admin') {
     SidebarContent = <StaffAdminSidebar isAdmin={true} mobile />;
-  } else if (role === 'employer') {
+  } else if (normalizedRole === 'employer') {
     SidebarContent = <EmployerSidebar mobile />;
   } else {
     SidebarContent = <GuestEmployeeSidebar mobile />;

@@ -27,9 +27,12 @@ export default function JobDetailDialog({ jobId, open, onClose }) {
         setLoading(true);
         setError(null);
 
-        const EndpointResolver = (await import('../../../services/EndpointResolver')).default;
-        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_job_id.json', { signal: ac.signal });
-        setJob(parsed?.data || parsed || null);
+  const { get: apiGet } = await import('../../../services/ApiClient');
+  const ApiEndpoints = (await import('../../../services/ApiEndpoints')).default;
+  const parsed = await apiGet(ApiEndpoints.JOB_DETAIL(jobId), { signal: ac.signal });
+  // parsed may be axios response-like or normalized by handleAsync upstream; try common shapes
+  const payload = parsed?.data ?? parsed;
+  setJob(payload?.data ?? payload ?? null);
       } catch (err) {
         // treat abort/cancel as non-fatal
         if (err?.name && err.name === 'AbortError') return;

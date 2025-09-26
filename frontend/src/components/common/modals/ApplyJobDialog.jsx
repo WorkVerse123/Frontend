@@ -33,9 +33,11 @@ export default function ApplyJobDialog({ open, onClose, jobId }) {
         jobId,
       };
       console.log('Submitting job application:', payload);
-      // POST to mock endpoint via ApiClient (will return parsed response)
-      const { post } = await import('../../../services/ApiClient');
-      await post('/mocks/JSON_DATA/requests/post_job_id_apply.json', payload);
+  // POST to real API endpoint via ApiClient
+  const { post } = await import('../../../services/ApiClient');
+  const ApiEndpoints = (await import('../../../services/ApiEndpoints')).default;
+  // Use generic applications endpoint (backend should accept payload with employeeId/jobId)
+  await post(ApiEndpoints.APPLICATIONS || '/api/applications', payload);
 
       onClose?.({ success: true });
     } catch (err) {

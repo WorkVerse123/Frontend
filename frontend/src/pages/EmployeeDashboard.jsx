@@ -6,9 +6,31 @@ import ApplicationsList from '../components/employee/ApplicationsList';
 import AppliedJobs from '../components/employee/AppliedJobs';
 import SavedJobs from '../components/employee/SavedJobs';
 import Loading from '../components/common/loading/Loading';
+import ApiEndpoints from '../services/ApiEndpoints';
+import { get as apiGet } from '../services/ApiClient';
+import { handleAsync } from '../utils/HandleAPIResponse';
 import EmployeeProfilePanel from '../components/employee/EmployeeProfilePanel';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function EmployeeDashboard() {
+  const { user } = useAuth();
+  const roleCandidate = user?.RoleId || user?.roleId || user?.role || user?.role_id || null;
+  const normalizedRole = (() => {
+    if (roleCandidate === null || roleCandidate === undefined) return 'guest';
+    const n = Number(roleCandidate);
+    if (!Number.isNaN(n) && n > 0) {
+      switch (n) {
+        case 1: return 'admin';
+        case 2: return 'staff';
+        case 3: return 'employer';
+        case 4: return 'employee';
+        default: return 'guest';
+      }
+    }
+    return String(roleCandidate).toLowerCase();
+  })();
+
+  const roleLabel = normalizedRole === 'employee' ? 'Ứng viên' : normalizedRole === 'employer' ? 'Nhà Tuyển Dụng' : normalizedRole === 'admin' ? 'Admin' : normalizedRole === 'staff' ? 'Staff' : 'Khách';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState([]);
@@ -22,20 +44,22 @@ export default function EmployeeDashboard() {
     const load = async () => {
       try {
         setLoading(true);
-        const EndpointResolver = (await import('../services/EndpointResolver')).default;
-        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employee_id_dashboard.json', { signal: ac.signal });
-        if (!parsed || !parsed.data) throw new Error('Invalid data');
+  const resolvedEmployeeId = user?.employeeId ?? user?._raw?.EmployeeId ?? null;
+  if (!resolvedEmployeeId) throw new Error('No employee id available for current user');
+  const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_DASHBOARD(resolvedEmployeeId), { signal: ac.signal }));
+  const parsed = res?.data || res;
+  if (!parsed) throw new Error('Invalid data');
         if (!mounted) return;
-        setStats(parsed.data.stats || []);
-        setApplications(parsed.data.applications || []);
+        setStats(parsed.stats || []);
+        setApplications(parsed.applications || []);
         // try to also fetch bookmarks (non-blocking)
         try {
-          const bParsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employee_id_bookmarks.json', { signal: ac.signal });
+          const bRes = await apiGet(ApiEndpoints.EMPLOYEE_BOOKMARKS(resolvedEmployeeId), { signal: ac.signal });
+          const bParsed = bRes?.data || bRes;
           if (!mounted) return;
-          setBookmarks((bParsed && bParsed.data && bParsed.data.bookmarks) || []);
+          setBookmarks((bParsed && bParsed.bookmarks) || []);
         } catch (e) {
           // swallow bookmark fetch errors - non-critical
-          // console.debug('bookmark fetch failed', e);
         }
       } catch (err) {
         // Treat cancellation as non-fatal: some fetch utilities throw CanceledError
@@ -54,24 +78,24 @@ export default function EmployeeDashboard() {
   }, []);
 
   if (loading) return (
-    <MainLayout role="guest" hasSidebar={false}>
+    <MainLayout role={normalizedRole} hasSidebar={false}>
       <Loading />
     </MainLayout>
   );
 
   if (error) return (
-    <MainLayout role="guest" hasSidebar={false}>
+    <MainLayout role={normalizedRole} hasSidebar={false}>
       <div className="max-w-6xl mx-auto py-8 px-4 text-red-600">Lỗi khi tải dashboard: {String(error)}</div>
     </MainLayout>
   );
 
   return (
-    <MainLayout role="guest" hasSidebar={false}>
+    <MainLayout role={normalizedRole} hasSidebar={false}>
       <div className="max-w-6xl mx-auto py-8 px-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Left nav/profile */}
           <aside className="md:col-span-3">
-            <ProfileCard name="Tên người dùng" role="Ứng viên" />
+            <ProfileCard name="Tên người dùng" role={roleLabel} />
 
             <nav className="bg-white rounded-lg shadow p-3 border">
               <ul className="space-y-2 text-sm">

@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Auth from './pages/Auth'
 import HomePage from './pages/HomePage'
 import JobsPage from './pages/JobsPage'
+import CompaniesPage from './pages/CompaniesPage'
 import EmployerSetup from './pages/EmployerSetup'
+import EmployeeProfilePage from './pages/EmployeeProfilePage'
 import WorkCalendar from './pages/WorkCalendar'
 import EmployerJobs from './pages/EmployerJobs'
 import CandidatesPage from './pages/CandidatesPage'
@@ -15,11 +17,27 @@ import Subscription from './pages/Subscription'
 import './App.css'
 
 function App() {
-
   return (
-    <>
-      <EmployerProfile />
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/jobs" element={<JobsPage />} />
+        <Route path="/companies" element={<CompaniesPage />} />
+        <Route path="/jobs/:id" element={<JobDetail />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/employer/setup" element={<EmployerSetup />} />
+        <Route path="/employee/profile" element={<EmployeeProfilePage />} />
+        <Route path="/calendar" element={<WorkCalendar />} />
+        <Route path="/employer/jobs" element={<EmployerJobs />} />
+        <Route path="/candidates" element={<CandidatesPage />} />
+        <Route path="/jobs/create" element={<CreateJob />} />
+        <Route path="/employer/:id" element={<EmployerProfile />} />
+        <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+        <Route path="/employer/:id/edit" element={<EditEmployer />} />
+        <Route path="/subscription" element={<Subscription />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

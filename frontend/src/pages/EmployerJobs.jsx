@@ -2,12 +2,31 @@ import React, { useEffect, useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import Loading from '../components/common/loading/Loading';
 import { handleAsync } from '../utils/HandleAPIResponse';
+import ApiEndpoints from '../services/ApiEndpoints';
+import { get as apiGet } from '../services/ApiClient';
 import { Button, Typography } from '@mui/material';
 import JobRow from '../components/jobs/JobRow';
 import ActionsMenu from '../components/actions/ActionsMenu';
 import ApplicationsDialog from '../components/common/modals/ApplicationsDialog';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function EmployerJobs() {
+  const { user } = useAuth();
+  const roleCandidate = user?.RoleId || user?.roleId || user?.role || user?.role_id || null;
+  const normalizedRole = (() => {
+    if (roleCandidate === null || roleCandidate === undefined) return 'guest';
+    const n = Number(roleCandidate);
+    if (!Number.isNaN(n) && n > 0) {
+      switch (n) {
+        case 1: return 'admin';
+        case 2: return 'staff';
+        case 3: return 'employer';
+        case 4: return 'employee';
+        default: return 'guest';
+      }
+    }
+    return String(roleCandidate).toLowerCase();
+  })();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,25 +42,46 @@ export default function EmployerJobs() {
     const ac = new AbortController();
     setLoading(true);
     (async () => {
-      const EndpointResolver = (await import('../services/EndpointResolver')).default;
-      handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_employer_id_jobs.json', { signal: ac.signal }))
-        .then(res => {
-          if (!mounted) return;
-          setJobs(res?.data?.jobs || []);
-        })
-        .finally(() => mounted && setLoading(false));
+      try {
+        const resolvedEmployerId = user?.employerId ?? user?._raw?.EmployerId ?? null;
+        if (!resolvedEmployerId) throw new Error('No employer id available for current user');
+        const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYER_JOBS(resolvedEmployerId), { signal: ac.signal }));
+        if (!mounted) return;
+        const data = res?.data ?? res;
+        // Normalize common response shapes into an array
+        let list = [];
+        if (Array.isArray(data)) {
+          list = data;
+        } else if (data && Array.isArray(data.jobs)) {
+          list = data.jobs;
+        } else if (data && Array.isArray(data.data)) {
+          list = data.data;
+        } else if (data && typeof data === 'object' && Object.keys(data).length === 0) {
+          list = [];
+        } else {
+          // if API returned a single job object, wrap it
+          if (data && typeof data === 'object') list = [data];
+          else list = [];
+        }
+        setJobs(list);
+      } catch (e) {
+        // ignore — keep jobs empty
+      } finally {
+        if (mounted) setLoading(false);
+      }
     })();
     return () => { mounted = false; ac.abort(); };
   }, []);
 
-  const viewApplications = async (job) => {
+    const viewApplications = async (job) => {
     setAppsOpen(true);
     setAppsLoading(true);
   const ac = new AbortController();
   try {
-    const EndpointResolver = (await import('../services/EndpointResolver')).default;
-    const res = await handleAsync(EndpointResolver.get('/mocks/JSON_DATA/responses/get_employer_id_jobs_id_applications.json', { signal: ac.signal }));
-    const apps = res?.data?.applications || [];
+    const resolvedEmployerId = user?.employerId ?? user?._raw?.EmployerId ?? null;
+    if (!resolvedEmployerId) throw new Error('No employer id available for current user');
+    const res = await handleAsync(apiGet(ApiEndpoints.APPLICATIONS_FOR_EMPLOYER_JOB(resolvedEmployerId, job.jobId), { signal: ac.signal }));
+    const apps = res?.data?.applications || res?.data || res || [];
     if (!ac.signal.aborted) setApplications(Array.isArray(apps) ? apps.filter(a => !a.jobId || String(a.jobId) === String(job.jobId)) : []);
   } catch (err) {
     // ignore canceled or non-critical errors; keep applications empty
@@ -64,7 +104,7 @@ export default function EmployerJobs() {
   };
 
   return (
-    <MainLayout role="employer" hasSidebar={true}>
+    <MainLayout role={normalizedRole} hasSidebar={true}>
       <div className="max-w-5xl mx-auto p-4 sm:p-6">
         {/* header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">

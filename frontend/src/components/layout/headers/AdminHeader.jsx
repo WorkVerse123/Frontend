@@ -1,10 +1,20 @@
+import React from 'react';
+import { Button, Select, MenuItem } from '@mui/material';
+import UserMenu from './UserMenu';
+
 export default function AdminHeader() {
   return (
-    <nav className="flex gap-6 items-center flex-col md:flex-row md:gap-6">
-      <a href="#" className="text-white hover:underline text-lg md:text-base py-2 md:py-0 w-full md:w-auto text-center">Quản lý hệ thống</a>
-      <a href="#" className="text-white hover:underline text-lg md:text-base py-2 md:py-0 w-full md:w-auto text-center">Người dùng</a>
-      <a href="#" className="text-white hover:underline text-lg md:text-base py-2 md:py-0 w-full md:w-auto text-center">Báo cáo</a>
-      <a href="#" className="text-[#2563eb] bg-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-lg md:text-base w-full md:w-auto text-center">Đăng xuất</a>
-    </nav>
+    <div className="flex items-center gap-4">
+      <Button variant="contained" color="secondary" size="small" href="/admin">Dashboard</Button>
+      <a href="/admin/users" className="text-white hover:underline text-lg md:text-base">Người dùng</a>
+      <a href="/admin/reports" className="text-white hover:underline text-lg md:text-base">Báo cáo</a>
+      <div className="hidden md:flex items-center gap-2">
+        <Select value="vi" size="small" displayEmpty sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' } }} MenuProps={{ disableScrollLock: true }}>
+          <MenuItem value="vi">Tiếng Việt</MenuItem>
+          <MenuItem value="en">English</MenuItem>
+        </Select>
+      </div>
+      <UserMenu />
+    </div>
   );
 }

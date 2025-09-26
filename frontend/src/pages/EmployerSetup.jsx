@@ -1,6 +1,10 @@
 import { useState, useRef } from 'react';
 import { TextField, MenuItem, FormControl, InputLabel, Select, FormHelperText } from '@mui/material';
 import MainLayout from '../components/layout/MainLayout';
+import { useAuth } from '../contexts/AuthContext';
+import ApiEndpoints from '../services/ApiEndpoints';
+import { post } from '../services/ApiClient';
+import { useLocation } from 'react-router-dom';
 import { STEPS, TYPE_MAP } from '../utils/emun/Enum';
 
 
@@ -22,6 +26,26 @@ export default function EmployerSetup() {
 
     const [logoPreview, setLogoPreview] = useState(null);
     const logoFileRef = useRef(null);
+
+        const { user } = useAuth();
+        const location = useLocation();
+        // registration may navigate here with state: { forceCreate: true, userId }
+        const navStateUserId = location?.state?.userId || null;
+        const roleCandidate = user?.RoleId || user?.roleId || user?.role || user?.role_id || null;
+        const normalizedRole = (() => {
+            if (roleCandidate === null || roleCandidate === undefined) return 'guest';
+            const n = Number(roleCandidate);
+            if (!Number.isNaN(n) && n > 0) {
+                switch (n) {
+                    case 1: return 'admin';
+                    case 2: return 'staff';
+                    case 3: return 'employer';
+                    case 4: return 'employee';
+                    default: return 'guest';
+                }
+            }
+            return String(roleCandidate).toLowerCase();
+        })();
 
     // validation helpers
     const [validationStep, setValidationStep] = useState(null); // show errors for this step
@@ -90,8 +114,10 @@ export default function EmployerSetup() {
         const logoUrls = [];
         if (logoPreview) logoUrls.push(logoPreview);
 
+        const resolvedUserId = navStateUserId || user?.UserId || user?.userId || user?.id || user?.UserID || null;
+
         const payload = {
-            userId: 123,
+            userId: resolvedUserId,
             companyName: companyName || '',
             employerType: employerType,
             address: address || '',
@@ -104,14 +130,17 @@ export default function EmployerSetup() {
         // print formatted payload (send to API when ready)
         console.log('Employer setup payload:', JSON.stringify(payload, null, 2));
 
-        // simulate save
         setSaving(true);
         try {
-            // TODO: replace with real API call
-            // await fetch('/api/employer/setup', { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
-
-            // simulate success
-            setDone(true);
+            const res = await post(ApiEndpoints.COMPANY_SETUP, payload);
+            // handle Async wrapper shapes: post returns axios response; use status or data
+            const ok = res?.status === 200 || res?.status === 201 || (res?.data && (res.data.statusCode === 200 || res.data.statusCode === 201));
+            if (!ok) {
+                console.error('Company setup failed', res);
+                alert('Lưu thất bại, thử lại');
+            } else {
+                setDone(true);
+            }
         } catch (e) {
             console.error(e);
             alert('Lưu thất bại, thử lại');
@@ -122,7 +151,7 @@ export default function EmployerSetup() {
 
     if (done) {
         return (
-            <MainLayout role="employer" hasSidebar={false}>
+            <MainLayout role={normalizedRole} hasSidebar={false}>
                 <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6">
                     <div className="rounded-full bg-white/30 w-24 h-24 flex items-center justify-center mb-6">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="#0b66d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -130,8 +159,8 @@ export default function EmployerSetup() {
                     <h2 className="text-2xl font-semibold mb-2">🎉 Xin chúc mừng, hồ sơ đã hoàn thành 100%!</h2>
                     <p className="text-gray-600 max-w-xl">Bạn có thể tiếp tục đăng tin hoặc về trang tổng quan để quản lý doanh nghiệp và ứng viên.</p>
                     <div className="mt-6 flex gap-3">
-                        <button className="px-4 py-2 rounded bg-white border" onClick={() => window.location.href = '/employer/dashboard'}>Tổng Quan</button>
-                        <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={() => window.location.href = '/employer/post-job'}>Đăng Tin</button>
+                        <button className="px-4 py-2 rounded bg-white border" onClick={() => window.location.href = '/'}>Trang chủ</button>
+                        <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={() => window.location.href = '/jobs/create'}>Đăng Tin</button>
                     </div>
                 </div>
             </MainLayout>
@@ -141,7 +170,7 @@ export default function EmployerSetup() {
     const progress = Math.round((step / (STEPS.length - 1)) * 100);
 
     return (
-        <MainLayout role="employer" hasSidebar={false}>
+        <MainLayout role={normalizedRole} hasSidebar={false}>
             <div className="max-w-4xl mx-auto py-8 px-4">
                 <div className="mb-6">
                     <div className="flex items-center justify-between">

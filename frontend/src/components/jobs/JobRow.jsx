@@ -1,8 +1,54 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Chip, IconButton, Box, Typography } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import BookmarkButton from '../common/bookmark/BookmarkButton';
+import ApiEndpoints from '../../services/ApiEndpoints';
+import { post, del } from '../../services/ApiClient';
+import { handleAsync } from '../../utils/HandleAPIResponse';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function JobRow({ job, onViewApplications = () => {}, onOpenMenu = () => {} }) {
+  const { user } = useAuth();
+  const employeeId = user?.id || user?.userId || user?.employeeId || null;
+
+  const [bookmarked, setBookmarked] = useState(Boolean(job?.bookmarked));
+  const [bookmarkId, setBookmarkId] = useState(job?.bookmarkId || job?.bookmark_id || null);
+
+  const handleToggleBookmark = async (next) => {
+    // optimistic update
+    setBookmarked(Boolean(next));
+    try {
+      if (!employeeId) {
+        // Not authenticated - can't perform bookmark actions
+        console.warn('Attempted to toggle bookmark while not authenticated');
+        // rollback optimistic update
+        setBookmarked(false);
+        return;
+      }
+
+      if (next) {
+        const res = await handleAsync(post(ApiEndpoints.EMPLOYEE_BOOKMARK_JOB(employeeId, job.jobId)));
+        if (!res.success) throw new Error(res.message || 'Không thể lưu bookmark');
+        const data = res.data || res;
+        const id = data.bookmarkId || data.bookmark_id || data.id || data?.data?.id || null;
+        setBookmarkId(id);
+      } else {
+        if (!bookmarkId) {
+          // nothing to delete on server
+          return;
+        }
+        const url = `${ApiEndpoints.EMPLOYEE_BOOKMARKS(employeeId)}/${bookmarkId}`;
+        const res = await handleAsync(del(url));
+        if (!res.success) throw new Error(res.message || 'Không thể xóa bookmark');
+        setBookmarkId(null);
+      }
+    } catch (err) {
+      // rollback
+      setBookmarked((s) => !s);
+      // eslint-disable-next-line no-console
+      console.error('Bookmark toggle failed', err);
+    }
+  };
   return (
     <div className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div className="flex-1">
@@ -33,6 +79,8 @@ export default function JobRow({ job, onViewApplications = () => {}, onOpenMenu 
         >
           Xem Đơn Ứng Tuyển
         </Button>
+
+        <BookmarkButton bookmarked={bookmarked} onToggle={handleToggleBookmark} size="small" />
 
         <IconButton
           size="small"

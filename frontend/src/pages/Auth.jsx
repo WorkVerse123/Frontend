@@ -2,10 +2,21 @@ import RegisterForm from '../components/common/inputs/RegisterForm';
 import LoginForm from '../components/common/inputs/LoginForm';
 import ForgotPasswordForm from '../components/common/inputs/ForgotPasswordForm';
 import StatsPanel from '../components/auth/StatsPanel';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 export default function Auth() {
+  const location = useLocation();
   const [formType, setFormType] = useState('login');
+  const [initialRole, setInitialRole] = useState(1);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const form = params.get('form');
+    const role = params.get('role');
+    if (form === 'register') setFormType('register');
+    if (role) setInitialRole(Number(role));
+  }, [location.search]);
   return (
    <div className="min-h-screen flex bg-[#eaf2fb] h-screen overflow-hidden">
       {/* Cột trái: Form đăng ký */}
@@ -18,7 +29,7 @@ export default function Auth() {
             />
           )}
           {formType === 'register' && (
-            <RegisterForm onShowLogin={() => setFormType('login')} />
+            <RegisterForm initialRole={initialRole} onShowLogin={() => setFormType('login')} />
           )}
           {formType === 'forgotPassword' && (
             <ForgotPasswordForm onShowLogin={() => setFormType('login')} />

@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { handleAsync } from '../utils/HandleAPIResponse';
 import EndpointResolver from '../services/EndpointResolver';
+import { get as apiGet } from '../services/ApiClient';
 import JobSidebarInfo from '../components/jobs/JobSidebarInfo';
 import MainLayout from '../components/layout/MainLayout';
+import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/common/loading/Loading';
 import ApplyJobDialog from '../components/common/modals/ApplyJobDialog';
-
-async function fetchJob(id = 1) {
-  return handleAsync(EndpointResolver.get(`/mocks/JSON_DATA/responses/get_job_id.json`));
-}
+import ApiEndpoints from '../services/ApiEndpoints';
 
 export default function JobDetail() {
+  const { id: routeId } = useParams();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [applyOpen, setApplyOpen] = useState(false);
@@ -20,11 +21,64 @@ export default function JobDetail() {
     let mounted = true;
     (async () => {
       try {
-        const res = await handleAsync(EndpointResolver.get(`/mocks/JSON_DATA/responses/get_job_id.json`, { signal: ac.signal }));
+        // Use ApiClient directly to bypass EndpointResolver (and any mock routing)
+        const jobId = routeId || 1;
+        const res = await handleAsync(apiGet(ApiEndpoints.JOB_DETAIL(jobId), { signal: ac.signal }));
+        console.log('Job detail response (raw):', res);
+
+        const extractPayload = (r) => {
+          // r is the normalized value returned by handleAsync(api.get())
+          // Possible shapes encountered in this app:
+          // 1) { data: axiosResponse, success: true } where axiosResponse.data === serverBody
+          // 2) { data: serverBody, success: true } where serverBody may contain { data: payload }
+          // 3) serverBody directly
+          if (!r) return null;
+
+          // If r.data looks like an axios response (has status, headers, data)
+          const maybeAxios = r.data;
+          if (maybeAxios && typeof maybeAxios === 'object' && ('status' in maybeAxios) && ('data' in maybeAxios)) {
+            const serverBody = maybeAxios.data;
+            // If serverBody follows { data: payload } pattern
+            if (serverBody && typeof serverBody === 'object' && 'data' in serverBody) return serverBody.data;
+            return serverBody;
+          }
+
+          // If r.data is present and looks like the server body
+          if (r.data && typeof r.data === 'object') {
+            if ('data' in r.data) return r.data.data;
+            return r.data;
+          }
+
+          // As a last resort, if r itself is the server body
+          if (r && typeof r === 'object' && 'data' in r) return r.data;
+          return r;
+        };
+
+        const payload = extractPayload(res);
         if (!mounted) return;
-        if (!res) setJob(null);
-        else if (res.data) setJob(res.data);
-        else setJob(res);
+        if (!payload) setJob(null);
+        else {
+          // if job contains employerId, fetch employer info and merge
+          let merged = { ...payload };
+          try {
+            const empId = payload?.employerId ?? payload?.EmployerId ?? null;
+            if (empId) {
+              const empRes = await handleAsync(apiGet(ApiEndpoints.EMPLOYER(empId)));
+              const empServer = empRes?.data ?? empRes ?? null;
+              const empInner = empServer?.data ?? empServer;
+              if (empInner && typeof empInner === 'object') {
+                const companyName = empInner.companyName ?? empInner.CompanyName ?? empInner.name ?? empInner.company_name ?? '';
+                const logoUrl = empInner.logoUrl ?? empInner.CompanyLogo ?? empInner.logo ?? '';
+                const companyWebsite = empInner.websiteUrl ?? empInner.companyWebsite ?? empInner.website ?? '';
+                merged = { ...merged, companyName, logoUrl, companyWebsite, _employer: empInner };
+              }
+            }
+          } catch (e) {
+            // ignore employer fetch failures — show job without company details
+            // console.error('Failed to fetch employer for job', e);
+          }
+          setJob(merged);
+        }
       } catch (err) {
         const isCanceled = err?.name === 'AbortError' || (err?.message && String(err.message).toLowerCase().includes('cancel'));
         if (!isCanceled) setJob(null);
@@ -36,7 +90,28 @@ export default function JobDetail() {
   }, []);
 
   return (
-    <MainLayout role="guest" hasSidebar={false}>
+    <MainLayout role={(function(){
+      const { user } = useAuth();
+      const normalizeRole = (r) => {
+        if (!r) return 'guest';
+        if (typeof r === 'number') {
+          if (r === 1) return 'admin';
+          if (r === 2) return 'staff';
+          if (r === 3) return 'employer';
+          if (r === 4) return 'employee';
+          return 'guest';
+        }
+        if (typeof r === 'string') return r.toLowerCase();
+        if (typeof r === 'object') {
+          const id = r.roleId || r.RoleId || r.role_id || r.roleID;
+          if (id) return normalizeRole(Number(id));
+          const name = r.role || r.roleName || r.role_name;
+          if (name) return String(name).toLowerCase();
+        }
+        return 'guest';
+      };
+      return normalizeRole(user?.roleId || user);
+    })()} hasSidebar={false}>
       {loading && <Loading />}
 
       {!loading && !job && (

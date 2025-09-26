@@ -33,14 +33,37 @@ export default function MainLayout({ children, role = 'guest', hasSidebar = fals
 
 
 
+  // Normalize role: accept numeric RoleId (1/2/3/4 or string) or role name ('admin','staff','employer','employee')
+  const normalizedRole = (() => {
+    if (role === null || role === undefined) return 'guest';
+    // If role is a number or numeric string, map to role name
+    const n = Number(role);
+    if (!Number.isNaN(n) && n > 0) {
+      switch (n) {
+        case 1:
+          return 'admin';
+        case 2:
+          return 'staff';
+        case 3:
+          return 'employer';
+        case 4:
+          return 'employee';
+        default:
+          return 'guest';
+      }
+    }
+    // otherwise accept existing string role (keep compatibility)
+    return String(role).toLowerCase();
+  })();
+
   return (
     <div className="bg-[#eaf2fb] min-h-screen">
-      <Header role={role} />
+      <Header role={normalizedRole} />
       <div>{/* wrapper (kept minimal) */}</div>
 
       {/* Layout: on md+ show sidebar in flow (no fixed), main becomes flex-1 */}
       <div className="md:flex">
-        {hasSidebar && <Sidebar role={role} />}
+  {hasSidebar && <Sidebar role={normalizedRole} />}
 
         <main
           className="relative px-4 py-4 md:px-6 md:py-8 flex-1"

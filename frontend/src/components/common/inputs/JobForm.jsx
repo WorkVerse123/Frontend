@@ -12,8 +12,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { parseISO } from 'date-fns';
 
-const MOCK_PATH = '/mocks/JSON_DATA/requests/post_employer_id_job.json';
-
 export default function JobForm() {
   const [form, setForm] = useState({
     jobTitle: '',

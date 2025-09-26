@@ -28,6 +28,7 @@ export default function EmployerDetails({ employer }) {
   }
 
   const hours = employer?.companyOpeningHours || [];
+  const dateEstablished = employer?._raw?.dateEstablish ?? employer?.dateEstablished ?? employer?.dateEstablish ?? null;
   return (
     <div className="space-y-4">
       <Card className="p-4">
@@ -42,7 +43,7 @@ export default function EmployerDetails({ employer }) {
       <Card className="p-4">
         <h4 className="text-md font-medium mb-2">Thông tin cơ bản</h4>
         <div className="text-sm text-slate-700">
-          <div><strong>Thành lập:</strong> {employer.dateEstablished || '---'}</div>
+          <div><strong>Thành lập:</strong> {dateEstablished ? new Date(dateEstablished).toLocaleDateString() : '---'}</div>
           <div className="mt-1"><strong>Loại:</strong> {employer.employerTypeName || '---'}</div>
         </div>
       </Card>

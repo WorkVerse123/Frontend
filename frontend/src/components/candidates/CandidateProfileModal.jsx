@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -49,9 +50,14 @@ export default function CandidateProfileModal({ open, onClose, employeeId }) {
       setLoading(true);
       setError(null);
       try {
-        const EndpointResolver = (await import('../../services/EndpointResolver')).default;
-        const json = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employee_id.json');
-        if (!cancelled) setData(json?.data || json || null);
+        const { get: apiGet } = await import('../../services/ApiClient');
+        const ApiEndpoints = (await import('../../services/ApiEndpoints')).default;
+        // prefer explicit prop, otherwise use authenticated user's employeeId
+        const { user } = require('../../contexts/AuthContext').useAuth ? require('../../contexts/AuthContext').useAuth() : { user: null };
+        const resolvedEmployeeId = employeeId ?? user?.employeeId ?? user?._raw?.EmployeeId ?? null;
+        const path = resolvedEmployeeId ? ApiEndpoints.EMPLOYEE_PROFILE(resolvedEmployeeId) : ApiEndpoints.EMPLOYEE_PROFILE('0');
+        const res = await apiGet(path);
+        if (!cancelled) setData(res?.data || res || null);
       } catch (err) {
         if (!cancelled) {
           // treat cancellations as non-fatal

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Box, Typography } from '@mui/material';
 import { handleAsync } from '../../utils/HandleAPIResponse';
+import ApiEndpoints from '../../services/ApiEndpoints';
+import { get as apiGet } from '../../services/ApiClient';
 import { formatSalary } from '../../utils/formatSalary';
 import JobDetailDialog from '../../components/common/modals/JobDetailDialog';
 import EndpointResolver from '../../services/EndpointResolver';
@@ -25,9 +27,27 @@ export default function EmployerJobsList({ employerId }) {
     const load = async () => {
       try {
         setLoading(true);
-        const parsed = await EndpointResolver.get('/mocks/JSON_DATA/responses/get_employer_id_jobs.json', { signal: ac.signal });
+        const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYER_JOBS(employerId)));
         if (!mounted) return;
-        setJobs((parsed?.data && parsed.data.jobs) || parsed?.jobs || []);
+        const parsed = res?.data ?? res;
+        // Normalize various possible API shapes into an array of jobs
+        let jobList = [];
+        if (Array.isArray(parsed)) {
+          jobList = parsed;
+        } else if (Array.isArray(parsed?.jobs)) {
+          jobList = parsed.jobs;
+        } else if (Array.isArray(parsed?.data)) {
+          jobList = parsed.data;
+        } else if (Array.isArray(parsed?.items)) {
+          jobList = parsed.items;
+        } else if (parsed && typeof parsed === 'object') {
+          // Sometimes API returns an object with numeric keys or a single job
+          // If it's a single job object, wrap it
+          const possibleJob = parsed.job || parsed.jobDetail || parsed.jobData || parsed;
+          if (Array.isArray(possibleJob)) jobList = possibleJob;
+          else if (possibleJob && typeof possibleJob === 'object' && Object.keys(possibleJob).length) jobList = [possibleJob];
+        }
+        setJobs(jobList);
       } catch (err) {
         const isCanceled = err?.name === 'AbortError' || err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError' || (err?.message && err.message.toLowerCase().includes('cancel'));
         if (!isCanceled) setError(err);
@@ -58,9 +78,9 @@ export default function EmployerJobsList({ employerId }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {jobs.map((job) => (
+        {jobs.map((job, idx) => (
           <Card
-            key={job.jobId}
+            key={job.jobId ?? job.id ?? job._id ?? idx}
             className="p-4 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => { setSelectedJobId(job.jobId); setJobDialogOpen(true); }}
             role="button"

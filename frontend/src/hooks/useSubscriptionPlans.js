@@ -14,10 +14,10 @@ export default function useSubscriptionPlans(apiUrl) {
       setLoading(true);
       setError(null);
       try {
-        const EndpointResolver = (await import('../services/EndpointResolver')).default;
-        // If no apiUrl provided, fall back to a known mock file to avoid 404s
-        const path = apiUrl || '/mocks/JSON_DATA/responses/get_plans.json';
-        const res = await EndpointResolver.get(path, { signal: controller.signal });
+        const { get: apiGet } = await import('../services/ApiClient');
+        const ApiEndpoints = (await import('../services/ApiEndpoints')).default;
+        const path = apiUrl || ApiEndpoints.SUBSCRIPTION_PLANS || '/api/subscription-plans';
+        const res = await apiGet(path, { signal: controller.signal });
         if (mounted) setPlans(res?.data || res || []);
       } catch (err) {
         // Treat cancellation as non-fatal (Abort/Canceled). Only surface other errors.
