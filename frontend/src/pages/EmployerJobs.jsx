@@ -43,7 +43,8 @@ export default function EmployerJobs() {
     setLoading(true);
     (async () => {
       try {
-        const resolvedEmployerId = user?.employerId ?? user?._raw?.EmployerId ?? null;
+        // prefer normalized profileId/profileType produced by AuthContext.normalizeUser
+        const resolvedEmployerId = (user?.profileType === 'employer' && user?.profileId) ? user.profileId : null;
         if (!resolvedEmployerId) throw new Error('No employer id available for current user');
         const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYER_JOBS(resolvedEmployerId), { signal: ac.signal }));
         if (!mounted) return;
@@ -78,7 +79,7 @@ export default function EmployerJobs() {
     setAppsLoading(true);
   const ac = new AbortController();
   try {
-    const resolvedEmployerId = user?.employerId ?? user?._raw?.EmployerId ?? null;
+    const resolvedEmployerId = (user?.profileType === 'employer' && user?.profileId) ? user.profileId : null;
     if (!resolvedEmployerId) throw new Error('No employer id available for current user');
     const res = await handleAsync(apiGet(ApiEndpoints.APPLICATIONS_FOR_EMPLOYER_JOB(resolvedEmployerId, job.jobId), { signal: ac.signal }));
     const apps = res?.data?.applications || res?.data || res || [];

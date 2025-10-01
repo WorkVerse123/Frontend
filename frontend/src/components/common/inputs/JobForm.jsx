@@ -76,6 +76,7 @@ export default function JobForm() {
             label="Loại tiền"
             value={form.jobSalaryCurrency}
             onChange={(e) => onChange('jobSalaryCurrency', e.target.value)}
+            MenuProps={{ disableScrollLock: true }}
           >
             <MenuItem value="VND">VND</MenuItem>
             <MenuItem value="USD">USD</MenuItem>
@@ -90,6 +91,7 @@ export default function JobForm() {
             label="Đơn vị thời gian"
             value={form.jobTime}
             onChange={(e) => onChange('jobTime', e.target.value)}
+            MenuProps={{ disableScrollLock: true }}
           >
             <MenuItem value="hours">hours</MenuItem>
             <MenuItem value="days">days</MenuItem>
@@ -115,6 +117,7 @@ export default function JobForm() {
             label="Trạng thái"
             value={form.jobStatus}
             onChange={(e) => onChange('jobStatus', e.target.value)}
+            MenuProps={{ disableScrollLock: true }}
           >
             <MenuItem value="opened">Opened</MenuItem>
             <MenuItem value="closed">Closed</MenuItem>

@@ -12,7 +12,7 @@ export default function ActionsMenu({ anchorEl, open, onClose = () => {}, onActi
 
   if (isMobile) {
     return (
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" ModalProps={{ disableScrollLock: true }}>
         <DialogTitle>Hành động</DialogTitle>
         <List>
           <ListItem button onClick={() => handle('feature')}>
@@ -38,6 +38,7 @@ export default function ActionsMenu({ anchorEl, open, onClose = () => {}, onActi
       anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       getContentAnchorEl={null}
+      ModalProps={{ disableScrollLock: true }}
     >
       <MenuItem onClick={() => handle('feature')}>Đăng tin nổi bật</MenuItem>
       <MenuItem onClick={() => handle('view')}>Xem chi tiết</MenuItem>

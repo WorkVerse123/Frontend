@@ -12,11 +12,13 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
   const navigate = useNavigate();
   // mode: 'create' | 'update'
   const effectiveMode = mode === 'update' ? 'update' : 'create';
-  // Try multiple possible id field names that may come from different backends/tokens
-  // For update mode, prefer any id available from auth or prop; for create mode, require explicit userId prop (from registration response)
+  // Resolve the id used for employee API calls.
+  // - For 'update' mode we must call the employee endpoints with the employee's profile id (employeeId),
+  //   not the auth UserId. Prefer the normalized user.profileId when present.
+  // - For 'create' mode the caller should pass an explicit userId (auth id). If not provided, fall back to auth user id.
   const effectiveUserId = (effectiveMode === 'create')
-    ? (userId || user?.UserId || user?.id || user?.userId || user?.employeeId || null)
-    : (userId || user?.UserId || user?.id || user?.userId || user?.employeeId || null);
+    ? (userId || user?.id || user?.userId || user?.UserId || null)
+    : (userId || user?.profileId || user?.employeeId || user?.id || user?.userId || user?.UserId || null);
   const [fullName, setFullName] = useState(initialData?.fullName || '');
   const [dateOfBirth, setDateOfBirth] = useState(initialData?.dateOfBirth ? new Date(initialData.dateOfBirth).toISOString().slice(0,10) : ''); // yyyy-mm-dd for input
   const [gender, setGender] = useState(initialData?.gender || '');
@@ -132,22 +134,32 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
 
     setLoading(true);
     try {
-      // If a file was selected, upload it first and set payload.avatarUrl
+      // determine backend endpoint early so we can optionally let upload service save payload with avatarUrl
+      const endpoint = (effectiveMode === 'update')
+        ? ApiEndpoints.EMPLOYEE_PROFILE(effectiveUserId)
+        : ApiEndpoints.EMPLOYEE_PROFILE_CREATE(effectiveUserId);
+
+      let res;
+
+      // If a file was selected, upload to Cloudinary. Prefer letting the upload service
+      // save the payload (merged with avatarUrl) in one request to backend by using saveToBackend.
       if (selectedFile) {
         try {
-          const uploadRes = await UploadService.uploadImage(selectedFile);
-          // expected returned URL locations
-          const returnedUrl = (uploadRes && (uploadRes.url || uploadRes.data?.url || uploadRes.path || uploadRes.data?.path)) || null;
-          if (returnedUrl) {
-            payload.avatarUrl = returnedUrl;
-            setPreviewUrl(returnedUrl);
-            if (objectUrlRef.current) {
-              try { URL.revokeObjectURL(objectUrlRef.current); } catch (e) {}
-              objectUrlRef.current = null;
-            }
-          } else if (typeof uploadRes === 'string') {
-            payload.avatarUrl = uploadRes;
-            setPreviewUrl(uploadRes);
+          const uploadRes = await UploadService.uploadImageToCloudinary(selectedFile, {
+            onProgress: () => {},
+            saveToBackend: true,
+            backendPath: endpoint,
+            dataToSave: payload,
+            fieldName: 'avatarUrl',
+          });
+
+          // If uploadRes.backend exists, the backend already handled saving and we can use it as result
+          if (uploadRes && uploadRes.backend) {
+            res = uploadRes.backend;
+          } else if (uploadRes && uploadRes.url) {
+            // fallback: only got URL, attach and continue to call backend below
+            payload.avatarUrl = uploadRes.url;
+            setPreviewUrl(uploadRes.url);
             if (objectUrlRef.current) {
               try { URL.revokeObjectURL(objectUrlRef.current); } catch (e) {}
               objectUrlRef.current = null;
@@ -160,14 +172,13 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
         }
       }
 
-      let res;
-      if (effectiveMode === 'update') {
-        // update existing employee profile
-        const endpoint = ApiEndpoints.EMPLOYEE_PROFILE(effectiveUserId);
-        res = await handleAsync(put(endpoint, payload));
-      } else {
-        const endpoint = ApiEndpoints.EMPLOYEE_PROFILE_CREATE(effectiveUserId);
-        res = await handleAsync(post(endpoint, payload));
+      // If not already saved by upload step, save now
+      if (!res) {
+        if (effectiveMode === 'update') {
+          res = await handleAsync(put(endpoint, payload));
+        } else {
+          res = await handleAsync(post(endpoint, payload));
+        }
       }
       if (!res.success) {
         setError(res.message || 'Lưu hồ sơ thất bại');
@@ -200,7 +211,7 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
         />
         <FormControl>
           <InputLabel id="gender-label">Giới tính</InputLabel>
-          <Select labelId="gender-label" label="Giới tính" value={gender} onChange={e => setGender(e.target.value)}>
+          <Select labelId="gender-label" label="Giới tính" value={gender} onChange={e => setGender(e.target.value)} MenuProps={{ disableScrollLock: true }}>
             <MenuItem value="Male">Nam</MenuItem>
             <MenuItem value="Female">Nữ</MenuItem>
             <MenuItem value="Other">Khác</MenuItem>

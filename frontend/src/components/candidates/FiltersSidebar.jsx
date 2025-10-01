@@ -54,6 +54,7 @@ export default function FiltersSidebar({ query, setQuery, gender, setGender, edu
             label="Trình độ"
             value={education}
             onChange={(e) => setEducation(e.target.value)}
+            MenuProps={{ disableScrollLock: true }}
           >
             <MenuItem value="any">Tất cả</MenuItem>
             <MenuItem value="THPT">THPT</MenuItem>

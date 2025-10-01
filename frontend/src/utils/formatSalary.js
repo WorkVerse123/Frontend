@@ -5,5 +5,5 @@ export const formatSalary = (min, max, currency, time) => {
     const maxStr = max ? nf.format(max) : '';
     const range = min && max ? `${minStr} - ${maxStr}` : (minStr || maxStr);
     const suffix = time === 'hours' ? '/giờ' : time ? `/${time}` : '';
-    return `${range} ${currency || ''}${suffix}`.trim();
+    return `${range} ${currency || 'VND'}${suffix}`.trim();
   };

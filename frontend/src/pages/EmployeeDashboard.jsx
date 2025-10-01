@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
-import ProfileCard from '../components/employee/ProfileCard';
+// import ProfileCard from '../components/employee/ProfileCard';
 import StatsGrid from '../components/employee/StatsGrid';
 import ApplicationsList from '../components/employee/ApplicationsList';
 import AppliedJobs from '../components/employee/AppliedJobs';
@@ -10,6 +10,7 @@ import ApiEndpoints from '../services/ApiEndpoints';
 import { get as apiGet } from '../services/ApiClient';
 import { handleAsync } from '../utils/HandleAPIResponse';
 import EmployeeProfilePanel from '../components/employee/EmployeeProfilePanel';
+import SubscriptionPanel from '../components/employee/SubscriptionPanel';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function EmployeeDashboard() {
@@ -44,11 +45,19 @@ export default function EmployeeDashboard() {
     const load = async () => {
       try {
         setLoading(true);
-  const resolvedEmployeeId = user?.employeeId ?? user?._raw?.EmployeeId ?? null;
-  if (!resolvedEmployeeId) throw new Error('No employee id available for current user');
-  const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_DASHBOARD(resolvedEmployeeId), { signal: ac.signal }));
-  const parsed = res?.data || res;
-  if (!parsed) throw new Error('Invalid data');
+        // Resolve employee/profile id from normalized auth user when available
+        const resolvedEmployeeId = user?.profileId || user?.employeeId || user?._raw?.EmployeeId || null;
+        // If no employee id available yet, skip fetching dashboard data (user may still be initializing)
+        if (!resolvedEmployeeId) {
+          if (mounted) setLoading(false);
+          return;
+        }
+        const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_DASHBOARD(resolvedEmployeeId), { signal: ac.signal }));
+        const parsed = res?.data || res;
+        if (!parsed) {
+          if (!mounted) return;
+          throw new Error('Invalid data');
+        }
         if (!mounted) return;
         setStats(parsed.stats || []);
         setApplications(parsed.applications || []);
@@ -75,7 +84,7 @@ export default function EmployeeDashboard() {
     };
     load();
     return () => { mounted = false; ac.abort(); };
-  }, []);
+  }, [user]);
 
   if (loading) return (
     <MainLayout role={normalizedRole} hasSidebar={false}>
@@ -95,7 +104,7 @@ export default function EmployeeDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Left nav/profile */}
           <aside className="md:col-span-3">
-            <ProfileCard name="Tên người dùng" role={roleLabel} />
+            {/* <ProfileCard name="Tên người dùng" role={roleLabel} /> */}
 
             <nav className="bg-white rounded-lg shadow p-3 border">
               <ul className="space-y-2 text-sm">
@@ -123,7 +132,12 @@ export default function EmployeeDashboard() {
                 >
                   Thông tin cá nhân
                 </li>
-                <li className="py-2 px-3 rounded hover:bg-slate-50">Cài đặt</li>
+                <li
+                  onClick={() => setActiveTab('subscription')}
+                  className={`py-2 px-3 rounded cursor-pointer ${activeTab === 'subscription' ? 'bg-[#f3f7fb] font-medium' : 'hover:bg-slate-50'}`}
+                >
+                  Gói đăng ký
+                </li>
               </ul>
             </nav>
           </aside>
@@ -140,22 +154,24 @@ export default function EmployeeDashboard() {
               />
             ) : activeTab === 'profile' ? (
               <EmployeeProfilePanel employee={null} onSave={(data) => console.log('save profile', data)} />
+            ) : activeTab === 'subscription' ? (
+              <SubscriptionPanel />
             ) : (
               <>
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-[#042852]">Xin chào, Tên người dùng</h2>
+                  <h2 className="text-2xl font-bold text-[#042852]">Xin chào, </h2>
                   <p className="text-sm text-gray-600">Đây chính là trang tổng quan về hồ sơ cá nhân của bạn</p>
                 </div>
 
                 <StatsGrid items={stats} />
 
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center justify-between">
+                {/* <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center justify-between">
                   <div>
                     <div className="font-semibold">Hồ sơ của bạn chưa được hoàn thiện</div>
                     <div className="text-sm text-gray-600">Hoàn thiện việc chỉnh sửa hồ sơ cá nhân của bạn để tăng khả năng ứng tuyển</div>
                   </div>
                   <button className="bg-red-500 text-white px-4 py-2 rounded">Tùy chỉnh</button>
-                </div>
+                </div> */}
 
                 <div className="bg-white rounded-lg border p-4">
                   <div className="flex items-center justify-between mb-4">

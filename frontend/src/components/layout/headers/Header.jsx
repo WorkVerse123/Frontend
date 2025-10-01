@@ -5,7 +5,12 @@ import EmployerHeader from './EmployerHeader';
 import StaffHeader from './StaffHeader';
 import AdminHeader from './AdminHeader';
 import { useState } from 'react';
-import { getCookie } from '../../../services/AuthCookie';
+import { useNavigate } from 'react-router-dom';
+import { Avatar, Divider, List, ListItem, ListItemText, ListItemIcon, Box, Typography } from '@mui/material';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '../../../contexts/AuthContext';
+import { deleteCookie, getCookie } from '../../../services/AuthCookie';
 
 // Map numeric RoleId in token to string role used by UI
 const ROLE_MAP = {
@@ -80,6 +85,8 @@ function parseRoleFromToken() {
 
 export default function Header({ role = 'guest' }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, setUser } = useAuth();
   // If a valid role can be parsed from token, prefer it over passed prop
   const detected = parseRoleFromToken();
 
@@ -160,7 +167,7 @@ export default function Header({ role = 'guest' }) {
           ☰
         </button>
       </div>
-      {/* Drawer menu cho mobile */}
+      {/* Drawer menu cho mobile: unified role links + account actions to avoid nested hamburgers */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div
@@ -168,15 +175,116 @@ export default function Header({ role = 'guest' }) {
             onClick={() => setDrawerOpen(false)}
             aria-label="Đóng menu"
           />
-          <div className="bg-[#042852] w-64 h-full p-6 flex flex-col gap-6 animate-slide-in-right">
+          <div className="bg-[#042852] w-64 h-full p-4 flex flex-col gap-2 animate-slide-in-right text-white">
             <button
-              className="self-end text-white text-2xl mb-4"
+              className="self-end text-white text-2xl mb-2"
               onClick={() => setDrawerOpen(false)}
               aria-label="Đóng menu"
             >
               ×
             </button>
-            {RoleHeader}
+
+            {/* Account summary */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+              <Avatar sx={{ width: 56, height: 56 }}>{(user && (user.fullName || user.name)) ? (user.fullName || user.name).charAt(0).toUpperCase() : <AccountCircleIcon />}</Avatar>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'white' }}>{user?.fullName || user?.name || 'Tài khoản'}</Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>{user?.email || ''}</Typography>
+              </Box>
+            </Box>
+
+            <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)', mb: 1 }} />
+
+            {/* Role-specific links */}
+            <List sx={{ color: 'white' }}>
+              {finalRole === 'employee' && (
+                <>
+                  <ListItem button component="a" href="/jobs" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Tìm việc" />
+                  </ListItem>
+                </>
+              )}
+
+              {finalRole === 'employer' && (
+                <>
+                  <ListItem button component="a" href="/employer/jobs" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Quản lý tin tuyển dụng" />
+                  </ListItem>
+                  <ListItem button component="a" href="/candidates" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Ứng viên" />
+                  </ListItem>
+                </>
+              )}
+
+              {finalRole === 'staff' && (
+                <>
+                  <ListItem button component="a" href="/staff/hr" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Quản lý nhân sự" />
+                  </ListItem>
+                  <ListItem button component="a" href="/staff/reports" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Báo cáo" />
+                  </ListItem>
+                  <ListItem button component="a" href="/staff/account" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Tài khoản" />
+                  </ListItem>
+                </>
+              )}
+
+              {finalRole === 'admin' && (
+                <>
+                  <ListItem button component="a" href="/admin" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Dashboard" />
+                  </ListItem>
+                  <ListItem button component="a" href="/admin/users" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Người dùng" />
+                  </ListItem>
+                  <ListItem button component="a" href="/admin/reports" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Báo cáo" />
+                  </ListItem>
+                </>
+              )}
+
+              {finalRole === 'guest' && (
+                <ListItem button component="a" href="/auth" onClick={() => setDrawerOpen(false)}>
+                  <ListItemText primary="Đăng nhập / Đăng ký" />
+                </ListItem>
+              )}
+            </List>
+
+            <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+
+            {/* Account actions */}
+            <List>
+              <ListItem button onClick={() => {
+                // Profile routing logic simplified
+                try {
+                  // Try role-based redirection similar to UserMenu
+                  const roleCandidate = (user && (user.roleId || user.RoleId)) || null;
+                  const n = roleCandidate ? Number(roleCandidate) : null;
+                  if (n === 3 || user?.profileType === 'employer') {
+                    const resolvedEmployerId = user?.profileId || null;
+                    if (resolvedEmployerId) { navigate(`/employer/${resolvedEmployerId}`); setDrawerOpen(false); return; }
+                    navigate('/employer/setup'); setDrawerOpen(false); return;
+                  }
+                  if (n === 4 || user?.profileType === 'employee') {
+                    navigate('/employee/dashboard'); setDrawerOpen(false); return;
+                  }
+                } catch (e) { /* ignore */ }
+                navigate('/profile'); setDrawerOpen(false);
+              }}>
+                <ListItemIcon><AccountCircleIcon sx={{ color: 'white' }} /></ListItemIcon>
+                <ListItemText primary={user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : 'Hồ sơ'} />
+              </ListItem>
+
+              <ListItem button onClick={() => {
+                deleteCookie('token'); deleteCookie('user'); try { setUser(null); } catch (e) { }
+                navigate('/');
+                setDrawerOpen(false);
+              }}>
+                <ListItemIcon><LogoutIcon sx={{ color: 'white' }} /></ListItemIcon>
+                <ListItemText primary="Đăng xuất" />
+              </ListItem>
+            </List>
           </div>
         </div>
       )}

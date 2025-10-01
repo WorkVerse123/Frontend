@@ -17,17 +17,17 @@ export default function EmployerDetails({ employer }) {
           <div className="text-sm text-slate-700">Chưa có thông tin</div>
         </Card>
 
-        <Card className="p-4">
+        {/* <Card className="p-4">
           <h4 className="text-md font-medium mb-2">Giờ mở cửa</h4>
           <ul className="text-sm text-slate-700 space-y-1">
             <li>Không có thông tin giờ mở cửa</li>
           </ul>
-        </Card>
+        </Card> */}
       </div>
     );
   }
 
-  const hours = employer?.companyOpeningHours || [];
+  // const hours = employer?.companyOpeningHours || [];
   const dateEstablished = employer?._raw?.dateEstablish ?? employer?.dateEstablished ?? employer?.dateEstablish ?? null;
   return (
     <div className="space-y-4">
@@ -48,7 +48,7 @@ export default function EmployerDetails({ employer }) {
         </div>
       </Card>
 
-      <Card className="p-4">
+      {/* <Card className="p-4">
         <h4 className="text-md font-medium mb-2">Giờ mở cửa</h4>
         <ul className="text-sm text-slate-700 space-y-1">
           {hours.length === 0 && <li>Không có thông tin giờ mở cửa</li>}
@@ -58,7 +58,7 @@ export default function EmployerDetails({ employer }) {
             </li>
           ))}
         </ul>
-      </Card>
+      </Card> */}
     </div>
   );
 }

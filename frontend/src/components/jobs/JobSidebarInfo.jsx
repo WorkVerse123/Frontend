@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDateToDDMMYYYY } from '../../utils/formatDate';
 import { useNavigate } from 'react-router-dom';
 
 export default function JobSidebarInfo({ job }) {
@@ -23,21 +24,21 @@ export default function JobSidebarInfo({ job }) {
           <div>
             <strong>Lương:</strong>{' '}
             {job?.jobSalaryMin != null || job?.jobSalaryMax != null ? (
-              <>{job?.jobSalaryMin ?? '—'} - {job?.jobSalaryMax ?? '—'}</>
+              <span className='font-bold'>{job?.jobSalaryMin ?? '—'} - {job?.jobSalaryMax ?? '—'} VND</span>
             ) : (
               'Thương lượng'
-            )}{' '}
-            {job?.jobTime ? <span>/ {job.jobTime}</span> : null}
+            )}
           </div>
           <div><strong>Loại công việc:</strong> {job?.jobType ?? job?.jobTime ?? 'Không rõ'}</div>
           <div>
             <strong>Hạn ứng tuyển:</strong>{' '}
-            {(() => {
-              const raw = job?.jobExpiredAt ?? job?.jobExpireAt ?? job?.jobCreatedAt;
-              if (!raw) return 'Không rõ';
-              const d = new Date(raw);
-              return isNaN(d.getTime()) ? 'Không rõ' : d.toLocaleDateString();
-            })()}
+           <span className='text-green-600 font-semibold'>
+             {(() => {
+               const raw = job?.jobExpiredAt ?? job?.jobExpireAt ?? job?.jobCreatedAt;
+               const formatted = formatDateToDDMMYYYY(raw);
+               return formatted || 'Không rõ';
+             })()}
+           </span>
           </div>
         </div>
       </div>

@@ -74,10 +74,9 @@ export default function Footer() {
       </div>
       {/* Social icons */}
       <div className="max-w-7xl mx-auto px-4 mt-8 flex justify-center gap-6 text-gray-300 text-xl">
-        <a href="#"><i className="fab fa-facebook"></i></a>
-        <a href="#"><i className="fab fa-instagram"></i></a>
-        <a href="#"><i className="fab fa-youtube"></i></a>
-        <a href="#"><i className="fab fa-twitter"></i></a>
+        <a href="https://www.facebook.com/profile.php?id=61567714224653" target="_blank" rel="noreferrer noopener"><i className="fab fa-facebook"></i></a>
+        <a href="https://www.instagram.com/work.verse/" target="_blank" rel="noreferrer noopener"><i className="fab fa-instagram"></i></a>
+        <a href="https://www.threads.com/@work.verse" target="_blank" rel="noreferrer noopener"><i className="fab fa-threads"></i></a>
       </div>
       {/* Copyright */}
       <div className="max-w-7xl mx-auto px-4 mt-6 text-center text-sm text-gray-400 border-t border-gray-700 pt-2">

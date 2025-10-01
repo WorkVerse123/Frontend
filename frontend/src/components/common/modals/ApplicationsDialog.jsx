@@ -4,7 +4,7 @@ import Loading from '../loading/Loading';
 
 export default function ApplicationsDialog({ open, onClose = () => {}, loading = false, applications = [] }) {
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+  <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" ModalProps={{ disableScrollLock: true }}>
       <DialogTitle>Đơn ứng tuyển</DialogTitle>
 
       <DialogContent>

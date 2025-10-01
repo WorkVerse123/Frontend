@@ -20,7 +20,7 @@ export default function EventDialog({
     : (startError ? 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc' : '');
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+  <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" ModalProps={{ disableScrollLock: true }}>
       <DialogTitle>Thêm / Chỉnh sửa sự kiện</DialogTitle>
       <DialogContent className="space-y-4">
         <TextField

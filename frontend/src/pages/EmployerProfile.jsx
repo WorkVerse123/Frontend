@@ -46,7 +46,8 @@ export default function EmployerProfile() {
       try {
           setLoading(true);
           setError(null);
-        const resolvedId = (routeId && routeId !== 'me') ? routeId : (user?.employeeId ? null : (user?.employerId || user?.EmployerId || null));
+        // prefer normalized profile fields from AuthContext
+        const resolvedId = (routeId && routeId !== 'me') ? routeId : (user?.profileType === 'employer' ? user?.profileId : null);
         const endpointId = resolvedId || (routeId && routeId !== 'me' ? routeId : 'me');
         const res = await apiGet(ApiEndpoints.EMPLOYER(endpointId), { signal: ac.signal });
     
@@ -62,6 +63,9 @@ export default function EmployerProfile() {
           const logoUrl = e.logoUrl ?? e.CompanyLogo ?? e.logo ?? '';
           const description = e.description ?? e.desc ?? e.about ?? '';
           const employerTypeName = e.employerTypeName ?? (e.employerType && (e.employerType.name || e.employerType.employerTypeName)) ?? '';
+          const dateEstablished = e.dateEstablished ?? e.dateEstablish ?? e.date_established ?? e.date_establish ?? null;
+          const contactEmail = e.contactEmail ?? e.contact_email ?? e.email ?? '';
+          const contactPhone = e.contactPhone ?? e.contact_phone ?? e.phone ?? '';
           return {
             employerId,
             companyName,
@@ -71,6 +75,9 @@ export default function EmployerProfile() {
             CompanyLogo: logoUrl,
             description,
             employerTypeName,
+            dateEstablished,
+            contactEmail,
+            contactPhone,
             _raw: e
           };
         };
@@ -97,9 +104,9 @@ export default function EmployerProfile() {
           <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">Không thể tải thông tin nhà tuyển dụng. Vui lòng thử lại.</div>
         )}
         {employer ? (
-          <EmployerHeader employer={employer} isOwner={Boolean(user?.employerId && String(user.employerId) === String(employer.employerId))} onEdit={() => {
+          <EmployerHeader employer={employer} isOwner={Boolean(user?.profileType === 'employer' && String(user?.profileId) === String(employer.employerId))} onEdit={() => {
             // navigate to the dedicated edit page to avoid duplicate inline editors
-            const targetId = employer?.employerId || employer?.EmployerId || user?.employerId || user?._raw?.EmployerId;
+            const targetId = employer?.employerId || employer?.EmployerId || (user?.profileType === 'employer' ? user?.profileId : null);
             if (targetId) navigate(`/employer/${targetId}/edit`);
             else navigate('/employer/setup');
           }} />

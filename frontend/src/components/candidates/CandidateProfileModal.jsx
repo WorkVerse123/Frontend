@@ -73,7 +73,7 @@ export default function CandidateProfileModal({ open, onClose, employeeId }) {
   }, [open, employeeId]);
 
   return (
-    <Dialog open={Boolean(open)} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={Boolean(open)} onClose={onClose} maxWidth="md" fullWidth ModalProps={{ disableScrollLock: true }}>
       <DialogTitle sx={{ m: 0, p: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span />

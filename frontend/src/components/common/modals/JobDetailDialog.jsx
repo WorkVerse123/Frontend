@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogTitle,
@@ -12,11 +13,18 @@ import {
 import Loading from '../loading/Loading';
 import { handleAsync } from '../../../utils/HandleAPIResponse';
 import { formatSalary } from '../../../utils/formatSalary';
+import { formatDateToDDMMYYYY } from '../../../utils/formatDate';
+import { useAuth } from '../../../contexts/AuthContext';
+import { get as apiGet } from '../../../services/ApiClient';
+import ApiEndpoints from '../../../services/ApiEndpoints';
 
 export default function JobDetailDialog({ jobId, open, onClose }) {
+  const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [applied, setApplied] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!open || !jobId) return;
@@ -47,6 +55,29 @@ export default function JobDetailDialog({ jobId, open, onClose }) {
     return () => ac.abort();
   }, [jobId, open]);
 
+  // determine whether current user already applied to this job
+  useEffect(() => {
+    let mounted = true;
+    if (!job || !user?.employeeId) {
+      setApplied(false);
+      return () => { mounted = false; };
+    }
+
+    (async () => {
+      try {
+        const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(user.employeeId)));
+        if (!mounted) return;
+        const apps = res?.data?.applications || res?.data || res || [];
+        const found = (Array.isArray(apps) ? apps : []).some(a => String(a.jobId || a.jobId) === String(job.jobId || job.id));
+        setApplied(Boolean(found));
+      } catch (e) {
+        if (mounted) setApplied(false);
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, [job, user]);
+
   const handleClose = () => {
     setJob(null);
     setError(null);
@@ -54,7 +85,7 @@ export default function JobDetailDialog({ jobId, open, onClose }) {
   };
 
   return (
-    <Dialog open={!!open} onClose={handleClose} fullWidth maxWidth="md">
+  <Dialog open={!!open} onClose={handleClose} fullWidth maxWidth="md" ModalProps={{ disableScrollLock: true }}>
       <DialogTitle>
         {loading ? 'Đang tải...' : job ? job.jobTitle || 'Chi tiết công việc' : 'Chi tiết công việc'}
       </DialogTitle>
@@ -79,8 +110,8 @@ export default function JobDetailDialog({ jobId, open, onClose }) {
               </div>
               <div className="flex items-center gap-2">
                 <Chip label={job.jobStatus || job.status || '—'} size="small" color={job.jobStatus === 'opened' || job.status === 'opened' ? 'success' : 'default'} />
-                <Typography variant="body2" className="text-slate-500">
-                  Hạn nộp: {job.jobExpireAt ? new Date(job.jobExpireAt).toLocaleDateString() : job.expiredAt ? new Date(job.expiredAt).toLocaleDateString() : '—'}
+                <Typography variant="body2" className="text-slate-500 font-semibold">
+                  Hạn nộp: <span className='text-green-500'>{formatDateToDDMMYYYY(job.jobExpiredAt) || '—'}</span>
                 </Typography>
               </div>
             </div>
@@ -103,8 +134,7 @@ export default function JobDetailDialog({ jobId, open, onClose }) {
             </div>
 
             <div className="flex flex-wrap gap-4 text-sm text-slate-600">
-              <div>Ngày tạo: {job.jobCreateAt ? new Date(job.jobCreateAt).toLocaleDateString() : (job.jobCreateAt || '—')}</div>
-              <div>Trạng thái: {job.jobStatus || job.status || '—'}</div>
+              <div>Ngày tạo: {formatDateToDDMMYYYY(job.jobCreatedAt) || (job.jobCreatedAt || '—')}</div>
             </div>
           </div>
         )}
@@ -112,7 +142,14 @@ export default function JobDetailDialog({ jobId, open, onClose }) {
 
       <DialogActions>
         <Button onClick={handleClose} variant="outlined">Đóng</Button>
-        <Button onClick={() => { /* placeholder: apply action */ }} variant="contained" color="primary">Ứng tuyển</Button>
+        <Button
+          onClick={() => navigate(`/jobs/${job.jobId || job.id}`)}
+          variant="contained"
+          color={applied ? 'success' : 'primary'}
+          disabled={applied}
+        >
+          {applied ? 'Đã ứng tuyển' : 'Ứng tuyển'}
+        </Button>
       </DialogActions>
     </Dialog>
   );

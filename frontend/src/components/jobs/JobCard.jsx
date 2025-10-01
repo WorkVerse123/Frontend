@@ -20,11 +20,11 @@ export default function JobCard({ job }) {
               <div className="text-sm text-gray-500">{job.companyName} • {job.jobLocation}</div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-700 font-semibold">{job.jobSalaryMin} - {job.jobSalaryMax} {job.jobSalaryCurrency}</div>
+              <div className="text-sm text-gray-700 font-semibold">{job.jobSalaryMin} - {job.jobSalaryMax} VND</div>
             </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between">
+            <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {job.jobCategory && (
                 <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">{job.jobCategory}</span>
@@ -33,7 +33,7 @@ export default function JobCard({ job }) {
                 <span className="text-xs text-gray-500">{job.jobType}</span>
               )}
             </div>
-            <button onClick={() => navigate(`/jobs/${job.jobId || job.id}`)} className="bg-[#2563eb] text-white px-3 py-1 rounded text-sm font-semibold hover:bg-blue-700">Ứng Tuyển</button>
+            <button onClick={() => navigate(`/jobs/${job.jobId || job.id}`)} className={`${job.applied ? 'bg-green-600 hover:bg-green-700' : 'bg-[#2563eb] hover:bg-blue-700'} text-white px-3 py-1 rounded text-sm font-semibold`}>{job.applied ? 'Đã ứng tuyển' : 'Ứng Tuyển'}</button>
           </div>
         </div>
       </div>

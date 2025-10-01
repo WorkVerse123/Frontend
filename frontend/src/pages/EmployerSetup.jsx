@@ -4,6 +4,7 @@ import MainLayout from '../components/layout/MainLayout';
 import { useAuth } from '../contexts/AuthContext';
 import ApiEndpoints from '../services/ApiEndpoints';
 import { post } from '../services/ApiClient';
+import UploadService from '../services/UploadService';
 import { useLocation } from 'react-router-dom';
 import { STEPS, TYPE_MAP } from '../utils/emun/Enum';
 
@@ -26,26 +27,27 @@ export default function EmployerSetup() {
 
     const [logoPreview, setLogoPreview] = useState(null);
     const logoFileRef = useRef(null);
+    const [logoUploadProgress, setLogoUploadProgress] = useState(0);
 
-        const { user } = useAuth();
-        const location = useLocation();
-        // registration may navigate here with state: { forceCreate: true, userId }
-        const navStateUserId = location?.state?.userId || null;
-        const roleCandidate = user?.RoleId || user?.roleId || user?.role || user?.role_id || null;
-        const normalizedRole = (() => {
-            if (roleCandidate === null || roleCandidate === undefined) return 'guest';
-            const n = Number(roleCandidate);
-            if (!Number.isNaN(n) && n > 0) {
-                switch (n) {
-                    case 1: return 'admin';
-                    case 2: return 'staff';
-                    case 3: return 'employer';
-                    case 4: return 'employee';
-                    default: return 'guest';
-                }
+    const { user } = useAuth();
+    const location = useLocation();
+    // registration may navigate here with state: { forceCreate: true, userId }
+    const navStateUserId = location?.state?.userId || null;
+    const roleCandidate = user?.RoleId || user?.roleId || user?.role || user?.role_id || null;
+    const normalizedRole = (() => {
+        if (roleCandidate === null || roleCandidate === undefined) return 'guest';
+        const n = Number(roleCandidate);
+        if (!Number.isNaN(n) && n > 0) {
+            switch (n) {
+                case 1: return 'admin';
+                case 2: return 'staff';
+                case 3: return 'employer';
+                case 4: return 'employee';
+                default: return 'guest';
             }
-            return String(roleCandidate).toLowerCase();
-        })();
+        }
+        return String(roleCandidate).toLowerCase();
+    })();
 
     // validation helpers
     const [validationStep, setValidationStep] = useState(null); // show errors for this step
@@ -110,9 +112,37 @@ export default function EmployerSetup() {
         const socialUrls = parseList(socials).map(normalizeUrl).filter(Boolean);
         const websiteUrlsDedup = Array.from(new Set([...websiteUrls, ...socialUrls]));
 
-        // logoUrls: use preview (data URL) as placeholder since real upload/API not available
+        // logoUrls: upload real file to Cloudinary if present; otherwise fall back to preview data URL
         const logoUrls = [];
-        if (logoPreview) logoUrls.push(logoPreview);
+        if (logoFileRef.current) {
+            // upload selected file to Cloudinary and collect returned URL
+            try {
+                const uploadRes = await UploadService.uploadImageToCloudinary(logoFileRef.current, {
+                    onProgress: (p) => setLogoUploadProgress(p),
+                    // do not let UploadService save to backend here; we'll include returned URL in payload below
+                    saveToBackend: false,
+                });
+                const resolvedUrl = uploadRes?.url || uploadRes?.raw?.secure_url || uploadRes?.secure_url || null;
+                if (resolvedUrl) {
+                    logoUrls.push(resolvedUrl);
+                } else if (uploadRes?.backend) {
+                    // if service saved to backend and returned backend payload, try to extract logoUrls
+                    const be = uploadRes.backend;
+                    if (Array.isArray(be?.logoUrls)) logoUrls.push(...be.logoUrls);
+                    else if (Array.isArray(be?.data?.logoUrls)) logoUrls.push(...be.data.logoUrls);
+                }
+            } catch (e) {
+                console.error('Logo upload failed', e);
+                alert('Upload logo thất bại, thử lại');
+                setSaving(false);
+                setLogoUploadProgress(0);
+                return;
+            } finally {
+                setLogoUploadProgress(0);
+            }
+        } else if (logoPreview) {
+            logoUrls.push(logoPreview);
+        }
 
         const resolvedUserId = navStateUserId || user?.UserId || user?.userId || user?.id || user?.UserID || null;
 
@@ -247,10 +277,12 @@ export default function EmployerSetup() {
                                         value={companyType}
                                         onChange={e => setCompanyType(e.target.value)}
                                         MenuProps={{
-                                          // ensure menu is rendered in a portal (attach to body) to avoid parent clipping
-                                          disablePortal: false,
-                                          // make paper scrollable
-                                          PaperProps: { style: { maxHeight: 250, overflow: 'auto' } }
+                                            // ensure menu is rendered in a portal (attach to body) to avoid parent clipping
+                                            disablePortal: false,
+                                            // make paper scrollable
+                                            PaperProps: { style: { maxHeight: 250, overflow: 'auto' } },
+                                            // don't lock body scroll on open
+                                            disableScrollLock: true
                                         }}
                                     >
                                         <MenuItem value="">-- Chọn --</MenuItem>

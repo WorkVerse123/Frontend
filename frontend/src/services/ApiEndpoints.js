@@ -4,8 +4,7 @@ const ApiEndpoints = {
   LOGIN: '/api/auth/login',
   REGISTER: '/api/auth/register',
 
-  // // Users / Profile
-  // ME: '/api/me',
+
 
   // Jobs
   JOBS: '/api/jobs',
@@ -14,6 +13,7 @@ const ApiEndpoints = {
     JOB_CANDIDATES: '/api/jobs/cadidates',
   JOB_REVIEWS: (id) => `/api/jobs/${id}/reviews`,
   JOB_CATEGORIES: '/api/jobs/categories',
+  JOB_FILTERS: '/job-filter',
 
   // Employer
   EMPLOYER: (id) => `/api/employer/${id}`,

@@ -9,56 +9,64 @@ import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/common/loading/Loading';
 import ApplyJobDialog from '../components/common/modals/ApplyJobDialog';
 import ApiEndpoints from '../services/ApiEndpoints';
+import { handleAsync as handleAsyncUtil } from '../utils/HandleAPIResponse';
 
 export default function JobDetail() {
   const { id: routeId } = useParams();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [applyOpen, setApplyOpen] = useState(false);
+  const [appliedForThisJob, setAppliedForThisJob] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
+    // Fetch both job detail and employee's applications up-front so the page
+    // can render with the correct "applied" state immediately.
     const ac = new AbortController();
     let mounted = true;
     (async () => {
       try {
-        // Use ApiClient directly to bypass EndpointResolver (and any mock routing)
+        setLoading(true);
         const jobId = routeId || 1;
-        const res = await handleAsync(apiGet(ApiEndpoints.JOB_DETAIL(jobId), { signal: ac.signal }));
-        console.log('Job detail response (raw):', res);
+        const employeeId = user?.employeeId || null;
 
+        // Start both requests in parallel (apps request is skipped when no employeeId)
+        const jobPromise = apiGet(ApiEndpoints.JOB_DETAIL(jobId), { signal: ac.signal });
+        const appsPromise = employeeId ? apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(employeeId), { signal: ac.signal }) : Promise.resolve(null);
+
+        const [jobRes, appsRes] = await Promise.all([jobPromise, appsPromise]);
+
+        // Determine applied state from appsRes
+        try {
+          let apps = [];
+          if (appsRes) apps = appsRes?.data?.applications || appsRes?.data || appsRes || [];
+          const found = Array.isArray(apps) && apps.some(a => String(a.jobId) === String(jobId) || String(a.job_id) === String(jobId));
+          if (mounted) setAppliedForThisJob(!!found);
+        } catch (e) {
+          // swallow errors checking apps — failure to determine applied state shouldn't break job load
+        }
+
+        // Normalize job payload (reuse existing extraction logic)
         const extractPayload = (r) => {
-          // r is the normalized value returned by handleAsync(api.get())
-          // Possible shapes encountered in this app:
-          // 1) { data: axiosResponse, success: true } where axiosResponse.data === serverBody
-          // 2) { data: serverBody, success: true } where serverBody may contain { data: payload }
-          // 3) serverBody directly
           if (!r) return null;
-
-          // If r.data looks like an axios response (has status, headers, data)
           const maybeAxios = r.data;
           if (maybeAxios && typeof maybeAxios === 'object' && ('status' in maybeAxios) && ('data' in maybeAxios)) {
             const serverBody = maybeAxios.data;
-            // If serverBody follows { data: payload } pattern
             if (serverBody && typeof serverBody === 'object' && 'data' in serverBody) return serverBody.data;
             return serverBody;
           }
-
-          // If r.data is present and looks like the server body
           if (r.data && typeof r.data === 'object') {
             if ('data' in r.data) return r.data.data;
             return r.data;
           }
-
-          // As a last resort, if r itself is the server body
           if (r && typeof r === 'object' && 'data' in r) return r.data;
           return r;
         };
 
-        const payload = extractPayload(res);
+        const payload = extractPayload(jobRes);
         if (!mounted) return;
         if (!payload) setJob(null);
         else {
-          // if job contains employerId, fetch employer info and merge
           let merged = { ...payload };
           try {
             const empId = payload?.employerId ?? payload?.EmployerId ?? null;
@@ -74,8 +82,7 @@ export default function JobDetail() {
               }
             }
           } catch (e) {
-            // ignore employer fetch failures — show job without company details
-            // console.error('Failed to fetch employer for job', e);
+            // ignore employer fetch failures
           }
           setJob(merged);
         }
@@ -87,7 +94,9 @@ export default function JobDetail() {
       }
     })();
     return () => { mounted = false; ac.abort(); };
-  }, []);
+  }, [routeId, user]);
+
+  
 
   return (
     <MainLayout role={(function(){
@@ -129,7 +138,7 @@ export default function JobDetail() {
                 </div>
               </div>
               <div>
-                <button onClick={() => setApplyOpen(true)} className="bg-[#2563eb] text-white px-4 py-2 rounded font-semibold">Ứng tuyển ngay</button>
+                <button onClick={() => setApplyOpen(true)} className={`${appliedForThisJob ? 'bg-green-600' : 'bg-[#2563eb]'} text-white px-4 py-2 rounded font-semibold`} disabled={appliedForThisJob}>{appliedForThisJob ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}</button>
               </div>
             </div>
 
@@ -149,7 +158,19 @@ export default function JobDetail() {
           </div>
         </div>
       )}
-  <ApplyJobDialog open={applyOpen} onClose={() => setApplyOpen(false)} jobId={job?.jobId} />
+  <ApplyJobDialog
+        open={applyOpen}
+        onClose={(result) => {
+          // only mark as applied when the dialog reports success
+          setApplyOpen(false);
+          if (result && result.success) {
+            setAppliedForThisJob(true);
+          }
+        }}
+        jobId={job?.jobId}
+        employerId={job?._employer?.employerId || job?.employerId}
+        initialApplied={appliedForThisJob}
+      />
     </MainLayout>
   );
 }

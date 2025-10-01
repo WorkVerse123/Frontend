@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { IconButton, Menu, MenuItem, ListItemIcon, Avatar, Tooltip } from '@mui/material';
+import { IconButton, Menu, MenuItem, ListItemIcon, Avatar, Tooltip, Dialog, DialogTitle, List, ListItem, ListItemText, useMediaQuery, useTheme, AppBar, Toolbar, Divider, Typography, Box, Button } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
-import { getCookie, deleteCookie } from '../../../services/AuthCookie';
+import { deleteCookie } from '../../../services/AuthCookie';
 import { useAuth } from '../../../contexts/AuthContext';
 
 export default function UserMenu() {
@@ -11,17 +12,11 @@ export default function UserMenu() {
   const [anchorEl, setAnchorEl] = useState(null);
   const { setUser, user } = useAuth();
   const open = Boolean(anchorEl);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  let userName = null;
-  try {
-    const raw = getCookie('user');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      userName = parsed?.fullName || parsed?.name || parsed?.email || null;
-    }
-  } catch (e) {
-    // ignore parse
-  }
+  // derive display name from normalized user object (AuthContext)
+  const userName = user?.fullName || user?.name || user?.email || user?._raw?.Email || null;
 
   function handleOpen(e) {
     setAnchorEl(e.currentTarget);
@@ -50,20 +45,20 @@ export default function UserMenu() {
     })();
 
     try {
-      const resolvedEmployerId = user?.employerId ?? user?._raw?.EmployerId ?? user?.EmployerId ?? null;
+      const resolvedEmployerId = (user?.profileType === 'employer' && user?.profileId) ? user.profileId : null;
+      const resolvedEmployeeId = (user?.profileType === 'employee' && user?.profileId) ? user.profileId : null;
+
       if (toRole === 'employer' || resolvedEmployerId) {
-        // employer profile — navigate to canonical employer route
         if (resolvedEmployerId) {
           navigate(`/employer/${resolvedEmployerId}`);
           return;
         }
-        // fallback to setup page
         navigate('/employer/setup');
         return;
       }
-      if (toRole === 'employee' || user?.employeeId) {
-        // employee profile
-        navigate('/employee/profile');
+      if (toRole === 'employee' || resolvedEmployeeId) {
+        // For employees, route to dashboard overview rather than profile edit page
+        navigate('/employee/dashboard');
         return;
       }
     } catch (e) {
@@ -89,27 +84,70 @@ export default function UserMenu() {
           {userName ? <Avatar sx={{ width: 32, height: 32 }}>{userName.charAt(0).toUpperCase()}</Avatar> : <AccountCircleIcon fontSize="inherit" />}
         </IconButton>
       </Tooltip>
-      <Menu
-        id="user-menu"
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <MenuItem onClick={handleProfile}>
-          <ListItemIcon>
-            <AccountCircleIcon fontSize="small" />
-          </ListItemIcon>
-          Hồ sơ
-        </MenuItem>
-        <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          Đăng xuất
-        </MenuItem>
-      </Menu>
+
+      {isMobile ? (
+  <Dialog open={open} onClose={handleClose} fullScreen ModalProps={{ disableScrollLock: true }}>
+          <AppBar position="relative" color="primary" sx={{ position: 'sticky' }}>
+            <Toolbar>
+              <Typography variant="h6" sx={{ flex: 1 }}>Tài khoản</Typography>
+              <IconButton edge="end" color="inherit" onClick={handleClose} aria-label="close">
+                <CloseIcon />
+              </IconButton>
+            </Toolbar>
+          </AppBar>
+
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Avatar sx={{ width: 64, height: 64 }}>{userName ? userName.charAt(0).toUpperCase() : <AccountCircleIcon />}</Avatar>
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{userName || 'Tài khoản'}</Typography>
+                <Typography variant="body2" color="text.secondary">{user?.email || ''}</Typography>
+              </Box>
+            </Box>
+
+            <Divider sx={{ mb: 2 }} />
+
+            <List>
+              <ListItem button onClick={() => { handleProfile(); handleClose(); }}>
+                <ListItemIcon><AccountCircleIcon /></ListItemIcon>
+                <ListItemText primary={user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : 'Hồ sơ'} />
+              </ListItem>
+
+              <ListItem button onClick={() => { handleLogout(); handleClose(); }}>
+                <ListItemIcon><LogoutIcon /></ListItemIcon>
+                <ListItemText primary="Đăng xuất" />
+              </ListItem>
+            </List>
+
+            <Box sx={{ mt: 3 }}>
+              <Button fullWidth variant="outlined" onClick={handleClose}>Đóng</Button>
+            </Box>
+          </Box>
+        </Dialog>
+      ) : (
+        <Menu
+          id="user-menu"
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          ModalProps={{ disableScrollLock: true }}
+        >
+          <MenuItem onClick={handleProfile} >
+            <ListItemIcon>
+              <AccountCircleIcon fontSize="small" />
+            </ListItemIcon>
+            {user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : 'Hồ sơ'}
+          </MenuItem>
+          <MenuItem onClick={handleLogout}>
+            <ListItemIcon>
+              <LogoutIcon fontSize="small" />
+            </ListItemIcon>
+            Đăng xuất
+          </MenuItem>
+        </Menu>
+      )}
     </div>
   );
 }

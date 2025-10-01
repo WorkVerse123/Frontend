@@ -200,6 +200,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                         displayEmpty
                         sx={{ bgcolor: 'white', borderRadius: 2, fontWeight: 600 }}
                         inputProps={{ 'aria-label': 'role' }}
+                            MenuProps={{ disableScrollLock: true }}
                     >
                         <MenuItem value={4}>Ứng Viên</MenuItem>
                         <MenuItem value={3}>Nhà Tuyển Dụng</MenuItem>

@@ -4,8 +4,11 @@ import JobCard from '../components/jobs/JobCard';
 import { handleAsync } from '../utils/HandleAPIResponse';
 import ApiEndpoints from '../services/ApiEndpoints';
 import { get as apiGet } from '../services/ApiClient';
+import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/common/loading/Loading';
 import Pagination from '@mui/material/Pagination';
+import JobsFilters from '../components/jobs/JobsFilters';
+import InlineLoader from '../components/common/loading/InlineLoader';
 
 export default function JobsPage() {
   const [allJobs, setAllJobs] = useState([]);
@@ -16,16 +19,93 @@ export default function JobsPage() {
 
   // filters
   const [keyword, setKeyword] = useState('');
-  const [location, setLocation] = useState('');
   const [category, setCategory] = useState('');
   const [type, setType] = useState('');
+  // new filter states
+  const [selectedCategories, setSelectedCategories] = useState([]); // array of ids
+  const [salaryMin, setSalaryMin] = useState('');
+  const [salaryMax, setSalaryMax] = useState('');
+  const [jobTimeFilter, setJobTimeFilter] = useState('');
+  const [categoriesOptions, setCategoriesOptions] = useState([]);
+  // appliedFilters holds the active filters used for fetching (set when user clicks Áp dụng)
+  const [appliedFilters, setAppliedFilters] = useState({});
 
+  // fetch job categories for the category filter dropdown
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await handleAsync(apiGet(ApiEndpoints.JOB_CATEGORIES));
+        if (!mounted) return;
+        const data = res?.data?.data || res?.data || res || {};
+        // prefer data.jobCategories shape from backend sample, fallback to other shapes
+        const arr = Array.isArray(data?.jobCategories)
+          ? data.jobCategories
+          : Array.isArray(data?.categories)
+          ? data.categories
+          : Array.isArray(data?.items)
+          ? data.items
+          : Array.isArray(data)
+          ? data
+          : [];
+        // normalize to { id, name }
+        const opts = arr.map((c) => ({ id: c.categoryId || c.id || c.category_id || c.value || c.key || c, name: c.categoryName || c.name || c.title || String(c) }));
+        setCategoriesOptions(opts);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+    // helper: given a freshly fetched jobs array, fetch user's applications and mark applied flags
+    async function markAppliedOnJobs(jobsArray, mountedRef = { v: true }) {
+      try {
+        const employeeId = user?.employeeId || null;
+        if (!employeeId) {
+          // no user -> just set jobs without applied flags
+          if (mountedRef.v) setAllJobs(jobsArray || []);
+          return;
+        }
+        const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(employeeId)));
+        const apps = res?.data?.applications || res?.data || res || [];
+        const appliedIds = new Set((Array.isArray(apps) ? apps : []).map(a => String(a.jobId || a.jobId)));
+        if (!mountedRef.v) return;
+        setAllJobs((jobsArray || []).map(j => ({ ...j, applied: appliedIds.has(String(j.jobId || j.id)) })));
+      } catch (e) {
+        if (mountedRef.v) setAllJobs(jobsArray || []);
+      }
+    }
+
+  // fetch jobs using server-side filters (JOB_FILTERS) or paged list when no applied filters
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
-        const res = await handleAsync(apiGet(ApiEndpoints.JOBS_LIST(page, pageSize)));
+        const params = new URLSearchParams();
+        const f = appliedFilters || {};
+        if (f.keyword) params.append('Search', f.keyword);
+        // CategoryId can be multiple
+        if (Array.isArray(f.selectedCategories) && f.selectedCategories.length > 0) {
+          f.selectedCategories.forEach(id => params.append('CategoryId', String(id)));
+        }
+        if (f.salaryMin !== undefined && f.salaryMin !== '') params.append('SalaryMin', String(f.salaryMin));
+        if (f.salaryMax !== undefined && f.salaryMax !== '') params.append('SalaryMax', String(f.salaryMax));
+        if (f.jobTimeFilter !== undefined && f.jobTimeFilter !== '') params.append('JobTime', String(f.jobTimeFilter));
+
+        // Decide which endpoint to call: full list when no filters, otherwise filters endpoint
+        const hasFilter = params.toString().length > 0;
+        let url;
+        if (hasFilter) {
+          // add pagination params only when calling the filter endpoint
+          if (page) params.append('pageNumber', String(page));
+          if (pageSize) params.append('pageSize', String(pageSize));
+          url = ApiEndpoints.JOB_FILTERS + `?${params.toString()}`;
+        } else {
+          url = ApiEndpoints.JOBS_LIST(page, pageSize);
+        }
+        const res = await handleAsync(apiGet(url));
         if (!mounted) return;
         const data = res?.data?.data || res?.data || res || {};
         const arr = Array.isArray(data?.jobs)
@@ -35,9 +115,23 @@ export default function JobsPage() {
           : Array.isArray(data)
           ? data
           : [];
-        if (Array.isArray(arr)) setAllJobs(arr);
+        // client-side safety sort: priority first then createdAt desc
+        if (Array.isArray(arr)) {
+          arr.sort((a, b) => {
+            const pa = a?.isPriority ? 1 : 0;
+            const pb = b?.isPriority ? 1 : 0;
+            if (pa !== pb) return pb - pa; // true first
+            const da = new Date(a.jobCreatedAt || a.jobCreatedAt || a.jobCreatedAt || a.createdAt || 0).getTime();
+            const db = new Date(b.jobCreatedAt || b.jobCreatedAt || b.createdAt || 0).getTime();
+            return db - da;
+          });
+          // mark applied flags before setting state
+          await markAppliedOnJobs(arr, { v: mounted });
+        } else {
+          await markAppliedOnJobs([], { v: mounted });
+        }
+
         const tp = data?.paging?.totalPages || data?.paging?.total || data?.totalPages || 1;
-        // if server returns total items, compute pages
         if (!data?.paging?.totalPages && data?.paging?.total && pageSize) {
           setTotalPages(Math.max(1, Math.ceil(data.paging.total / pageSize)));
         } else if (typeof tp === 'number') {
@@ -52,13 +146,31 @@ export default function JobsPage() {
       }
     })();
     return () => { mounted = false; };
-  }, [page, pageSize]);
+  }, [page, pageSize, appliedFilters]);
 
-  const locations = useMemo(() => {
-    const set = new Set();
-    allJobs.forEach(j => j.jobLocation && set.add(j.jobLocation));
-    return Array.from(set);
-  }, [allJobs]);
+  // After job list loaded, fetch employee applications and mark applied jobs
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!allJobs || allJobs.length === 0) return;
+    const ac = new AbortController();
+    let mounted = true;
+    (async () => {
+      try {
+        const employeeId = user?.employeeId || null;
+        if (!employeeId) return;
+        const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(employeeId), { signal: ac.signal }));
+        const apps = res?.data?.applications || res?.data || res || [];
+        const appliedIds = new Set((Array.isArray(apps) ? apps : []).map(a => String(a.jobId || a.jobId)));
+        if (!mounted) return;
+        setAllJobs(prev => prev.map(j => ({ ...j, applied: appliedIds.has(String(j.jobId || j.id)) })));
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; ac.abort(); };
+  }, [allJobs.length, user]);
+
+  // location filter removed
 
   const categories = useMemo(() => {
     const set = new Set();
@@ -78,61 +190,69 @@ export default function JobsPage() {
         const k = keyword.toLowerCase();
         if (!((j.jobTitle || '').toLowerCase().includes(k) || (j.companyName || '').toLowerCase().includes(k))) return false;
       }
-      if (location && j.jobLocation !== location) return false;
       if (category && j.jobCategory !== category) return false;
       if (type && j.jobType !== type) return false;
       return true;
     });
-  }, [allJobs, keyword, location, category, type]);
+  }, [allJobs, keyword, category, type]);
 
   function clearFilters() {
     setKeyword('');
-    setLocation('');
     setCategory('');
     setType('');
+    setSelectedCategories([]);
+    setSalaryMin('');
+    setSalaryMax('');
+    setJobTimeFilter('');
+    // clear applied filters to fetch the full jobs list
+    setAppliedFilters({});
+  }
+
+  // called when user clicks Áp dụng in JobsFilters — copy current UI filter values into appliedFilters
+  function onApply() {
+    setAppliedFilters({
+      keyword,
+      selectedCategories,
+      salaryMin,
+      salaryMax,
+      jobTimeFilter,
+      category,
+      type,
+    });
+    setPage(1);
   }
 
   // reset to first page when filters change
   useEffect(() => {
     setPage(1);
-  }, [keyword, location, category, type]);
+  }, [keyword, category, type]);
 
   return (
     <MainLayout hasSidebar={false}>
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar filters */}
-        <aside className="col-span-1 bg-white rounded-xl p-4 shadow border">
-          <h3 className="font-semibold text-lg mb-3">Bộ lọc</h3>
-          <div className="mb-3">
-            <label className="block text-sm text-gray-600 mb-1">Từ khóa</label>
-            <input value={keyword} onChange={e => setKeyword(e.target.value)} className="w-full border rounded px-3 py-2" placeholder="Chức danh hoặc công ty" />
-          </div>
-          <div className="mb-3">
-            <label className="block text-sm text-gray-600 mb-1">Khu vực</label>
-            <select value={location} onChange={e => setLocation(e.target.value)} className="w-full border rounded px-3 py-2">
-              <option value="">Tất cả</option>
-              {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-            </select>
-          </div>
-          <div className="mb-3">
-            <label className="block text-sm text-gray-600 mb-1">Ngành nghề</label>
-            <select value={category} onChange={e => setCategory(e.target.value)} className="w-full border rounded px-3 py-2">
-              <option value="">Tất cả</option>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="mb-3">
-            <label className="block text-sm text-gray-600 mb-1">Loại hình</label>
-            <select value={type} onChange={e => setType(e.target.value)} className="w-full border rounded px-3 py-2">
-              <option value="">Tất cả</option>
-              {types.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 mt-4">
-            <button onClick={() => {}} className="flex-1 bg-[#2563eb] text-white px-3 py-2 rounded font-semibold">Áp dụng</button>
-            <button onClick={clearFilters} className="flex-1 border rounded px-3 py-2">Xóa</button>
-          </div>
+        {/* Sidebar filters (extracted to component) */}
+        <aside className="col-span-1">
+          <JobsFilters
+            keyword={keyword}
+            setKeyword={setKeyword}
+            category={category}
+            setCategory={setCategory}
+            type={type}
+            setType={setType}
+            types={types}
+            categoriesOptions={categoriesOptions}
+            categories={categories}
+            selectedCategories={selectedCategories}
+            setSelectedCategories={setSelectedCategories}
+            salaryMin={salaryMin}
+            setSalaryMin={setSalaryMin}
+            salaryMax={salaryMax}
+            setSalaryMax={setSalaryMax}
+            jobTimeFilter={jobTimeFilter}
+            setJobTimeFilter={setJobTimeFilter}
+            onApply={onApply}
+            onClear={clearFilters}
+          />
         </aside>
 
         {/* Main results */}
@@ -144,7 +264,7 @@ export default function JobsPage() {
 
           <div className="grid grid-cols-1 gap-4">
             {loading ? (
-              <div className="col-span-full p-6 text-center text-gray-500">Đang tải...</div>
+              <div className="col-span-full p-6 text-center text-gray-500"><InlineLoader /></div>
             ) : (
               filtered.map(job => <JobCard key={job.jobId} job={job} />)
             )}

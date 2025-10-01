@@ -8,30 +8,30 @@ export default function BannerSearch() {
   const [keyword, setKeyword] = useState(null);
   const [location, setLocation] = useState(null);
 
-  const jobOptions = [
-    { value: 'frontend', label: 'Frontend Developer' },
-    { value: 'backend', label: 'Backend Developer' },
-    { value: 'fullstack', label: 'Fullstack Developer' },
-    { value: 'designer', label: 'Designer' },
-    { value: 'pm', label: 'Product Manager' }
-  ];
+  // const jobOptions = [
+  //   { value: 'frontend', label: 'Frontend Developer' },
+  //   { value: 'backend', label: 'Backend Developer' },
+  //   { value: 'fullstack', label: 'Fullstack Developer' },
+  //   { value: 'designer', label: 'Designer' },
+  //   { value: 'pm', label: 'Product Manager' }
+  // ];
 
-  const locationOptions = [
-    { value: 'hanoi', label: 'Hà Nội' },
-    { value: 'hcm', label: 'Hồ Chí Minh' },
-    { value: 'danang', label: 'Đà Nẵng' },
-    { value: 'remote', label: 'Remote' }
-  ];
+  // const locationOptions = [
+  //   { value: 'hanoi', label: 'Hà Nội' },
+  //   { value: 'hcm', label: 'Hồ Chí Minh' },
+  //   { value: 'danang', label: 'Đà Nẵng' },
+  //   { value: 'remote', label: 'Remote' }
+  // ];
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const data = {
-      keyword: keyword?.value || null,
-      location: location?.value || null
-    };
-    console.log('Banner search submitted:', data);
-    // TODO: gửi data lên API hoặc xử lý chuyển trang tìm kiếm
-  };
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   const data = {
+  //     keyword: keyword?.value || null,
+  //     location: location?.value || null
+  //   };
+  //   console.log('Banner search submitted:', data);
+  //   // TODO: gửi data lên API hoặc xử lý chuyển trang tìm kiếm
+  // };
 
   return (
     <section className="w-full bg-white pt-8 pb-6 border-b">
@@ -42,7 +42,7 @@ export default function BannerSearch() {
           </h1>
           <p className="text-gray-600 mb-6">Chào mừng đến với WorkVerse</p>
 
-          <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
+          {/* <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4">
             <Box className="flex-1">
               <Autocomplete
                 options={jobOptions}
@@ -110,7 +110,7 @@ export default function BannerSearch() {
             >
               Tìm Việc
             </Button>
-          </form>
+          </form> */}
 
         </div>
       </div>

@@ -18,10 +18,10 @@ export default function Auth() {
     if (role) setInitialRole(Number(role));
   }, [location.search]);
   return (
-   <div className="min-h-screen flex bg-[#eaf2fb] h-screen overflow-hidden">
+   <div className="min-h-screen flex flex-col md:flex-row bg-[#eaf2fb] h-screen overflow-hidden">
       {/* Cột trái: Form đăng ký */}
       <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl px-10 py-4 flex flex-col">
+        <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl px-6 py-6 sm:px-10 sm:py-4 flex flex-col">
           {formType === 'login' && (
             <LoginForm
               onShowRegister={() => setFormType('register')}
@@ -37,7 +37,7 @@ export default function Auth() {
         </div>
       </div>
       {/* Cột phải: StatsPanel */}
-      <div className="flex-1 flex items-center justify-center relative overflow-hidden bg-[#1a2332]">
+  <div className="hidden md:flex flex-1 items-center justify-center relative overflow-hidden bg-[#1a2332]">
         <div className="absolute inset-0 grid grid-cols-4 grid-rows-4">
           {[...Array(16)].map((_, i) => (
             <div

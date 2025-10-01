@@ -8,6 +8,7 @@ import FeaturedCompanies from '../components/homepage/FeaturedCompanies';
 import Loading from '../components/common/loading/Loading';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import PromoBanner from '../components/homepage/PromoBanner';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ export default function HomePage() {
     <MainLayout role={normalizedRole} hasSidebar={false}>
         {/* Each child component manages its own loading state now. Removed global Loading overlay to avoid full-page reloads when a single component paginates. */}
       <BannerSearch />
+      <PromoBanner imageUrl={"https://scontent.fsgn2-3.fna.fbcdn.net/v/t39.30808-6/555736342_122168935118590474_6570772927044831720_n.png?_nc_cat=107&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeHiXZxTnukOM-_srDGpDCIOUJd_mi3Kc6lQl3-aLcpzqX0NELkNxainqOAnZRsylWmLD3eJyKplNrt5lqFTRanU&_nc_ohc=fWh4pazPQjsQ7kNvwGaqFTK&_nc_oc=AdkzNkindFUDe3xDSwJaie5i5FTRJP7mHyaX5bt4pkIZqWQ4dvvfLoVRZFj65gRRt1eIF6N9SnUUei-KRtd2mLsC&_nc_zt=23&_nc_ht=scontent.fsgn2-3.fna&_nc_gid=FEq7ev26bmlvnMz-yWcyzg&oh=00_AfbFzSLc3Zkx36SO6CwgleRLJod5K9BEMK6Rr12lpdJgzw&oe=68E2CBA3"} />
       <StatsPanel setIsLoading={setStatsLoading} />
       <RegisterBox />
       <PlatformSteps />

@@ -59,7 +59,11 @@ function normalizeUser(candidate) {
 	else if (employerId !== null) { finalRole = 'employer'; finalRoleId = finalRoleId || 3; }
 	else finalRole = mapRole(roleId);
 
-	return { ...candidate, employeeId, employerId, roleId: finalRoleId, role: finalRole };
+	const hasProfile = (finalRole === 'employee' && employeeId !== null) || (finalRole === 'employer' && employerId !== null);
+	const profileType = hasProfile ? finalRole : null;
+	const profileId = profileType === 'employee' ? employeeId : (profileType === 'employer' ? employerId : null);
+
+	return { ...candidate, employeeId, employerId, roleId: finalRoleId, role: finalRole, hasProfile, profileType, profileId };
 }
 
 export function AuthProvider({ children }) {
@@ -75,7 +79,9 @@ export function AuthProvider({ children }) {
 			if (userCookie) {
 				try {
 					const parsed = JSON.parse(userCookie);
-					if (mounted) setUser(parsed);
+					// ensure cookie-provided user is normalized (numbers, role mapping)
+					const normalized = normalizeUser(parsed) || parsed;
+					if (mounted) setUser(normalized);
 					return;
 				} catch (e) {
 					// ignore parse error and continue to token parsing
