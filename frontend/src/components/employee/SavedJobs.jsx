@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function SavedJobs({ items = [], onOpen = () => {}, onRemove = () => {} }) {
+  const navigate = useNavigate();
+
   return (
     <div className="bg-white rounded-lg border p-4">
       <div className="flex items-center justify-between mb-4">
@@ -19,7 +22,18 @@ export default function SavedJobs({ items = [], onOpen = () => {}, onRemove = ()
             </div>
 
             <div className="flex items-center gap-2">
-              <button onClick={() => onOpen(b)} className="text-sm px-3 py-1 border rounded bg-blue-500 text-white hover:bg-blue-600">Chi tiết</button>
+              <button
+                onClick={() => {
+                  const jobId = b.jobId || b.job_id || b.id || (b.job && (b.job.jobId || b.job.id));
+                  if (jobId) {
+                    onOpen(jobId);
+                    navigate(`/jobs/${jobId}`);
+                  } else {
+                    onOpen(b);
+                  }
+                }}
+                className="text-sm px-3 py-1 border rounded bg-blue-500 text-white hover:bg-blue-600"
+              >Chi tiết</button>
               <button onClick={() => onRemove(b)} className="text-sm px-3 py-1 bg-red-50 text-red-600 rounded">Bỏ lưu</button>
             </div>
           </div>

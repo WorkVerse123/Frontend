@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Box, Typography } from '@mui/material';
+import { Card, Box, Typography, Button } from '@mui/material';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 import ApiEndpoints from '../../services/ApiEndpoints';
 import { get as apiGet } from '../../services/ApiClient';
@@ -12,8 +14,11 @@ export default function EmployerJobsList({ employerId }) {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedJobId, setSelectedJobId] = useState(null);
+  const [noJobs, setNoJobs] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
@@ -28,9 +33,16 @@ export default function EmployerJobsList({ employerId }) {
     const load = async () => {
       try {
         setLoading(true);
+        setNoJobs(false);
         const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYER_JOBS(employerId)));
         if (!mounted) return;
         const parsed = res?.data ?? res;
+        // handle explicit "no jobs" API shape: { statusCode: 404, message: 'No jobs...', data: null }
+        if (parsed == null || (parsed && (parsed.statusCode === 404 || parsed.data == null && parsed.message && parsed.message.toLowerCase().includes('no jobs')))) {
+          setJobs([]);
+          setNoJobs(true);
+          return;
+        }
         // Normalize various possible API shapes into an array of jobs
         let jobList = [];
         if (Array.isArray(parsed)) {
@@ -49,9 +61,20 @@ export default function EmployerJobsList({ employerId }) {
           else if (possibleJob && typeof possibleJob === 'object' && Object.keys(possibleJob).length) jobList = [possibleJob];
         }
         setJobs(jobList);
+        if (!jobList || jobList.length === 0) setNoJobs(true);
       } catch (err) {
         const isCanceled = err?.name === 'AbortError' || err?.code === 'ERR_CANCELED' || err?.name === 'CanceledError' || (err?.message && err.message.toLowerCase().includes('cancel'));
-        if (!isCanceled) setError(err);
+        if (!isCanceled) {
+          // treat explicit 404 / empty responses as "no jobs"
+          const statusCode = err?.response?.data?.statusCode ?? err?.status ?? err?.response?.status ?? err?.statusCode ?? null;
+          const message = (err?.response?.data?.message || err?.message || '').toString().toLowerCase();
+          if (statusCode === 404 || message.includes('no jobs') || message.includes('not found')) {
+            setNoJobs(true);
+            setError(null);
+          } else {
+            setError(err);
+          }
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -59,7 +82,11 @@ export default function EmployerJobsList({ employerId }) {
 
     load();
     return () => { mounted = false; ac.abort(); };
-  }, [employerId]);
+  // Re-run load when employerId or the authenticated user's identity changes
+  // (profileId/employerId/id/profileType). This ensures the owner CTA updates
+  // as soon as the auth context becomes available and prevents needing a full
+  // page refresh to see the "Đăng tin tuyển dụng" button.
+  }, [employerId, user?.profileId, user?.employerId, user?._raw?.EmployerId, user?.id, user?.profileType]);
 
 
 
@@ -69,6 +96,24 @@ export default function EmployerJobsList({ employerId }) {
 
   if (error) {
     return <div className="text-sm text-red-600">Không tải được danh sách việc làm.</div>;
+  }
+
+  if (noJobs) {
+    // robust owner check: accept profileId, employerId, raw EmployerId or id
+    const userEmployerId = user?.profileId ?? user?.employerId ?? user?._raw?.EmployerId ?? user?.id ?? null;
+    const isOwner = user?.profileType === 'employer' && userEmployerId != null && Number(userEmployerId) === Number(employerId);
+    return (
+      <div className="bg-white rounded-lg p-6 text-center">
+        {isOwner ? (
+          <div>
+            <div className="mb-3 text-lg font-medium">Bạn chưa có tin tuyển dụng nào</div>
+            <Button variant="contained" color="primary" onClick={() => navigate('/jobs/create')}>Đăng tin tuyển dụng</Button>
+          </div>
+        ) : (
+          <div className="text-sm text-slate-600">Nhà tuyển dụng này chưa có tin tuyển dụng.</div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -83,13 +128,13 @@ export default function EmployerJobsList({ employerId }) {
           <Card
             key={job.jobId ?? job.id ?? job._id ?? idx}
             className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => { setSelectedJobId(job.jobId); setJobDialogOpen(true); }}
+            onClick={() => { setSelectedJob(job); setJobDialogOpen(true); }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                setSelectedJobId(job.jobId);
+                setSelectedJob(job);
                 setJobDialogOpen(true);
               }
             }}
@@ -111,9 +156,10 @@ export default function EmployerJobsList({ employerId }) {
       </div>
       {/* Job detail dialog */}
       <JobDetailDialog
-        jobId={selectedJobId}
+        job={selectedJob}
+        employerId={employerId}
         open={jobDialogOpen}
-        onClose={() => { setJobDialogOpen(false); setSelectedJobId(null); }}
+        onClose={() => { setJobDialogOpen(false); setSelectedJob(null); }}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { IconButton, Select, MenuItem, Dialog, AppBar, Toolbar, Typography, List, ListItem, ListItemText, useTheme, useMediaQuery, Box, Avatar, Divider, Button, ListItemIcon } from '@mui/material';
+import NotificationsPopover from '../../common/notifications/NotificationsPopover';
 import UserMenu from './UserMenu';
 import { useNavigate } from 'react-router-dom';
 import { deleteCookie } from '../../../services/AuthCookie';
@@ -74,8 +75,8 @@ export default function EmployeeHeader() {
           <MenuItem value="vi">Tiếng Việt</MenuItem>
           {/* <MenuItem value="en">English</MenuItem> */}
         </Select>
-        <IconButton color="inherit" size="large" aria-label="Thông báo"><NotificationsIcon /></IconButton>
-        <IconButton color="inherit" size="large" aria-label="Lịch"><CalendarTodayIcon /></IconButton>
+        <NotificationsPopover />
+        <IconButton color="inherit" size="large" aria-label="Lịch" onClick={() => navigate('/calendar')}><CalendarTodayIcon /></IconButton>
       </div>
 
       {/* Mobile menu trigger */}

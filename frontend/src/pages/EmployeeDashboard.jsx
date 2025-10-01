@@ -6,9 +6,10 @@ import ApplicationsList from '../components/employee/ApplicationsList';
 import AppliedJobs from '../components/employee/AppliedJobs';
 import SavedJobs from '../components/employee/SavedJobs';
 import Loading from '../components/common/loading/Loading';
-import ApiEndpoints from '../services/ApiEndpoints';
 import { get as apiGet } from '../services/ApiClient';
 import { handleAsync } from '../utils/HandleAPIResponse';
+import { del } from '../services/ApiClient';
+import ApiEndpoints from '../services/ApiEndpoints';
 import EmployeeProfilePanel from '../components/employee/EmployeeProfilePanel';
 import SubscriptionPanel from '../components/employee/SubscriptionPanel';
 import { useAuth } from '../contexts/AuthContext';
@@ -147,10 +148,29 @@ export default function EmployeeDashboard() {
             {activeTab === 'applied' ? (
               <AppliedJobs items={applications} onView={(app) => console.log('view', app)} />
             ) : activeTab === 'saved' ? (
-              <SavedJobs
+                <SavedJobs
                 items={bookmarks}
                 onOpen={(b) => console.log('open bookmark', b)}
-                onRemove={(b) => setBookmarks(prev => prev.filter(x => x.bookmarkId !== b.bookmarkId))}
+                onRemove={async (b) => {
+                  // optimistic UI
+                  setBookmarks(prev => prev.filter(x => x.bookmarkId !== (b.bookmarkId || b.bookmark_id)));
+                  try {
+                    const resolvedEmployeeId = user?.profileId || user?.employeeId || user?._raw?.EmployeeId || null;
+                    if (!resolvedEmployeeId) return;
+                    const id = b.bookmarkId || b.bookmark_id || b.id || null;
+                    if (!id) return;
+                    const url = `${ApiEndpoints.EMPLOYEE_BOOKMARKS(resolvedEmployeeId)}/${id}`;
+                    const res = await handleAsync(del(url));
+                    if (!res || (res && res.success === false)) {
+                      // rollback on failure
+                      setBookmarks(prev => [b, ...prev]);
+                    }
+                  } catch (err) {
+                    // rollback
+                    setBookmarks(prev => [b, ...prev]);
+                    console.error('Failed to remove bookmark', err);
+                  }
+                }}
               />
             ) : activeTab === 'profile' ? (
               <EmployeeProfilePanel employee={null} onSave={(data) => console.log('save profile', data)} />

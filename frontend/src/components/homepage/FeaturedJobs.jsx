@@ -75,7 +75,7 @@ export default function FeaturedJobs({ setIsLoading }) {
           jobs
           .filter(job => (job.isPriority === 1 || job.isPriority === '1' || job.isPriority === true) && (job.jobStatus === 'opened' || job.jobStatus === 'active'))
           .map(job => {
-            const daysLeft = getDaysLeft(job.jobExpireAt, job.jobStatus);
+            const daysLeft = getDaysLeft(job.jobExpiredAt, job.jobStatus);
             return (
               <div key={job.jobId} className="bg-white rounded-xl shadow p-4 flex items-center justify-between border">
                 <div>
@@ -84,7 +84,7 @@ export default function FeaturedJobs({ setIsLoading }) {
                     <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs ml-2">{job.jobCategory}</span>
                   </div>
                   <div className="text-gray-500 text-sm">
-                    {job.jobLocation} • {job.jobSalaryMin} - {job.jobSalaryMax} {job.jobSalaryCurrency}
+                    {job.jobLocation} • {job.jobSalaryMin} - {job.jobSalaryMax} VND
                     {daysLeft && (
                       <span className="ml-2 text-xs text-green-600">
                         | Còn {daysLeft} ngày ứng tuyển

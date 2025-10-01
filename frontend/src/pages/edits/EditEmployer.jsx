@@ -5,6 +5,7 @@ import EmployerForm from '../../components/employer-profile/EmployerForm';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 import ApiEndpoints from '../../services/ApiEndpoints';
 import { get as apiGet, put as apiPut } from '../../services/ApiClient';
+import UploadService from '../../services/UploadService';
 
 export default function EditEmployer() {
   const { user } = useAuth();
@@ -36,11 +37,31 @@ export default function EditEmployer() {
     const ac = new AbortController();
     (async () => {
       try {
-        const resolvedEmployerId = user?.employerId ?? user?._raw?.EmployerId ?? null;
+        const resolvedEmployerId = user?.profileId ?? user?.employerId ?? user?._raw?.EmployerId ?? user?.id ?? null;
         if (!resolvedEmployerId) throw new Error('No employer id available');
         const res = await apiGet(ApiEndpoints.EMPLOYER(resolvedEmployerId), { signal: ac.signal });
         if (!mounted) return;
-        const parsed = res?.data || res;
+        const server = res?.data ?? res;
+        const inner = server?.data ?? server;
+        // normalize to the API example shape
+        const normalize = (e) => {
+          if (!e || typeof e !== 'object') return null;
+          return {
+            employerId: e.employerId ?? e.EmployerId ?? e.id ?? null,
+            companyName: e.companyName ?? e.CompanyName ?? e.name ?? '',
+            employerTypeName: e.employerTypeName ?? (e.employerType && (e.employerType.name || e.employerType.employerTypeName)) ?? '',
+            employerType: e.employerType ?? e.employerTypeId ?? null,
+            address: e.address ?? e.companyAddress ?? e.company_address ?? '',
+            websiteUrl: e.websiteUrl ?? e.companyWebsite ?? e.website ?? '',
+            logoUrl: e.logoUrl ?? e.CompanyLogo ?? e.logo ?? '',
+            dateEstablish: e.dateEstablish ?? e.dateEstablish ?? e.dateEstablished ?? e.date_establish ?? null,
+            description: e.description ?? e.desc ?? e.about ?? '',
+            contactEmail: e.contactEmail ?? e.contact_email ?? e.email ?? '',
+            contactPhone: e.contactPhone ?? e.contact_phone ?? e.phone ?? '',
+            _raw: e
+          };
+        };
+        const parsed = normalize(inner);
         setValues(parsed || null);
       } catch (err) {
         if (!mounted) setValues(null);
@@ -56,7 +77,7 @@ export default function EditEmployer() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const resolvedEmployerId = user?.employerId ?? user?._raw?.EmployerId ?? null;
+      const resolvedEmployerId = user?.profileId ?? user?.employerId ?? user?._raw?.EmployerId ?? user?.id ?? null;
       if (!resolvedEmployerId) throw new Error('No employer id available');
       // build payload with backend-expected keys
       const pickPositive = (v) => {
@@ -76,11 +97,26 @@ export default function EditEmployer() {
         websiteUrl: values?.websiteUrl ?? values?.companyWebsite ?? values?.website ?? '',
         logoUrl: values?.logoUrl ?? values?.CompanyLogo ?? values?.logo ?? '',
         dateEstablish: values?.dateEstablish ?? values?.dateEstablished ?? values?.date_establish ?? null,
-        description: values?.description ?? values?.desc ?? values?.about ?? ''
+        description: values?.description ?? values?.desc ?? values?.about ?? '',
+        // contact fields (backend validation requires ContactEmail/ContactPhone in some flows)
+        contactEmail: values?.contactEmail ?? values?.email ?? values?._raw?.contactEmail ?? '',
+        contactPhone: values?.contactPhone ?? values?.phone ?? values?._raw?.contactPhone ?? ''
       };
 
       // remove null/empty userId if it's not valid (some backends reject userId:0)
       if (payload.userId == null) delete payload.userId;
+
+      // If a local File was selected for logo (values.logoFile), upload first and replace logoUrl
+      if (values?.logoFile && typeof UploadService?.uploadImageToCloudinary === 'function') {
+        try {
+          const up = await UploadService.uploadImageToCloudinary(values.logoFile, { onProgress: () => {} });
+          const returnedUrl = (up && (up.url || up.secure_url || up.raw?.secure_url)) || null;
+          if (returnedUrl) payload.logoUrl = returnedUrl;
+        } catch (upErr) {
+          console.error('Logo upload failed', upErr);
+          throw new Error(upErr?.response?.data?.message || upErr?.message || 'Upload logo thất bại');
+        }
+      }
 
       await apiPut(ApiEndpoints.EMPLOYER(resolvedEmployerId), payload);
       alert('Đã cập nhật nhà tuyển dụng');

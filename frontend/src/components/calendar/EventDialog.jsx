@@ -1,5 +1,6 @@
-import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
+import React, { useEffect } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Typography } from '@mui/material';
+import { formatDateToDDMMYYYY, parseDDMMYYYYToISO } from '../../utils/formatDate';
 
 /**
  * Props:
@@ -19,8 +20,33 @@ export default function EventDialog({
     ? 'Thời gian bắt đầu không được ở quá khứ'
     : (startError ? 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc' : '');
 
+  // Defensive guard to restore body overflow/padding if other code changes it while this dialog is open
+  useEffect(() => {
+    if (!open || typeof document === 'undefined') return;
+    const prev = document.body.style.overflow;
+    const prevPad = document.body.style.paddingRight;
+    const obs = new MutationObserver(() => {
+      try {
+        if (document.body.style.overflow === 'hidden') {
+          document.body.style.overflow = prev || '';
+          try {
+            if (document.body.style.paddingRight !== prevPad) {
+              document.body.style.paddingRight = prevPad || '';
+            }
+          } catch (e) { /* ignore */ }
+        }
+      } catch (e) { /* ignore */ }
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+    return () => {
+      try { obs.disconnect(); } catch (e) {}
+      try { document.body.style.overflow = prev || ''; } catch (e) {}
+      try { document.body.style.paddingRight = prevPad || ''; } catch (e) {}
+    };
+  }, [open]);
+
   return (
-  <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" ModalProps={{ disableScrollLock: true }}>
+  <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Thêm / Chỉnh sửa sự kiện</DialogTitle>
       <DialogContent className="space-y-4">
         <TextField
@@ -29,13 +55,27 @@ export default function EventDialog({
           onChange={(e) => onChange('title', e.target.value)}
           fullWidth
         />
+        {/* Use text input with dd/mm/yyyy display and parse back to ISO for internal value */}
         <TextField
-          type="date"
-          label="Ngày"
-          value={value.date || ''}
-          onChange={(e) => onChange('date', e.target.value)}
+          type="text"
+          label="Ngày (dd/mm/yyyy)"
+          disabled = {true}
+          value={value.date ? formatDateToDDMMYYYY(value.date) : ''}
+          onChange={(e) => {
+            const txt = e.target.value;
+            // try to parse dd/mm/yyyy -> ISO (YYYY-MM-DD)
+            const iso = parseDDMMYYYYToISO(txt);
+            // if parse succeeded, update with ISO; otherwise update raw input to allow user typing
+            if (iso) {
+              onChange('date', iso);
+            } else {
+              // let caller manage invalid state; we still pass the raw text so UI can show it
+              onChange('date', txt);
+            }
+          }}
           fullWidth
           InputLabelProps={{ shrink: true }}
+          helperText={value.date && typeof value.date === 'string' && !parseDDMMYYYYToISO(formatDateToDDMMYYYY(value.date)) ? 'Định dạng ngày không hợp lệ (dd/mm/yyyy)' : ''}
         />
         <div className="grid grid-cols-2 gap-3">
           <TextField

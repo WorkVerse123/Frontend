@@ -1,4 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ApiEndpoints from '../../../services/ApiEndpoints';
+import { post as apiPost } from '../../../services/ApiClient';
+import { useAuth } from '../../../contexts/AuthContext';
 
 function generateAIResponse(userText) {
   // Simple deterministic mock response logic. Replace with API call when ready.
@@ -11,6 +14,7 @@ function generateAIResponse(userText) {
 }
 
 export default function AIChatWidget() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
     { from: 'ai', text: 'Xin chào! Tôi là trợ lý AI. Hỏi tôi về tìm việc, nhà tuyển dụng hoặc quy trình ứng tuyển.' },
@@ -30,12 +34,35 @@ export default function AIChatWidget() {
     setInput('');
     setSending(true);
 
-    // simulate thinking time
-    setTimeout(() => {
+    // choose endpoint based on role
+    const role = (user && (user.profileType || user.role || user.roleName)) ? String(user.profileType || user.role || user.roleName).toLowerCase() : 'guest';
+    const isEmployee = role === 'employee' || role === '4' || role === 'emp' || role === 'employee';
+    const isEmployer = role === 'employer' || role === '3' || role === 'employer';
+
+    try {
+      // prefer server endpoint when available
+      let reply = null;
+      if (isEmployee && ApiEndpoints.AI_CHAT_EMPLOYEE) {
+        const res = await apiPost(ApiEndpoints.AI_CHAT_EMPLOYEE, { query: text, user: user || null });
+        reply = res?.data?.reply || res?.data || res?.reply || null;
+      } else if (isEmployer && ApiEndpoints.AI_CHAT_EMPLOYER) {
+        const res = await apiPost(ApiEndpoints.AI_CHAT_EMPLOYER, { query: text, user: user || null });
+        reply = res?.data?.reply || res?.data || res?.reply || null;
+      }
+
+      if (!reply) {
+        // fallback to local generator when no server reply
+        reply = generateAIResponse(text);
+      }
+
+      setMessages(prev => [...prev, { from: 'ai', text: reply }]);
+    } catch (e) {
+      // on any failure fallback to mock
       const reply = generateAIResponse(text);
       setMessages(prev => [...prev, { from: 'ai', text: reply }]);
+    } finally {
       setSending(false);
-    }, 700 + Math.random() * 900);
+    }
   };
 
   const handleKey = (e) => {
@@ -50,7 +77,7 @@ export default function AIChatWidget() {
       {/* Chat panel - fixed independently so it doesn't affect button position */}
       {open && (
         <div className="fixed bottom-20 right-6 z-50">
-          <div className="w-80 md:w-96 h-96 bg-white shadow-xl rounded-xl flex flex-col overflow-hidden">
+  <div className="w-80 md:w-96 h-[30rem] bg-white shadow-xl rounded-xl flex flex-col overflow-hidden border border-slate-200">
             <div className="flex items-center justify-between px-4 py-2 border-b">
               <div className="font-semibold text-sm">Trợ lý AI</div>
               <div className="flex items-center gap-2">
@@ -64,8 +91,11 @@ export default function AIChatWidget() {
 
             <div ref={listRef} className="flex-1 overflow-auto p-3 space-y-2 bg-[#f8fafc]">
               {messages.map((m, i) => (
-                <div key={i} className={m.from === 'ai' ? 'text-sm text-slate-800' : 'text-sm text-white'}>
-                  <div className={m.from === 'ai' ? 'inline-block bg-white text-slate-800 px-3 py-2 rounded-lg shadow' : 'inline-block bg-[#2563eb] px-3 py-2 rounded-lg'}>
+                <div key={i} className={`flex ${m.from === 'ai' ? 'justify-start' : 'justify-end'}`}>
+                  <div className={m.from === 'ai'
+                    ? 'text-sm inline-block bg-white text-slate-800 px-3 py-2 rounded-lg shadow max-w-[80%]'
+                    : 'text-sm text-white inline-block bg-[#2563eb] px-3 py-2 rounded-lg max-w-[80%] text-right'
+                  }>
                     {m.text}
                   </div>
                 </div>

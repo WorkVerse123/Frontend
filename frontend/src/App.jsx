@@ -9,6 +9,7 @@ import WorkCalendar from './pages/WorkCalendar'
 import EmployerJobs from './pages/EmployerJobs'
 import CandidatesPage from './pages/CandidatesPage'
 import CreateJob from './pages/creates/CreateJob/CreateJob'
+import EditJob from './pages/edits/EditJob'
 import EmployerProfile from './pages/EmployerProfile'
 import EmployeeDashboard from './pages/EmployeeDashboard'
 import JobDetail from './pages/JobDetail'
@@ -31,6 +32,7 @@ function App() {
         <Route path="/employer/jobs" element={<EmployerJobs />} />
         <Route path="/candidates" element={<CandidatesPage />} />
         <Route path="/jobs/create" element={<CreateJob />} />
+  <Route path="/jobs/edit/:jobId" element={<EditJob />} />
         <Route path="/employer/:id" element={<EmployerProfile />} />
         <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
         <Route path="/employer/:id/edit" element={<EditEmployer />} />

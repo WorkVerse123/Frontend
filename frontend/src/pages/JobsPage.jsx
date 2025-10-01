@@ -61,19 +61,37 @@ export default function JobsPage() {
     // helper: given a freshly fetched jobs array, fetch user's applications and mark applied flags
     async function markAppliedOnJobs(jobsArray, mountedRef = { v: true }) {
       try {
-        const employeeId = user?.employeeId || null;
-        if (!employeeId) {
-          // no user -> just set jobs without applied flags
-          if (mountedRef.v) setAllJobs(jobsArray || []);
-          return;
-        }
-        const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(employeeId)));
-        const apps = res?.data?.applications || res?.data || res || [];
-        const appliedIds = new Set((Array.isArray(apps) ? apps : []).map(a => String(a.jobId || a.jobId)));
-        if (!mountedRef.v) return;
-        setAllJobs((jobsArray || []).map(j => ({ ...j, applied: appliedIds.has(String(j.jobId || j.id)) })));
+          const employeeId = user?.employeeId || null;
+          if (!employeeId) {
+            // no user -> just set jobs without applied/bookmark flags
+            if (mountedRef.v) setAllJobs((jobsArray || []).map(j => ({ ...j, applied: false, bookmarked: false, bookmarkId: null })));
+            return;
+          }
+
+          // fetch bookmarks first (so we know saved state), then applications
+          const bookmarksRes = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_BOOKMARKS(employeeId)));
+          const appsRes = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(employeeId)));
+
+          const apps = appsRes?.data?.applications || appsRes?.data || appsRes || [];
+          const appliedIds = new Set((Array.isArray(apps) ? apps : []).map(a => String(a.jobId || a.job_id || a.jobId)));
+
+    const bData = bookmarksRes?.data?.bookmarks || bookmarksRes?.data || bookmarksRes || [];
+          // build map jobId -> bookmarkId
+          const bookmarkMap = new Map();
+          (Array.isArray(bData) ? bData : []).forEach(b => {
+            const jid = String(b.jobId || b.job_id || b.jobId || b.job?.jobId || b.job?.id || '');
+            const id = b.bookmarkId || b.bookmark_id || b.id || b?.id || null;
+            if (jid) bookmarkMap.set(jid, id);
+          });
+
+          if (!mountedRef.v) return;
+          setAllJobs((jobsArray || []).map(j => {
+            const id = String(j.jobId || j.id || j.job_id || '');
+            const isBookmarked = bookmarkMap.has(id);
+            return { ...j, applied: appliedIds.has(id), bookmarked: isBookmarked, bookmarkId: isBookmarked ? bookmarkMap.get(id) : null };
+          }));
       } catch (e) {
-        if (mountedRef.v) setAllJobs(jobsArray || []);
+          if (mountedRef.v) setAllJobs(jobsArray || []);
       }
     }
 

@@ -7,6 +7,8 @@ import { post } from '../services/ApiClient';
 import UploadService from '../services/UploadService';
 import { useLocation } from 'react-router-dom';
 import { STEPS, TYPE_MAP } from '../utils/emun/Enum';
+import { useEffect } from 'react';
+import { get as apiGet } from '../services/ApiClient';
 
 
 
@@ -19,6 +21,7 @@ export default function EmployerSetup() {
     const [description, setDescription] = useState('');
     const [establishedAt, setEstablishedAt] = useState('');
     const [companyType, setCompanyType] = useState('');
+    const [employerTypes, setEmployerTypes] = useState([]);
     const [address, setAddress] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
@@ -86,6 +89,23 @@ export default function EmployerSetup() {
         setStep((s) => Math.max(s - 1, 0));
     };
 
+    // fetch employer types to populate dropdown (API returns { data: [ { employerTypeId, employerTypeName } ] })
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const res = await apiGet(ApiEndpoints.EMPLOYER_TYPES);
+                if (!mounted) return;
+                const list = res?.data?.data || res?.data || [];
+                setEmployerTypes(Array.isArray(list) ? list : []);
+            } catch (e) {
+                console.error('Failed to load employer types', e);
+                setEmployerTypes([]);
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
+
     const handleSave = async () => {
         // final validation
         for (let s = 0; s <= 3; s++) {
@@ -93,7 +113,8 @@ export default function EmployerSetup() {
         }
 
 
-        const employerType = TYPE_MAP[companyType] ?? null;
+        // send numeric employerType id (selected companyType is string of id)
+        const employerType = companyType ? Number(companyType) : null;
 
         // parse website and socials into URL list
         const parseList = (raw) =>
@@ -146,14 +167,23 @@ export default function EmployerSetup() {
 
         const resolvedUserId = navStateUserId || user?.UserId || user?.userId || user?.id || user?.UserID || null;
 
+        // pick only the first website/logo URL — backend expects single values
+        const websiteUrl = websiteUrlsDedup?.[0] || '';
+        const logoUrl = logoUrls?.[0] || '';
+
+        // normalize payload to backend-expected keys (singular fields)
         const payload = {
             userId: resolvedUserId,
             companyName: companyName || '',
             employerType: employerType,
             address: address || '',
-            websiteUrls: websiteUrlsDedup,
-            logoUrls,
-            dateEstablished: establishedAt || '',
+            ContactPhone: phone || '',
+            ContactEmail: email || '',
+            // backend (PUT /api/employer/:id) expects websiteUrl and logoUrl as single values
+            websiteUrl,
+            logoUrl,
+            // backend uses `dateEstablish` (see EditEmployer.jsx) — keep consistent
+            dateEstablish: establishedAt || '',
             description: description || '',
         };
 
@@ -163,17 +193,25 @@ export default function EmployerSetup() {
         setSaving(true);
         try {
             const res = await post(ApiEndpoints.COMPANY_SETUP, payload);
-            // handle Async wrapper shapes: post returns axios response; use status or data
             const ok = res?.status === 200 || res?.status === 201 || (res?.data && (res.data.statusCode === 200 || res.data.statusCode === 201));
             if (!ok) {
                 console.error('Company setup failed', res);
-                alert('Lưu thất bại, thử lại');
+                const serverMsg = res?.data?.message || res?.data || JSON.stringify(res);
+                alert('Lưu thất bại: ' + serverMsg);
             } else {
                 setDone(true);
             }
         } catch (e) {
-            console.error(e);
-            alert('Lưu thất bại, thử lại');
+            // try to surface useful server validation messages when available
+            console.error('Company setup error', e);
+            const serverDetail = e?.response?.data ?? e?.response ?? e?.message ?? e;
+            try {
+                // prefer explicit message field
+                const msg = (e?.response?.data && (e.response.data.message || e.response.data.error)) || JSON.stringify(serverDetail);
+                alert('Lưu thất bại: ' + msg);
+            } catch (ex) {
+                alert('Lưu thất bại, kiểm tra console để biết thêm chi tiết');
+            }
         } finally {
             setSaving(false);
         }
@@ -268,7 +306,7 @@ export default function EmployerSetup() {
                                     error={validationStep === 1 && establishedAt.trim() === ''}
                                     helperText={validationStep === 1 && establishedAt.trim() === '' ? 'Bắt buộc' : ''}
                                 />
-                                <FormControl fullWidth variant="outlined" error={validationStep === 1 && companyType.trim() === ''}>
+                                <FormControl fullWidth variant="outlined" error={validationStep === 1 && companyType === ''}>
                                     <InputLabel id="company-type-label">Loại doanh nghiệp</InputLabel>
                                     <Select
                                         labelId="company-type-label"
@@ -286,15 +324,11 @@ export default function EmployerSetup() {
                                         }}
                                     >
                                         <MenuItem value="">-- Chọn --</MenuItem>
-                                        <MenuItem value="Private Limited">Private Limited</MenuItem>
-                                        <MenuItem value="Public Company">Public Company</MenuItem>
-                                        <MenuItem value="Startup">Startup</MenuItem>
-                                        <MenuItem value="NGO">NGO / Non-profit</MenuItem>
-                                        <MenuItem value="Sole Proprietorship">Sole Proprietorship</MenuItem>
-                                        <MenuItem value="Partnership">Partnership</MenuItem>
-                                        <MenuItem value="Other">Other</MenuItem>
+                                        {employerTypes.map((t) => (
+                                            <MenuItem key={t.employerTypeId} value={String(t.employerTypeId)}>{t.employerTypeName}</MenuItem>
+                                        ))}
                                     </Select>
-                                    {validationStep === 1 && companyType.trim() === '' && <FormHelperText>Bắt buộc</FormHelperText>}
+                                    {validationStep === 1 && companyType === '' && <FormHelperText>Bắt buộc</FormHelperText>}
                                 </FormControl>
                             </div>
                         )}
@@ -376,7 +410,7 @@ export default function EmployerSetup() {
                                     error={validationStep === 3 && !/\S+@\S+\.\S+/.test(email)}
                                     helperText={validationStep === 3 && !/\S+@\S+\.\S+/.test(email) ? 'Email không hợp lệ' : ''}
                                 />
-                                <TextField label="Mạng xã hội / Liên kết (URL, cách nhau bằng dấu phẩy)" value={socials} onChange={e => setSocials(e.target.value)} fullWidth variant="outlined" placeholder="https://facebook.com/..., https://linkedin.com/..." />
+                                <TextField label="Mạng xã hội / Liên kết " value={socials} onChange={e => setSocials(e.target.value)} fullWidth variant="outlined" placeholder="https://facebook.com/..." />
                             </div>
                         )}
                     </div>

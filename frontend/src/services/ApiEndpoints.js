@@ -8,14 +8,15 @@ const ApiEndpoints = {
 
   // Jobs
   JOBS: '/api/jobs',
-    JOB_DETAIL: (id) => `/api/jobs/${id}`,
-    JOBS_LIST: (page = 1, size = 10) => `/api/jobs?pageNumber=${page}&pageSize=${size}`,
-    JOB_CANDIDATES: '/api/jobs/cadidates',
+  JOB_DETAIL: (id) => `/api/jobs/${id}`,
+  JOBS_LIST: (page = 1, size = 10) => `/api/jobs?pageNumber=${page}&pageSize=${size}`,
+  JOB_CANDIDATES: '/api/jobs/cadidates',
   JOB_REVIEWS: (id) => `/api/jobs/${id}/reviews`,
   JOB_CATEGORIES: '/api/jobs/categories',
   JOB_FILTERS: '/job-filter',
 
   // Employer
+  EMPLOYER_TYPES: '/api/EmployerType/types',
   EMPLOYER: (id) => `/api/employer/${id}`,
   EMPLOYER_JOBS: (id) => `/api/employer/${id}/jobs`,
   EMPLOYER_JOB: (id, jobId) => `/api/employer/${id}/jobs/${jobId}`,
@@ -56,6 +57,14 @@ const ApiEndpoints = {
 
   // Misc / Employee dashboard
   EMPLOYEE_DASHBOARD: (id) => `/employee-dashboard/${id}`,
+
+
+
+  //AI chat
+  AI_CHAT_EMPLOYEE: '/api/chatbot-ai/employee',
+  AI_CHAT_EMPLOYER: '/api/chatbot-ai/employer'
 };
+
+
 
 export default ApiEndpoints;

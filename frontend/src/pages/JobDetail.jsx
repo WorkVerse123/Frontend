@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { handleAsync } from '../utils/HandleAPIResponse';
 import EndpointResolver from '../services/EndpointResolver';
 import { get as apiGet } from '../services/ApiClient';
 import JobSidebarInfo from '../components/jobs/JobSidebarInfo';
@@ -8,8 +7,11 @@ import MainLayout from '../components/layout/MainLayout';
 import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/common/loading/Loading';
 import ApplyJobDialog from '../components/common/modals/ApplyJobDialog';
+import DOMPurify from 'dompurify';
 import ApiEndpoints from '../services/ApiEndpoints';
-import { handleAsync as handleAsyncUtil } from '../utils/HandleAPIResponse';
+import BookmarkButton from '../components/common/bookmark/BookmarkButton';
+import { post, del } from '../services/ApiClient';
+import { handleAsync } from '../utils/HandleAPIResponse';
 
 export default function JobDetail() {
   const { id: routeId } = useParams();
@@ -17,7 +19,15 @@ export default function JobDetail() {
   const [loading, setLoading] = useState(true);
   const [applyOpen, setApplyOpen] = useState(false);
   const [appliedForThisJob, setAppliedForThisJob] = useState(false);
+  const [bookmarked, setBookmarked] = useState(Boolean(false));
+  const [bookmarkId, setBookmarkId] = useState(null);
   const { user } = useAuth();
+  const employeeId = user?.id || user?.userId || user?.employeeId || null;
+
+  const [sanitizedDescription, setSanitizedDescription] = useState('');
+  const [sanitizedRequirements, setSanitizedRequirements] = useState('');
+  const descRef = useRef(null);
+  const reqRef = useRef(null);
 
   useEffect(() => {
     // Fetch both job detail and employee's applications up-front so the page
@@ -96,6 +106,60 @@ export default function JobDetail() {
     return () => { mounted = false; ac.abort(); };
   }, [routeId, user]);
 
+  // Sanitize and decode any HTML coming from the job payload (Quill HTML, etc.)
+  useEffect(() => {
+    if (!job) {
+      setSanitizedDescription('');
+      setSanitizedRequirements('');
+      return;
+    }
+    const decodeHtml = (s = '') => {
+      try {
+        const t = document.createElement('textarea');
+        t.innerHTML = s;
+        return t.value;
+      } catch (e) {
+        return s;
+      }
+    };
+    const rawDesc = job.jobDescription || job.jobDesc || job.description || '';
+    const rawReq = job.jobRequirements || job.requirements || '';
+    const decodedDesc = decodeHtml(rawDesc);
+    const decodedReq = decodeHtml(rawReq);
+    try {
+      const allowed = {
+        ALLOWED_TAGS: ['p','br','ul','ol','li','h1','h2','h3','h4','h5','h6','strong','b','em','i','u','a','img','blockquote','pre','code','span','div','table','thead','tbody','tr','th','td','hr'],
+        ALLOWED_ATTR: ['href','target','rel','src','alt','title','class','width','height']
+      };
+      const cleanDesc = DOMPurify.sanitize(decodedDesc || '', allowed);
+      const cleanReq = DOMPurify.sanitize(decodedReq || '', allowed);
+      setSanitizedDescription(cleanDesc);
+      setSanitizedRequirements(cleanReq);
+    } catch (e) {
+      setSanitizedDescription(decodedDesc);
+      setSanitizedRequirements(decodedReq);
+    }
+  }, [job]);
+
+  // Add Tailwind classes to lists/strong after innerHTML is set
+  useEffect(() => {
+    const applyListStyles = (root) => {
+      if (!root) return;
+      try {
+        const uls = root.querySelectorAll('ul, ol');
+        uls.forEach(u => {
+          u.classList.add('list-disc', 'pl-5', 'ml-4', 'space-y-1');
+        });
+        const strongs = root.querySelectorAll('strong');
+        strongs.forEach(s => s.classList.add('font-semibold'));
+      } catch (e) {
+        // noop
+      }
+    };
+    applyListStyles(descRef.current);
+    applyListStyles(reqRef.current);
+  }, [sanitizedDescription, sanitizedRequirements]);
+
   
 
   return (
@@ -138,18 +202,65 @@ export default function JobDetail() {
                 </div>
               </div>
               <div>
-                <button onClick={() => setApplyOpen(true)} className={`${appliedForThisJob ? 'bg-green-600' : 'bg-[#2563eb]'} text-white px-4 py-2 rounded font-semibold`} disabled={appliedForThisJob}>{appliedForThisJob ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}</button>
+                  <div className="flex items-center gap-2">
+                    <BookmarkButton bookmarked={bookmarked} onToggle={async (n) => {
+                      setBookmarked(Boolean(n));
+                      try {
+                        if (!employeeId) { setBookmarked(false); return; }
+                            if (n) {
+                              const res = await handleAsync(post(ApiEndpoints.EMPLOYEE_BOOKMARK_JOB(employeeId, job.jobId)));
+                              if (!res.success) {
+                                const msg = String(res.message || '').toLowerCase();
+                                if (msg.includes('already exists') || msg.includes('already saved') || msg.includes('exist')) {
+                                  // fetch bookmarks to find the bookmark id
+                                  try {
+                                    const bRes = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_BOOKMARKS(employeeId)));
+                                    const bList = bRes?.data?.bookmarks || bRes?.data || bRes || [];
+                                    const found = (Array.isArray(bList) ? bList : []).find(b => String(b.jobId || b.job_id || b.job?.jobId || b.job?.id) === String(job.jobId || job.id));
+                                    if (found) setBookmarkId(found.bookmarkId || found.bookmark_id || found.id || null);
+                                  } catch (e) {
+                                    // ignore
+                                  }
+                                } else {
+                                  throw new Error(res.message || 'Không thể lưu bookmark');
+                                }
+                              } else {
+                                const data = res.data || res;
+                                const id = data.bookmarkId || data.bookmark_id || data.id || data?.data?.id || null;
+                                setBookmarkId(id);
+                              }
+                            } else {
+                          if (!bookmarkId) return;
+                          const url = `${ApiEndpoints.EMPLOYEE_BOOKMARKS(employeeId)}/${bookmarkId}`;
+                          const res = await handleAsync(del(url));
+                          if (!res.success) throw new Error(res.message || 'Không thể xóa bookmark');
+                          setBookmarkId(null);
+                        }
+                      } catch (err) {
+                        setBookmarked((s) => !s);
+                        console.error('Bookmark toggle failed', err);
+                      }
+                    }} size="small" />
+                    <button onClick={() => setApplyOpen(true)} className={`${appliedForThisJob ? 'bg-green-600' : 'bg-[#2563eb]'} text-white px-4 py-2 rounded font-semibold`} disabled={appliedForThisJob}>{appliedForThisJob ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}</button>
+                  </div>
               </div>
             </div>
 
             <section className="prose prose-sm max-w-none text-gray-700">
               <h3 className='font-semibold'>Mô tả công việc</h3>
-              <p>{job.jobDescription}</p>
+              {sanitizedDescription ? (
+                <div ref={descRef} className="text-gray-700" dangerouslySetInnerHTML={{ __html: sanitizedDescription }} />
+              ) : (
+                <p>{job.jobDescription || '—'}</p>
+              )}
 
               <h3 className='font-semibold'>Yêu cầu</h3>
-              <p>{job.jobRequirements}</p>
+              {sanitizedRequirements ? (
+                <div ref={reqRef} className="text-gray-700" dangerouslySetInnerHTML={{ __html: sanitizedRequirements }} />
+              ) : (
+                <p>{job.jobRequirements || '—'}</p>
+              )}
 
-              
             </section>
           </div>
 

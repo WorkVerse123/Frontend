@@ -71,8 +71,12 @@ export default function AppliedJobs({ items = [], onView = () => {} }) {
                 <StatusBadge status={status} />
                 <button
                   onClick={() => {
-                    if (resolvedJobId) navigate(`/jobs/${resolvedJobId}`);
-                    else onView(app);
+                    if (resolvedJobId) {
+                      onView(resolvedJobId);
+                      navigate(`/jobs/${resolvedJobId}`);
+                    } else {
+                      onView(app);
+                    }
                   }}
                   className="bg-blue-600 text-white px-3 py-1 rounded"
                 >

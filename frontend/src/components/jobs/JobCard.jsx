@@ -1,8 +1,61 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import BookmarkButton from '../common/bookmark/BookmarkButton';
+import ApiEndpoints from '../../services/ApiEndpoints';
+import { post, del, get as apiGet } from '../../services/ApiClient';
+import { handleAsync } from '../../utils/HandleAPIResponse';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function JobCard({ job }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const employeeId = user?.id || user?.userId || user?.employeeId || null;
+  const [bookmarked, setBookmarked] = useState(Boolean(job?.bookmarked));
+  const [bookmarkId, setBookmarkId] = useState(job?.bookmarkId || job?.bookmark_id || null);
+
+  const handleToggleBookmark = async (next) => {
+    setBookmarked(Boolean(next));
+    try {
+      if (!employeeId) {
+        console.warn('Attempted to toggle bookmark while not authenticated');
+        setBookmarked(false);
+        return;
+      }
+      if (next) {
+        const res = await handleAsync(post(ApiEndpoints.EMPLOYEE_BOOKMARK_JOB(employeeId, job.jobId)));
+        if (!res.success) {
+          const msg = String(res.message || '').toLowerCase();
+          if (msg.includes('already exists') || msg.includes('already saved') || msg.includes('exist')) {
+            // fetch bookmarks to find the bookmark id
+            try {
+              const bRes = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_BOOKMARKS(employeeId)));
+              const bList = bRes?.data?.bookmarks || bRes?.data || bRes || [];
+              const found = (Array.isArray(bList) ? bList : []).find(b => String(b.jobId || b.job_id || b.job?.jobId || b.job?.id) === String(job.jobId || job.id));
+              if (found) setBookmarkId(found.bookmarkId || found.bookmark_id || found.id || null);
+            } catch (e) {
+              // ignore
+            }
+          } else {
+            throw new Error(res.message || 'Không thể lưu bookmark');
+          }
+        } else {
+          const data = res.data || res;
+          const id = data.bookmarkId || data.bookmark_id || data.id || data?.data?.id || null;
+          setBookmarkId(id);
+        }
+      } else {
+        if (!bookmarkId) return;
+        const url = `${ApiEndpoints.EMPLOYEE_BOOKMARKS(employeeId)}/${bookmarkId}`;
+        const res = await handleAsync(del(url));
+        if (!res.success) throw new Error(res.message || 'Không thể xóa bookmark');
+        setBookmarkId(null);
+      }
+    } catch (err) {
+      setBookmarked((s) => !s);
+      // eslint-disable-next-line no-console
+      console.error('Bookmark toggle failed', err);
+    }
+  };
   return (
     <div className="bg-white rounded-xl shadow p-4 border hover:shadow-md transition">
       <div className="flex items-start gap-4">
@@ -33,7 +86,10 @@ export default function JobCard({ job }) {
                 <span className="text-xs text-gray-500">{job.jobType}</span>
               )}
             </div>
-            <button onClick={() => navigate(`/jobs/${job.jobId || job.id}`)} className={`${job.applied ? 'bg-green-600 hover:bg-green-700' : 'bg-[#2563eb] hover:bg-blue-700'} text-white px-3 py-1 rounded text-sm font-semibold`}>{job.applied ? 'Đã ứng tuyển' : 'Ứng Tuyển'}</button>
+            <div className="flex items-center gap-2">
+              <BookmarkButton bookmarked={bookmarked} onToggle={handleToggleBookmark} size="small" />
+              <button onClick={() => navigate(`/jobs/${job.jobId || job.id}`)} className={`${job.applied ? 'bg-green-600 hover:bg-green-700' : 'bg-[#2563eb] hover:bg-blue-700'} text-white px-3 py-1 rounded text-sm font-semibold`}>{job.applied ? 'Đã ứng tuyển' : 'Ứng Tuyển'}</button>
+            </div>
           </div>
         </div>
       </div>

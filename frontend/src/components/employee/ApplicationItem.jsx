@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function StatusBadge({ status }) {
   const cls = status === 'Đang công tác' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600';
@@ -6,6 +7,7 @@ function StatusBadge({ status }) {
 }
 
 export default function ApplicationItem({ app }) {
+  const navigate = useNavigate();
   const job = app.job || {};
   const emp = app.employer || {};
   const avatarChar = (emp.companyName && emp.companyName.charAt(0)) || (job.title && job.title.charAt(0)) || '?';
@@ -23,7 +25,15 @@ export default function ApplicationItem({ app }) {
       <div className="flex items-center gap-4">
         <div className="text-sm text-gray-700">{job.jobSalaryMin} - {job.jobSalaryMax} {job.jobSalaryCurrency} • {job.jobTime}</div>
         <StatusBadge status={app.status} />
-        <button className="bg-blue-600 text-white px-3 py-1 rounded">Chi tiết</button>
+        <button
+          onClick={() => {
+            const jobId = job?.jobId || job?.job_id || job?.id || app?.jobId || app?.job_id || app?.id;
+            if (jobId) {
+              navigate(`/jobs/${jobId}`, { state: { job } });
+            }
+          }}
+          className="bg-blue-600 text-white px-3 py-1 rounded"
+        >Chi tiết</button>
       </div>
     </div>
   );

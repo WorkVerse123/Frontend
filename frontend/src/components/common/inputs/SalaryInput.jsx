@@ -1,7 +1,7 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
 
-export default function SalaryInput({ min = '', max = '', onChange }) {
+export default function SalaryInput({ min = '', max = '', onChange, minError = false, maxError = false, minHelper = '', maxHelper = '' }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <TextField
@@ -11,6 +11,8 @@ export default function SalaryInput({ min = '', max = '', onChange }) {
         fullWidth
         type="number"
         inputProps={{ min: 0 }}
+        error={minError}
+        helperText={minHelper}
       />
       <TextField
         label="Lương tối đa"
@@ -19,6 +21,8 @@ export default function SalaryInput({ min = '', max = '', onChange }) {
         fullWidth
         type="number"
         inputProps={{ min: 0 }}
+        error={maxError}
+        helperText={maxHelper}
       />
     </div>
   );

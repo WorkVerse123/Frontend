@@ -44,9 +44,9 @@ export default function EmployerHeader() {
       <div className="hidden md:block">
         <UserMenu />
       </div>
-      <IconButton className="md:hidden" color="inherit" onClick={() => setMobileOpen(true)} aria-label="menu">
+      {/* <IconButton className="md:hidden" color="inherit" onClick={() => setMobileOpen(true)} aria-label="menu">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M3 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-      </IconButton>
+      </IconButton> */}
 
   <Dialog fullScreen open={mobileOpen} onClose={() => setMobileOpen(false)} ModalProps={{ disableScrollLock: true }}>
         <AppBar position="relative">
@@ -68,7 +68,7 @@ export default function EmployerHeader() {
 
           <Divider sx={{ mb: 2 }} />
 
-          <List>
+          {/* <List>
             <ListItem button component="a" href="/employer/jobs" onClick={() => setMobileOpen(false)}>
               <ListItemText primary="Quản lý tin tuyển dụng" />
             </ListItem>
@@ -83,7 +83,7 @@ export default function EmployerHeader() {
               <ListItemIcon><LogoutIcon /></ListItemIcon>
               <ListItemText primary="Đăng xuất" />
             </ListItem>
-          </List>
+          </List> */}
         </Box>
       </Dialog>
     </div>

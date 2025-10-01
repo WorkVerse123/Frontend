@@ -15,6 +15,33 @@ export default function UserMenu() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // Defensive: if other code sets document.body.style.overflow = 'hidden' while the menu is open,
+  // restore it so the page doesn't become scroll-locked unexpectedly.
+  React.useEffect(() => {
+    if (!open || typeof document === 'undefined') return;
+    const prev = document.body.style.overflow;
+    const prevPad = document.body.style.paddingRight;
+    const obs = new MutationObserver(() => {
+      try {
+        if (document.body.style.overflow === 'hidden') {
+          // restore overflow and any paddingRight that other code added
+          document.body.style.overflow = prev || '';
+          try {
+            if (document.body.style.paddingRight !== prevPad) {
+              document.body.style.paddingRight = prevPad || '';
+            }
+          } catch (e) { /* ignore */ }
+        }
+      } catch (e) {/* ignore */}
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+    return () => {
+      try { obs.disconnect(); } catch (e) {}
+      try { document.body.style.overflow = prev || ''; } catch (e) {}
+      try { document.body.style.paddingRight = prevPad || ''; } catch (e) {}
+    };
+  }, [open]);
+
   // derive display name from normalized user object (AuthContext)
   const userName = user?.fullName || user?.name || user?.email || user?._raw?.Email || null;
 
@@ -45,8 +72,13 @@ export default function UserMenu() {
     })();
 
     try {
-      const resolvedEmployerId = (user?.profileType === 'employer' && user?.profileId) ? user.profileId : null;
-      const resolvedEmployeeId = (user?.profileType === 'employee' && user?.profileId) ? user.profileId : null;
+      // Resolve profile ids robustly: prefer normalized profileId but fall back to other common fields
+      const resolvedEmployerId = (
+        user?.profileId ?? user?.employerId ?? user?._raw?.EmployerId ?? user?.id ?? null
+      );
+      const resolvedEmployeeId = (
+        user?.profileId ?? user?.employeeId ?? user?._raw?.EmployeeId ?? null
+      );
 
       if (toRole === 'employer' || resolvedEmployerId) {
         if (resolvedEmployerId) {
@@ -86,7 +118,7 @@ export default function UserMenu() {
       </Tooltip>
 
       {isMobile ? (
-  <Dialog open={open} onClose={handleClose} fullScreen ModalProps={{ disableScrollLock: true }}>
+  <Dialog open={open} onClose={handleClose} fullScreen ModalProps={{ disableScrollLock: true }} >
           <AppBar position="relative" color="primary" sx={{ position: 'sticky' }}>
             <Toolbar>
               <Typography variant="h6" sx={{ flex: 1 }}>Tài khoản</Typography>

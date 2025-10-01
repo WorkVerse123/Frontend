@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { format, parse, setHours, setMinutes } from 'date-fns';
+import { parseDDMMYYYYToISO } from '../utils/formatDate';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { handleAsync } from '../utils/HandleAPIResponse';
@@ -18,13 +19,16 @@ export default function WorkCalendar() {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [form, setForm] = useState({ title: '', date: format(new Date(), 'yyyy-MM-dd'), start: '09:00', end: '10:00', type: 'busy' });
 
+    // move hook call here (hooks must be called at top-level of component)
+    const { user } = useAuth();
+
     useEffect(() => {
         let mounted = true;
             setLoading(true);
             const ac = new AbortController();
             Promise.all([
                     (async () => { const { get: apiGet } = await import('../services/ApiClient'); const ApiEndpoints = (await import('../services/ApiEndpoints')).default; return handleAsync(apiGet(ApiEndpoints.JOBS + '/times', { signal: ac.signal })); })(),
-                    (async () => { const { get: apiGet } = await import('../services/ApiClient'); const ApiEndpoints = (await import('../services/ApiEndpoints')).default; const { useAuth } = await import('../contexts/AuthContext'); const { user } = useAuth(); const empId = user?.employeeId ?? user?._raw?.EmployeeId ?? null; if (!empId) return []; return handleAsync(apiGet(ApiEndpoints.EMPLOYEE_BUSY_TIMES(empId), { signal: ac.signal })); })(),
+                    (async () => { const { get: apiGet } = await import('../services/ApiClient'); const ApiEndpoints = (await import('../services/ApiEndpoints')).default; const empId = user?.employeeId ?? user?._raw?.EmployeeId ?? null; if (!empId) return []; return handleAsync(apiGet(ApiEndpoints.EMPLOYEE_BUSY_TIMES(empId), { signal: ac.signal })); })(),
             ]).then(([jobsRes, busyRes]) => {
                 if (!mounted) return;
                 const jobEvents = mapApiTimesToEvents(jobsRes?.data || jobsRes, 'jobTimes', 'job');
@@ -34,10 +38,9 @@ export default function WorkCalendar() {
                 console.error(err);
             }).finally(() => mounted && setLoading(false));
             return () => { mounted = false; ac.abort(); };
-    }, []);
+    }, [user]);
 
-    // normalize role from auth
-    const { user } = useAuth();
+    // normalize role from auth (user is provided by the top-level useAuth call above)
     const normalizeRole = (r) => {
         if (!r) return 'guest';
         if (typeof r === 'number') {
@@ -104,11 +107,17 @@ export default function WorkCalendar() {
         return true;
     };
 
-    const saveForm = () => {
+    const saveForm = async () => {
         // build Dates
+        // normalize date: accept ISO (YYYY-MM-DD) or dd/mm/yyyy from the dialog helper
+        let dateIso = form.date;
+        if (dateIso && dateIso.indexOf('/') !== -1) {
+            const parsed = parseDDMMYYYYToISO(dateIso);
+            if (parsed) dateIso = parsed;
+        }
         const [sh, sm] = form.start.split(':').map(Number);
         const [eh, em] = form.end.split(':').map(Number);
-        const base = parse(form.date, 'yyyy-MM-dd', new Date());
+        const base = parse(dateIso, 'yyyy-MM-dd', new Date());
         const start = setMinutes(setHours(base, sh), sm);
         const end = setMinutes(setHours(base, eh), em);
         // luôn tạo event kiểu "busy"
@@ -118,22 +127,33 @@ export default function WorkCalendar() {
             start, end, type: 'busy',
         };
         setEvents(e => [...e, newEvent]);
-        // format payload for API (log for now)
+        // format payload for API: top-level busyTimes array
         const payload = {
-            employeeId: 123,
-            data: {
-                busyTimes: [
-                    {
-                        dayOfWeek: format(base, 'EEEE'), // "Monday"
-                        startTime: form.start, // "HH:mm"
-                        endTime: form.end,
-                        isBusy: true
-                    }
-                ]
-            }
+            busyTimes: [
+                {
+                    dayOfWeek: format(base, 'EEEE'), // e.g. "Monday"
+                    startTime: form.start, // "HH:mm"
+                    endTime: form.end
+                }
+            ]
         };
-        console.log('POST payload (simulate):', JSON.stringify(payload, null, 2));
-        setDialogOpen(false);
+        console.log('POST payload:', JSON.stringify(payload, null, 2));
+        // Try to POST to the API if we have an employee id from auth
+        try {
+            const empId = user?.employeeId ?? user?._raw?.EmployeeId ?? null;
+            if (empId) {
+                const { post } = await import('../services/ApiClient');
+                const ApiEndpoints = (await import('../services/ApiEndpoints')).default;
+                const res = await handleAsync(post(ApiEndpoints.EMPLOYEE_BUSY_TIMES(empId), payload));
+                console.log('Saved busy times response:', res);
+            } else {
+                console.warn('No employee id available, skipped POST to EMPLOYEE_BUSY_TIMES');
+            }
+        } catch (err) {
+            console.error('Failed to POST busy times:', err);
+        } finally {
+            setDialogOpen(false);
+        }
     };
 
     const onSaveClick = () => {
