@@ -3,7 +3,7 @@ import MainLayout from '../components/layout/MainLayout';
 import JobCard from '../components/jobs/JobCard';
 import { handleAsync } from '../utils/HandleAPIResponse';
 import ApiEndpoints from '../services/ApiEndpoints';
-import { get as apiGet } from '../services/ApiClient';
+import { get as apiGet, post as apiPost, del as apiDel } from '../services/ApiClient';
 import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/common/loading/Loading';
 import Pagination from '@mui/material/Pagination';
@@ -59,41 +59,41 @@ export default function JobsPage() {
   }, []);
 
     // helper: given a freshly fetched jobs array, fetch user's applications and mark applied flags
-    async function markAppliedOnJobs(jobsArray, mountedRef = { v: true }) {
-      try {
-          const employeeId = user?.employeeId || null;
-          if (!employeeId) {
-            // no user -> just set jobs without applied/bookmark flags
-            if (mountedRef.v) setAllJobs((jobsArray || []).map(j => ({ ...j, applied: false, bookmarked: false, bookmarkId: null })));
-            return;
-          }
+      async function markAppliedOnJobs(jobsArray, mountedRef = { v: true }) {
+        try {
+            const employeeId = user?.employeeId || user?.id || user?.userId || user?._raw?.EmployeeId || null;
+            if (!employeeId) {
+              // no user -> just set jobs without applied/bookmark flags
+              if (mountedRef.v) setAllJobs((jobsArray || []).map(j => ({ ...j, applied: false, bookmarked: false, bookmarkId: null })));
+              return;
+            }
 
-          // fetch bookmarks first (so we know saved state), then applications
-          const bookmarksRes = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_BOOKMARKS(employeeId)));
-          const appsRes = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(employeeId)));
+            // fetch bookmarks first (so we know saved state), then applications
+            const bookmarksRes = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_BOOKMARKS(employeeId)));
+            const appsRes = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(employeeId)));
 
-          const apps = appsRes?.data?.applications || appsRes?.data || appsRes || [];
-          const appliedIds = new Set((Array.isArray(apps) ? apps : []).map(a => String(a.jobId || a.job_id || a.jobId)));
+            const apps = appsRes?.data?.applications || appsRes?.data || appsRes || [];
+            const appliedIds = new Set((Array.isArray(apps) ? apps : []).map(a => String(a.jobId || a.job_id || a.job?.jobId || a.job?.id)));
 
-    const bData = bookmarksRes?.data?.bookmarks || bookmarksRes?.data || bookmarksRes || [];
-          // build map jobId -> bookmarkId
-          const bookmarkMap = new Map();
-          (Array.isArray(bData) ? bData : []).forEach(b => {
-            const jid = String(b.jobId || b.job_id || b.jobId || b.job?.jobId || b.job?.id || '');
-            const id = b.bookmarkId || b.bookmark_id || b.id || b?.id || null;
-            if (jid) bookmarkMap.set(jid, id);
-          });
+            const bData = bookmarksRes?.data?.bookmarks || bookmarksRes?.data || bookmarksRes || [];
+            // build map jobId -> bookmarkId
+            const bookmarkMap = new Map();
+            (Array.isArray(bData) ? bData : []).forEach(b => {
+              const jid = String(b.jobId || b.job_id || b.job?.jobId || b.job?.id || '');
+              const id = b.bookmarkId || b.bookmark_id || b.id || b?.id || null;
+              if (jid) bookmarkMap.set(jid, id);
+            });
 
-          if (!mountedRef.v) return;
-          setAllJobs((jobsArray || []).map(j => {
-            const id = String(j.jobId || j.id || j.job_id || '');
-            const isBookmarked = bookmarkMap.has(id);
-            return { ...j, applied: appliedIds.has(id), bookmarked: isBookmarked, bookmarkId: isBookmarked ? bookmarkMap.get(id) : null };
-          }));
-      } catch (e) {
-          if (mountedRef.v) setAllJobs(jobsArray || []);
+            if (!mountedRef.v) return;
+            setAllJobs((jobsArray || []).map(j => {
+              const id = String(j.jobId || j.id || j.job_id || '');
+              const isBookmarked = bookmarkMap.has(id);
+              return { ...j, applied: appliedIds.has(id), bookmarked: isBookmarked, bookmarkId: isBookmarked ? bookmarkMap.get(id) : null };
+            }));
+        } catch (e) {
+            if (mountedRef.v) setAllJobs(jobsArray || []);
+        }
       }
-    }
 
   // fetch jobs using server-side filters (JOB_FILTERS) or paged list when no applied filters
   useEffect(() => {
@@ -174,9 +174,9 @@ export default function JobsPage() {
     let mounted = true;
     (async () => {
       try {
-        const employeeId = user?.employeeId || null;
-        if (!employeeId) return;
-        const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(employeeId), { signal: ac.signal }));
+  const employeeId = user?.employeeId || user?.id || user?.userId || user?._raw?.EmployeeId || null;
+  if (!employeeId) return;
+  const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYEE_APPLICATIONS(employeeId), { signal: ac.signal }));
         const apps = res?.data?.applications || res?.data || res || [];
         const appliedIds = new Set((Array.isArray(apps) ? apps : []).map(a => String(a.jobId || a.jobId)));
         if (!mounted) return;
@@ -188,11 +188,32 @@ export default function JobsPage() {
     return () => { mounted = false; ac.abort(); };
   }, [allJobs.length, user]);
 
+  // If jobs were loaded before auth/user was available, re-run bookmark+applied mapping
+  useEffect(() => {
+    // re-run when user or jobs list changes so bookmarks/applied flags are applied after reload
+    if (!allJobs || allJobs.length === 0) return;
+    const empId = user?.employeeId || user?.id || user?.userId || user?._raw?.EmployeeId || null;
+    if (!empId) return;
+    // debug to help trace reload issues
+    console.debug('JobsPage: rehydrating bookmarks/applied — employeeId=', empId, 'jobsCount=', allJobs.length);
+    const mountedRef = { v: true };
+    markAppliedOnJobs(allJobs, mountedRef);
+    return () => { mountedRef.v = false; };
+  }, [user, allJobs.length]);
+
   // location filter removed
 
   const categories = useMemo(() => {
     const set = new Set();
-    allJobs.forEach(j => j.jobCategory && set.add(j.jobCategory));
+    allJobs.forEach(j => {
+      const c = j.jobCategory;
+      if (!c && c !== 0) return;
+      if (Array.isArray(c)) {
+        c.forEach(x => { if (x != null) set.add(String(x)); });
+      } else {
+        set.add(String(c));
+      }
+    });
     return Array.from(set);
   }, [allJobs]);
 
@@ -284,7 +305,35 @@ export default function JobsPage() {
             {loading ? (
               <div className="col-span-full p-6 text-center text-gray-500"><InlineLoader /></div>
             ) : (
-              filtered.map(job => <JobCard key={job.jobId} job={job} />)
+              filtered.map(job => (
+                <JobCard
+                  key={job.jobId}
+                  job={job}
+                  onBookmarkToggle={async (jobItem, next) => {
+                    try {
+                      const employeeId = user?.employeeId || null;
+                      if (!employeeId) return;
+                      const jid = String(jobItem.jobId || jobItem.id || jobItem.job_id || '');
+                      if (next) {
+                        // add bookmark (POST)
+                        const res = await handleAsync(apiPost(ApiEndpoints.EMPLOYEE_BOOKMARK_JOB(employeeId, jid)));
+                        // try to extract returned bookmark id
+                        const returnedId = res?.data?.bookmarkId || res?.data?.bookmark_id || res?.data || res || null;
+                        setAllJobs(prev => prev.map(j => String(j.jobId || j.id || j.job_id) === jid ? { ...j, bookmarked: true, bookmarkId: returnedId } : j));
+                      } else {
+                        // remove bookmark: find bookmarkId from jobItem or from current state
+                        const bId = jobItem.bookmarkId || jobItem.bookmark_id || (allJobs.find(x => String(x.jobId || x.id || x.job_id) === jid)?.bookmarkId) || null;
+                        if (!bId) return;
+                        const url = `${ApiEndpoints.EMPLOYEE_BOOKMARKS(employeeId)}/${bId}`;
+                        await handleAsync(apiDel(url));
+                        setAllJobs(prev => prev.map(j => String(j.jobId || j.id || j.job_id) === jid ? { ...j, bookmarked: false, bookmarkId: null } : j));
+                      }
+                    } catch (e) {
+                      // ignore errors here; JobCard will fallback its own handler
+                    }
+                  }}
+                />
+              ))
             )}
           </div>
 

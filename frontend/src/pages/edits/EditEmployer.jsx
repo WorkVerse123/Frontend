@@ -6,6 +6,7 @@ import { handleAsync } from '../../utils/HandleAPIResponse';
 import ApiEndpoints from '../../services/ApiEndpoints';
 import { get as apiGet, put as apiPut } from '../../services/ApiClient';
 import UploadService from '../../services/UploadService';
+import { Snackbar, Alert } from '@mui/material';
 
 export default function EditEmployer() {
   const { user } = useAuth();
@@ -31,6 +32,10 @@ export default function EditEmployer() {
   const [values, setValues] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const showSnackbar = (msg, severity = 'success') => { setSnackbarMsg(msg); setSnackbarSeverity(severity); setSnackbarOpen(true); };
 
   useEffect(() => {
     let mounted = true;
@@ -119,10 +124,10 @@ export default function EditEmployer() {
       }
 
       await apiPut(ApiEndpoints.EMPLOYER(resolvedEmployerId), payload);
-      alert('Đã cập nhật nhà tuyển dụng');
+      showSnackbar('Đã cập nhật nhà tuyển dụng', 'success');
     } catch (err) {
       console.error('EditEmployer save failed', err);
-      alert('Lỗi khi cập nhật: ' + (err?.response?.data?.message || err?.message || 'Kiểm tra console'));
+      showSnackbar('Lỗi khi cập nhật: ' + (err?.response?.data?.message || err?.message || 'Kiểm tra console'), 'error');
     } finally { setSaving(false); }
   };
 
@@ -140,6 +145,9 @@ export default function EditEmployer() {
           </div>
         </div>
       </div>
+      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>{snackbarMsg}</Alert>
+      </Snackbar>
     </MainLayout>
   );
 }

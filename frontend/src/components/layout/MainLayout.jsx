@@ -61,29 +61,18 @@ export default function MainLayout({ children, role = 'guest', hasSidebar = fals
       <Header role={normalizedRole} />
       <div>{/* wrapper (kept minimal) */}</div>
 
-      {/* Layout: on md+ show sidebar in flow (no fixed), main becomes flex-1 */}
-      <div className="md:flex">
-  {hasSidebar && <Sidebar role={normalizedRole} />}
+      {/* Layout: centered container so sidebar sits near main content; apply header offset to wrapper */}
+      <div className="max-w-6xl mx-auto md:flex md:items-start md:gap-6" style={{ paddingTop: LAYOUT.HEADER_HEIGHT + 10 }}>
+        {hasSidebar && <Sidebar role={normalizedRole} />}
 
         <main
-          className="relative px-4 py-4 md:px-6 md:py-8 flex-1"
+          className="relative px-4 py-6 md:px-6 md:py-8 flex-1"
           style={{
-            marginLeft: '0',
-            marginTop: '0',
-            marginBottom: '0',
             minHeight: '100vh',
-            paddingTop: LAYOUT.HEADER_HEIGHT + 10,
           }}
         >
-          <div
-            className="w-full h-full"
-            style={{
-              marginLeft: `0`,
-              marginTop: `0`,
-              marginBottom: `0`,
-            }}
-          >
-            <div className="block">
+          <div className="w-full h-full">
+            <div>
               {children}
             </div>
           </div>

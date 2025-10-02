@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Button, Chip, IconButton, Box, Typography } from '@mui/material';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import BookmarkButton from '../common/bookmark/BookmarkButton';
+import { Button, Chip, Box, Typography } from '@mui/material';
 import ApiEndpoints from '../../services/ApiEndpoints';
 import { post, del } from '../../services/ApiClient';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 import { useAuth } from '../../contexts/AuthContext';
+import { isJobOpen } from '../../utils/jobStatus';
 
 export default function JobRow({ job, onViewApplications = () => {}, onOpenMenu = () => {} }) {
   const { user } = useAuth();
@@ -49,48 +48,73 @@ export default function JobRow({ job, onViewApplications = () => {}, onOpenMenu 
       console.error('Bookmark toggle failed', err);
     }
   };
+  const formatSalary = (min, max) => {
+    const fmt = (v) => (v == null ? null : Number(v).toLocaleString());
+    const a = fmt(min); const b = fmt(max);
+    if (a && b) return `${a} - ${b} VND`;
+    if (a) return `${a} VND`;
+    if (b) return `${b} VND`;
+    return '';
+  };
+
   return (
-    <div className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div className="flex-1">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
-          <Typography variant="h6" component="h3" className="font-medium break-words">
-            {job.title}
-          </Typography>
-          <div className="flex items-center gap-2 mt-2 sm:mt-0">
-            {job.location && <Chip label={job.location} size="small" />}
-            <span className={`px-2 py-1 rounded text-sm ${job.status === 'opened' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-              {job.status}
-            </span>
+    <div className="py-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      {/* Left avatar */}
+      <div className="flex-shrink-0">
+        <Box className="w-12 h-12 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+          {job.title ? String(job.title).trim().charAt(0).toUpperCase() : '?'}
+        </Box>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <Typography variant="h6" component="h3" className="font-medium text-lg">
+              {job.title}
+            </Typography>
+            <div className="text-sm text-gray-500 mt-2">
+              <span className="inline-block mr-2">•</span>
+              <span className="inline-block text-sm text-gray-600">{job.location}</span>
+            </div>
+            {/* categories */}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(Array.isArray(job.jobCategory) ? job.jobCategory : []).slice(0, 8).map((c, i) => (
+                <Chip key={`${c}-${i}`} label={c} size="small" className="bg-blue-50 text-blue-700" />
+              ))}
+            </div>
+          </div>
+
+          {/* Right area: salary */}
+          <div className="flex-shrink-0 text-right">
+            <div className="text-sm font-medium text-gray-800">
+              {formatSalary(job.salaryMin ?? job.jobSalaryMin, job.salaryMax ?? job.jobSalaryMax)}
+            </div>
           </div>
         </div>
 
-        <div className="text-sm text-gray-500 mt-3 sm:mt-1">
-          {job.employeeApplyCount ?? 0} ứng viên • Hạn: {job.expiredAt ? new Date(job.expiredAt).toLocaleDateString() : '—'}
+          <div className="mt-4 flex items-center justify-between">
+          <div className="text-sm text-gray-500">{job.employeeApplyCount ?? 0} ứng viên • Hạn: {job.expiredAt ? new Date(job.expiredAt).toLocaleDateString() : '—'}</div>
+
+          <div className="flex items-center gap-2">
+            {(() => {
+              // allow employers to view applications regardless of open/closed state
+              const isEmployer = user && (user.profileType === 'employer' || String(user?.roleId || user?.RoleId || user?.role).toLowerCase() === '3' || String(user?.role).toLowerCase() === 'employer');
+              const disabled = !isEmployer && !isJobOpen(job);
+                return (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onViewApplications(job); }}
+                    disabled={disabled}
+                  >
+                    Xem Đơn Ứng Tuyển
+                  </Button>
+                );
+            })()}
+          </div>
         </div>
       </div>
-
-      <Box className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mt-2 sm:mt-0">
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => onViewApplications(job)}
-          fullWidth
-          className="sm:w-auto"
-        >
-          Xem Đơn Ứng Tuyển
-        </Button>
-
-        <BookmarkButton bookmarked={bookmarked} onToggle={handleToggleBookmark} size="small" />
-
-        <IconButton
-          size="small"
-          onClick={(e) => onOpenMenu(e, job)}
-          aria-label="actions"
-          className="self-end sm:self-auto"
-        >
-          <MoreVertIcon />
-        </IconButton>
-      </Box>
     </div>
   );
 }

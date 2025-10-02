@@ -12,6 +12,7 @@ export default function EventDialog({
   onChange = () => {},
   onClose = () => {},
   onSave = () => {},
+  onDelete = null,
   isTimeRangeValid = () => true,
   isStartInPast = () => false,
 }) {
@@ -46,7 +47,7 @@ export default function EventDialog({
   }, [open]);
 
   return (
-  <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+  <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" ModalProps={{ disableScrollLock: true }}>
       <DialogTitle>Thêm / Chỉnh sửa sự kiện</DialogTitle>
       <DialogContent className="space-y-4">
         <TextField
@@ -101,6 +102,9 @@ export default function EventDialog({
 
       <DialogActions>
         <Button onClick={onClose}>Hủy</Button>
+        {typeof onDelete === 'function' && (value?.id || value?.raw?.busyTimeId || value?.raw?.id) ? (
+          <Button color="error" onClick={onDelete}>Xóa</Button>
+        ) : null}
         <Button variant="contained" onClick={onSave} disabled={!isTimeRangeValid()}>Lưu</Button>
       </DialogActions>
     </Dialog>

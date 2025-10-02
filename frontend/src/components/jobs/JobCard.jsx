@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BookmarkButton from '../common/bookmark/BookmarkButton';
+import CategoryBadges from '../common/CategoryBadges';
 import ApiEndpoints from '../../services/ApiEndpoints';
 import { post, del, get as apiGet } from '../../services/ApiClient';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 import { useAuth } from '../../contexts/AuthContext';
 
-export default function JobCard({ job }) {
+export default function JobCard({ job, onBookmarkToggle }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const employeeId = user?.id || user?.userId || user?.employeeId || null;
   const [bookmarked, setBookmarked] = useState(Boolean(job?.bookmarked));
   const [bookmarkId, setBookmarkId] = useState(job?.bookmarkId || job?.bookmark_id || null);
+
+  // Keep local bookmarked/bookmarkId in sync if parent updates the job prop
+  useEffect(() => {
+    setBookmarked(Boolean(job?.bookmarked));
+    setBookmarkId(job?.bookmarkId || job?.bookmark_id || null);
+  }, [job?.bookmarked, job?.bookmarkId, job?.bookmark_id]);
 
   const handleToggleBookmark = async (next) => {
     setBookmarked(Boolean(next));
@@ -79,15 +86,16 @@ export default function JobCard({ job }) {
 
             <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {job.jobCategory && (
-                <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">{job.jobCategory}</span>
-              )}
+              <CategoryBadges categories={job.jobCategory} />
               {job.jobType && (
                 <span className="text-xs text-gray-500">{job.jobType}</span>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <BookmarkButton bookmarked={bookmarked} onToggle={handleToggleBookmark} size="small" />
+              <div className="flex items-center gap-2">
+              <BookmarkButton bookmarked={bookmarked} onToggle={(next) => {
+                if (typeof onBookmarkToggle === 'function') return onBookmarkToggle(job, next);
+                return handleToggleBookmark(next);
+              }} size="small" />
               <button onClick={() => navigate(`/jobs/${job.jobId || job.id}`)} className={`${job.applied ? 'bg-green-600 hover:bg-green-700' : 'bg-[#2563eb] hover:bg-blue-700'} text-white px-3 py-1 rounded text-sm font-semibold`}>{job.applied ? 'Đã ứng tuyển' : 'Ứng Tuyển'}</button>
             </div>
           </div>

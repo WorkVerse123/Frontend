@@ -72,13 +72,15 @@ export default function UserMenu() {
     })();
 
     try {
-      // Resolve profile ids robustly: prefer normalized profileId but fall back to other common fields
-      const resolvedEmployerId = (
-        user?.profileId ?? user?.employerId ?? user?._raw?.EmployerId ?? user?.id ?? null
-      );
-      const resolvedEmployeeId = (
-        user?.profileId ?? user?.employeeId ?? user?._raw?.EmployeeId ?? null
-      );
+      // Resolve profile ids robustly: prefer the explicit employerId/employeeId fields
+      // Use profileId only when profileType explicitly matches the expected type.
+      let resolvedEmployerId = null;
+      if (user?.profileType === 'employer' && user?.profileId) resolvedEmployerId = user.profileId;
+      else resolvedEmployerId = user?.employerId ?? user?._raw?.EmployerId ?? user?.id ?? null;
+
+      let resolvedEmployeeId = null;
+      if (user?.profileType === 'employee' && user?.profileId) resolvedEmployeeId = user.profileId;
+      else resolvedEmployeeId = user?.employeeId ?? user?._raw?.EmployeeId ?? null;
 
       if (toRole === 'employer' || resolvedEmployerId) {
         if (resolvedEmployerId) {

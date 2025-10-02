@@ -20,6 +20,8 @@ import { get as apiGet } from '../../../services/ApiClient';
 import ApiEndpoints from '../../../services/ApiEndpoints';
 import DOMPurify from 'dompurify';
 import { useRef } from 'react';
+import CategoryBadges from '../../common/CategoryBadges';
+import { isJobOpen } from '../../../utils/jobStatus';
 
 export default function JobDetailDialog({ job, employerId, open, onClose }) {
   const navigate = useNavigate();
@@ -167,9 +169,7 @@ export default function JobDetailDialog({ job, employerId, open, onClose }) {
   };
 
   // Derived display values (use localJob)
-  const statusText = (localJob?.jobStatus || localJob?.status || '').toString();
-  const statusNormalized = statusText.toLowerCase();
-  const isOpenStatus = statusNormalized.includes('open');
+  const isOpenStatus = isJobOpen(localJob);
   const expiredDisplay = localJob ? (formatDateToDDMMYYYY(localJob.jobExpiredAt || localJob.jobExpiredDate || localJob.expiredAt) || '—') : '—';
   const createdDisplay = localJob ? (formatDateToDDMMYYYY(localJob.jobCreatedAt || localJob.createdAt || localJob.jobCreatedAt) || '—') : '—';
   const applyCount = localJob?.employeeApplyCount ?? localJob?.applicantCount ?? 0;
@@ -196,30 +196,23 @@ export default function JobDetailDialog({ job, employerId, open, onClose }) {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="mt-2">
-                  {Array.isArray(localJob.jobCategory) ? (
-                    <div className="flex flex-wrap gap-2">
-                      {localJob.jobCategory.map((c, i) => (
-                        <Chip
-                          key={String(c) + i}
-                          label={typeof c === 'object' ? (c.name || c.categoryName || c.label || JSON.stringify(c)) : c}
-                          size="small"
-                          variant="filled"
-                          sx={{
-                            bgcolor: 'primary.main',
-                            color: 'primary.contrastText',
-                            borderRadius: '9999px',
-                            px: 1.5,
-                            py: 0.5,
-                            fontWeight: 600,
-                            '&:hover': { boxShadow: 2, transform: 'translateY(-1px)' },
-                          }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <Typography variant="body2" className="text-slate-600">{localJob.jobCategory}</Typography>
-                  )}
-                  <div className="text-sm text-slate-600 mt-2">{localJob.jobLocation}</div>
+                  <CategoryBadges categories={localJob.jobCategory} />
+                  {/* If jobLocation exists, render as a link to Google Maps (opens in new tab) */}
+                  <div className="text-sm text-slate-600 mt-2 font-semibold">
+                    {localJob.jobLocation ? (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(String(localJob.jobLocation))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-700 hover:underline"
+                        title={`Mở địa điểm trên Google Maps: ${localJob.jobLocation}`}
+                      >
+                        {localJob.jobLocation}
+                      </a>
+                    ) : (
+                      <span>—</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 ml-4">

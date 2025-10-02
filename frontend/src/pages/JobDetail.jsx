@@ -7,9 +7,11 @@ import MainLayout from '../components/layout/MainLayout';
 import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/common/loading/Loading';
 import ApplyJobDialog from '../components/common/modals/ApplyJobDialog';
+import { isJobOpen, displayStatus } from '../utils/jobStatus';
 import DOMPurify from 'dompurify';
 import ApiEndpoints from '../services/ApiEndpoints';
 import BookmarkButton from '../components/common/bookmark/BookmarkButton';
+import CategoryBadges from '../components/common/CategoryBadges';
 import { post, del } from '../services/ApiClient';
 import { handleAsync } from '../utils/HandleAPIResponse';
 
@@ -160,6 +162,33 @@ export default function JobDetail() {
     applyListStyles(reqRef.current);
   }, [sanitizedDescription, sanitizedRequirements]);
 
+  // Sync bookmark state for this job from server when job or user becomes available
+  useEffect(() => {
+    if (!job || !user) return;
+    const resolvedEmployeeId = user?.profileId ?? user?.employeeId ?? user?.id ?? user?.userId ?? null;
+    if (!resolvedEmployeeId) return;
+    const ac = new AbortController();
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await apiGet(ApiEndpoints.EMPLOYEE_BOOKMARKS(resolvedEmployeeId), { signal: ac.signal });
+        const list = res?.data?.bookmarks || res?.data || res || [];
+        const arr = Array.isArray(list) ? list : [];
+        const found = arr.find(b => String(b.jobId || b.job_id || b.job?.jobId || b.job?.id) === String(job.jobId || job.id));
+        if (mounted && found) {
+          setBookmarked(true);
+          setBookmarkId(found.bookmarkId || found.bookmark_id || found.id || null);
+        } else if (mounted) {
+          setBookmarked(false);
+          setBookmarkId(null);
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; ac.abort(); };
+  }, [user, job]);
+
   
 
   return (
@@ -196,13 +225,19 @@ export default function JobDetail() {
           <div className="lg:col-span-2 bg-white rounded-xl p-6 border">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-2xl font-bold text-[#042852]">{job.jobTitle}</h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold text-[#042852]">{job.jobTitle}</h1>
+                  {/* status badge */}
+                  <span className={`text-sm font-semibold px-2 py-1 rounded ${isJobOpen(job) ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                    {displayStatus(job.jobStatus ?? job.status ?? job.job_status)}
+                  </span>
+                </div>
                 <div className="text-sm text-gray-500">
-                  <span className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md text-xs">{job.jobCategory}</span>
+                  <CategoryBadges categories={job.jobCategory} />
                 </div>
               </div>
               <div>
-                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                     <BookmarkButton bookmarked={bookmarked} onToggle={async (n) => {
                       setBookmarked(Boolean(n));
                       try {
@@ -241,7 +276,26 @@ export default function JobDetail() {
                         console.error('Bookmark toggle failed', err);
                       }
                     }} size="small" />
-                    <button onClick={() => setApplyOpen(true)} className={`${appliedForThisJob ? 'bg-green-600' : 'bg-[#2563eb]'} text-white px-4 py-2 rounded font-semibold`} disabled={appliedForThisJob}>{appliedForThisJob ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}</button>
+                    {
+                      (() => {
+                        const expiredAt = job?.expiredAt ?? job?.jobExpiredAt ?? job?.expired_at ?? null;
+                        const isExpired = expiredAt ? (new Date(expiredAt).getTime() < Date.now()) : false;
+                        const open = isJobOpen(job);
+                        if (appliedForThisJob) {
+                          return (
+                            <button className={`bg-green-600 text-white px-4 py-2 rounded font-semibold`} disabled>Đã ứng tuyển</button>
+                          );
+                        }
+                        if (!open || isExpired) {
+                          return (
+                            <button className={`bg-gray-400 text-white px-4 py-2 rounded font-semibold`} disabled> Dừng ứng tuyển </button>
+                          );
+                        }
+                        return (
+                          <button onClick={() => setApplyOpen(true)} className={`bg-[#2563eb] text-white px-4 py-2 rounded font-semibold`}>Ứng tuyển ngay</button>
+                        );
+                      })()
+                    }
                   </div>
               </div>
             </div>

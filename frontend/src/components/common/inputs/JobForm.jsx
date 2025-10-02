@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 import SalaryInput from '../../../components/common/inputs/SalaryInput';
 import ApiEndpoints from '../../../services/ApiEndpoints';
 import { get as apiGet } from '../../../services/ApiClient';
@@ -19,7 +20,11 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { parseISO } from 'date-fns';
 
-export default function JobForm({ initialValues = null }) {
+export default function JobForm({ initialValues = null, onSuccess = null, packageId = null }) {
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const showSnackbar = (msg, severity = 'success') => { setSnackbarMsg(msg); setSnackbarSeverity(severity); setSnackbarOpen(true); };
   const [form, setForm] = useState({
     jobTitle: '',
     jobDescription: '',
@@ -141,11 +146,11 @@ export default function JobForm({ initialValues = null }) {
     try {
       const { post } = await import('../../../services/ApiClient');
       const data = await post('/api/jobs', payload);
-      alert('Tạo tin thành công');
+      showSnackbar('Tạo tin thành công', 'success');
       return data;
     } catch (err) {
       console.error(err);
-      alert('Tạo tin thất bại: ' + (err.message || 'Lỗi'));
+      showSnackbar('Tạo tin thất bại: ' + (err.message || 'Lỗi'), 'error');
       throw err;
     }
   }
@@ -196,10 +201,16 @@ export default function JobForm({ initialValues = null }) {
       expiredAt: form.jobExpireAt ? form.jobExpireAt.toISOString() : null,
       status: form.jobStatus || 'Open'
     };
+    // If parent provided a packageId (subscription plan), include it in the payload
+    if (packageId) {
+      // include both camelCase and snake_case to be safe with backend conventions
+      payload.packageId = packageId;
+      payload.package_id = packageId;
+    }
     try {
       const { post, put } = await import('../../../services/ApiClient');
       // If editing (initialValues has jobId), attempt to PUT to update endpoint
-      if (initialValues && (initialValues.jobId || initialValues.id)) {
+  if (initialValues && (initialValues.jobId || initialValues.id)) {
         const id = initialValues.jobId || initialValues.id;
         // Use employer-scoped endpoint for updates: EMPLOYER_JOBS(employerId)/:id
         const updateEndpoint = (ApiEndpoints.EMPLOYER_JOBS && resolvedEmployerId)
@@ -208,19 +219,27 @@ export default function JobForm({ initialValues = null }) {
         // Ensure payload carries the job id for update
         payload.jobId = id;
         const res = await put(updateEndpoint, payload);
-        alert('Cập nhật tin thành công');
-        if (resolvedEmployerId) navigate(`/employer/${resolvedEmployerId}`); else navigate('/jobs');
+        showSnackbar('Cập nhật tin thành công', 'success');
+        if (typeof onSuccess === 'function') {
+          try { onSuccess(res); } catch (e) { /* allow parent to handle */ }
+        } else {
+          if (resolvedEmployerId) navigate(`/employer/${resolvedEmployerId}`); else navigate('/jobs');
+        }
         return res;
       }
 
       const endpoint = ApiEndpoints.EMPLOYER_JOBS(resolvedEmployerId) || '/api/jobs';
       const res = await post(endpoint, payload);
-      alert('Tạo tin thành công');
-      if (resolvedEmployerId) navigate(`/employer/${resolvedEmployerId}`); else navigate('/jobs');
+      showSnackbar('Tạo tin thành công', 'success');
+      if (typeof onSuccess === 'function') {
+        try { onSuccess(res); } catch (e) { /* no-op */ }
+      } else {
+        if (resolvedEmployerId) navigate(`/employer/${resolvedEmployerId}`); else navigate('/jobs');
+      }
       return res;
     } catch (err) {
       console.error('Create/Update job failed', err);
-      alert('Tạo/Cập nhật tin thất bại: ' + (err?.response?.data?.message || err.message || 'Lỗi'));
+      showSnackbar('Tạo/Cập nhật tin thất bại: ' + (err?.response?.data?.message || err.message || 'Lỗi'), 'error');
       throw err;
     }
   }
@@ -369,6 +388,11 @@ export default function JobForm({ initialValues = null }) {
             <Alert severity="warning">{employerError}</Alert>
           </div>
         ) : null}
+        <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+          <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+            {snackbarMsg}
+          </Alert>
+        </Snackbar>
     </form>
   );
 }

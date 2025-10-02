@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { TextField, MenuItem, FormControl, InputLabel, Select, FormHelperText } from '@mui/material';
+import { TextField, MenuItem, FormControl, InputLabel, Select, FormHelperText, Snackbar, Alert } from '@mui/material';
 import MainLayout from '../components/layout/MainLayout';
 import { useAuth } from '../contexts/AuthContext';
 import ApiEndpoints from '../services/ApiEndpoints';
@@ -31,6 +31,10 @@ export default function EmployerSetup() {
     const [logoPreview, setLogoPreview] = useState(null);
     const logoFileRef = useRef(null);
     const [logoUploadProgress, setLogoUploadProgress] = useState(0);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMsg, setSnackbarMsg] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+    const showSnackbar = (msg, severity = 'success') => { setSnackbarMsg(msg); setSnackbarSeverity(severity); setSnackbarOpen(true); };
 
     const { user } = useAuth();
     const location = useLocation();
@@ -152,9 +156,9 @@ export default function EmployerSetup() {
                     if (Array.isArray(be?.logoUrls)) logoUrls.push(...be.logoUrls);
                     else if (Array.isArray(be?.data?.logoUrls)) logoUrls.push(...be.data.logoUrls);
                 }
-            } catch (e) {
+                } catch (e) {
                 console.error('Logo upload failed', e);
-                alert('Upload logo thất bại, thử lại');
+                showSnackbar('Upload logo thất bại, thử lại', 'error');
                 setSaving(false);
                 setLogoUploadProgress(0);
                 return;
@@ -194,10 +198,10 @@ export default function EmployerSetup() {
         try {
             const res = await post(ApiEndpoints.COMPANY_SETUP, payload);
             const ok = res?.status === 200 || res?.status === 201 || (res?.data && (res.data.statusCode === 200 || res.data.statusCode === 201));
-            if (!ok) {
+                if (!ok) {
                 console.error('Company setup failed', res);
                 const serverMsg = res?.data?.message || res?.data || JSON.stringify(res);
-                alert('Lưu thất bại: ' + serverMsg);
+                showSnackbar('Lưu thất bại: ' + serverMsg, 'error');
             } else {
                 setDone(true);
             }
@@ -205,12 +209,12 @@ export default function EmployerSetup() {
             // try to surface useful server validation messages when available
             console.error('Company setup error', e);
             const serverDetail = e?.response?.data ?? e?.response ?? e?.message ?? e;
-            try {
+                try {
                 // prefer explicit message field
                 const msg = (e?.response?.data && (e.response.data.message || e.response.data.error)) || JSON.stringify(serverDetail);
-                alert('Lưu thất bại: ' + msg);
+                showSnackbar('Lưu thất bại: ' + msg, 'error');
             } catch (ex) {
-                alert('Lưu thất bại, kiểm tra console để biết thêm chi tiết');
+                showSnackbar('Lưu thất bại, kiểm tra console để biết thêm chi tiết', 'error');
             }
         } finally {
             setSaving(false);
@@ -430,4 +434,12 @@ export default function EmployerSetup() {
             </div>
         </MainLayout>
     );
+
+    function SnackbarCmp() {
+        return (
+            <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+                <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>{snackbarMsg}</Alert>
+            </Snackbar>
+        );
+    }
 }

@@ -257,19 +257,22 @@ export default function Header({ role = 'guest' }) {
             <List>
               <ListItem button onClick={() => {
                 // Profile routing logic simplified
-                try {
-                  // Try role-based redirection similar to UserMenu
-                  const roleCandidate = (user && (user.roleId || user.RoleId)) || null;
-                  const n = roleCandidate ? Number(roleCandidate) : null;
-                  if (n === 3 || user?.profileType === 'employer') {
-                    const resolvedEmployerId = user?.profileId || null;
-                    if (resolvedEmployerId) { navigate(`/employer/${resolvedEmployerId}`); setDrawerOpen(false); return; }
-                    navigate('/employer/setup'); setDrawerOpen(false); return;
-                  }
-                  if (n === 4 || user?.profileType === 'employee') {
-                    navigate('/employee/dashboard'); setDrawerOpen(false); return;
-                  }
-                } catch (e) { /* ignore */ }
+                  try {
+                    // Try role-based redirection similar to UserMenu
+                    const roleCandidate = (user && (user.roleId || user.RoleId)) || null;
+                    const n = roleCandidate ? Number(roleCandidate) : null;
+                    if (n === 3 || user?.profileType === 'employer') {
+                      // prefer explicit employerId fields; fall back to profileId only when profileType === 'employer'
+                      const resolvedEmployerId = (user?.profileType === 'employer' && user?.profileId) ? user.profileId : (user?.employerId ?? user?._raw?.EmployerId ?? user?.id ?? null);
+                      if (resolvedEmployerId) { navigate(`/employer/${resolvedEmployerId}`); setDrawerOpen(false); return; }
+                      navigate('/employer/setup'); setDrawerOpen(false); return;
+                    }
+                    if (n === 4 || user?.profileType === 'employee') {
+                      const resolvedEmployeeId = (user?.profileType === 'employee' && user?.profileId) ? user.profileId : (user?.employeeId ?? user?._raw?.EmployeeId ?? null);
+                      // Navigate to dashboard (overview) for employees
+                      navigate('/employee/dashboard'); setDrawerOpen(false); return;
+                    }
+                  } catch (e) { /* ignore */ }
                 navigate('/profile'); setDrawerOpen(false);
               }}>
                 <ListItemIcon><AccountCircleIcon sx={{ color: 'white' }} /></ListItemIcon>

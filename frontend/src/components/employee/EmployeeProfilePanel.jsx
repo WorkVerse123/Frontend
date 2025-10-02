@@ -16,7 +16,7 @@ import { formatDateToDDMMYYYY } from '../../utils/formatDate';
 import InlineLoader from '../common/loading/InlineLoader';
 
 // A simple editable panel for employee profile. Shows provided `employee` or empty fields.
-export default function EmployeeProfilePanel({ employee = null, onSave = () => {}, userId = null, initialForceCreate = false }) {
+export default function EmployeeProfilePanel({ employee = null, onSave = () => {}, userId = null, initialForceCreate = false, readOnly = false }) {
   const empty = {
     employeeId: '',
     userId: '',
@@ -285,9 +285,12 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
               </IconButton>
             </>
           ) : (
-            <IconButton onClick={() => setEditing(true)} aria-label="edit">
-              <EditIcon />
-            </IconButton>
+            // Hide edit button when readOnly is true
+            !readOnly && (
+              <IconButton onClick={() => setEditing(true)} aria-label="edit">
+                <EditIcon />
+              </IconButton>
+            )
           )}
         </div>
       </div>
@@ -453,7 +456,7 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
           <TextField
             select
             fullWidth
-            label="Phương thức"
+            label="Chế độ"
             value={form.mode}
             onChange={e => change('mode', e.target.value)}
             disabled={!editing}
@@ -467,7 +470,10 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
 
        
         <Grid item xs={12} className="flex justify-end gap-2 mt-2">
-          <Button variant="contained" color="primary" startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />} onClick={handleSave} disabled={!editing || saving}>Lưu</Button>
+          {/* Hide save button when readOnly; parent dialog should provide a close action */}
+          {!readOnly && (
+            <Button variant="contained" color="primary" startIcon={saving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />} onClick={handleSave} disabled={!editing || saving}>Lưu</Button>
+          )}
         </Grid>
       </Grid> 
     </Paper>

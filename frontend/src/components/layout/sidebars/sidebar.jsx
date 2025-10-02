@@ -47,19 +47,14 @@ export default function Sidebar({ role = 'guest' }) {
 
   return (
     <>
+      {/* Desktop sidebar: render in normal flow so it scrolls with page content */}
       <aside
-        className="hidden md:block h-full"
+        className="hidden md:block"
         style={{
           width: LAYOUT.SIDEBAR_WIDTH,
-          position: 'sticky',
-          // dịch xuống nhiều hơn so với header
-          top: 100,
-          // lệch sang phải một chút
-          marginLeft: 50,
         }}
         aria-label="Sidebar"
       >
-        {/* Card wrapper — cao bằng nội dung bên trong */}
         <div className="bg-white rounded-lg shadow p-4">
           {SidebarContent}
         </div>

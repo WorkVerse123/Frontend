@@ -4,9 +4,10 @@ import StatsPanel from '../components/homepage/StatsPanel';
 import RegisterBox from '../components/homepage/RegisterBox';
 import PlatformSteps from '../components/homepage/PlatformSteps';
 import FeaturedJobs from '../components/homepage/FeaturedJobs';
+import FeaturedCandidates from '../components/homepage/FeaturedCandidates';
 import FeaturedCompanies from '../components/homepage/FeaturedCompanies';
 import Loading from '../components/common/loading/Loading';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PromoBanner from '../components/homepage/PromoBanner';
 
@@ -44,7 +45,11 @@ export default function HomePage() {
       <StatsPanel setIsLoading={setStatsLoading} />
       <RegisterBox />
       <PlatformSteps />
-      <FeaturedJobs setIsLoading={setJobsLoading} />
+      {normalizedRole === 'employer' ? (
+        <FeaturedCandidates setIsLoading={setJobsLoading} />
+      ) : (
+        <FeaturedJobs setIsLoading={setJobsLoading} />
+      )}
       <FeaturedCompanies setIsLoading={setCompaniesLoading} />
     </MainLayout>
   );
