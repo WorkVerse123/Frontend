@@ -3,7 +3,9 @@ import Loading from '../components/common/loading/Loading';
 import MainLayout from '../components/layout/MainLayout';
 import CandidateList from '../components/candidates/CandidateList';
 import FiltersSidebar from '../components/candidates/FiltersSidebar';
-import useCandidates from '../hooks/useCandidates';
+import ApiEndpoints from '../services/ApiEndpoints';
+import { get as apiGet } from '../services/ApiClient';
+import { handleAsync } from '../utils/HandleAPIResponse';
 
 /**
  * CandidatesPage
@@ -13,20 +15,41 @@ import useCandidates from '../hooks/useCandidates';
  * - Keeps API layer swappable: replace fetchMock() with real API call later
  */
 export default function CandidatesPage() {
-  const {
-    items: pageItems,
-    loading,
-    error,
-    page,
-    setPage,
-    totalPages,
-    query,
-    setQuery,
-    gender,
-    setGender,
-    education,
-    setEducation,
-  } = useCandidates();
+  const [pageItems, setPageItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize] = useState(10);
+  const [query, setQuery] = useState('');
+  const [gender, setGender] = useState('any');
+  const [education, setEducation] = useState('any');
+
+  useEffect(() => {
+    let mounted = true;
+    const ac = new AbortController();
+    (async () => {
+      setLoading(true); setError(null);
+      try {
+        const res = await handleAsync(apiGet(ApiEndpoints.JOB_CANDIDATES(page, pageSize), { signal: ac.signal }));
+        if (!mounted) return;
+        const outer = res?.data ?? res;
+        const payload = outer?.data ?? outer;
+        const arr = payload?.candidates ?? payload?.data?.candidates ?? payload ?? [];
+        setPageItems(Array.isArray(arr) ? arr : []);
+        // try to infer total pages from paging metadata if present
+        const total = payload?.totalPages || payload?.paging?.totalPages || 1;
+        setTotalPages(Number(total) || 1);
+      } catch (err) {
+        if (!mounted) return;
+        setError(err?.message || 'Lỗi khi tải ứng viên');
+        setPageItems([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; ac.abort(); };
+  }, [page, pageSize]);
 
   return (
     <MainLayout role='employer' hasSidebar={false}>

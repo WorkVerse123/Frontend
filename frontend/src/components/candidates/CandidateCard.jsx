@@ -38,10 +38,10 @@ export default function CandidateCard({ candidate }) {
             <Box className="flex items-center justify-between">
               <div>
                 <Typography variant="body2" component="div" sx={{ fontWeight: 600 }}>
-                  {candidate.jobTitle || 'Ứng viên'}
+                  {candidate.fullName || candidate.employeeFullName || 'Ứng viên'}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {candidate.employeeLocation}
+                  {candidate.employeeLocation || candidate.location || ''}
                 </Typography>
               </div>
               <div className="flex items-center gap-2">
@@ -54,12 +54,17 @@ export default function CandidateCard({ candidate }) {
                 Học vấn: {candidate.employeeEducation}
               </Typography>
             ) : null}
+            {candidate.gender ? (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', marginTop: 0.5 }}>
+                Giới tính: {candidate.gender}
+              </Typography>
+            ) : null}
           </Box>
         </Box>
       </CardContent>
       <CardActions />
     </Card>
-    <CandidateProfileModal open={openProfile} onClose={() => setOpenProfile(false)} employeeId={candidate?.employeeId} />
+  <CandidateProfileModal open={openProfile} onClose={() => setOpenProfile(false)} employeeId={candidate?.employeeId || candidate?.id} />
     </>
   );
 }

@@ -136,13 +136,7 @@ export default function EmployerJobs() {
       setSelectedJob(job);
       setAppsOpen(true);
       setAppsLoading(true);
-      // If job is not open, treat as closed: do not fetch applications and show empty list
-      const currentStatus = (job?.jobStatus ?? job?.status ?? '').toString().toLowerCase();
-      if (currentStatus !== 'open') {
-        setApplications([]);
-        setAppsLoading(false);
-        return;
-      }
+      // Always fetch applications so employer can review past applications even when job is closed
       const ac = new AbortController();
   try {
       const resolveEmployerId = (u) => {
@@ -188,7 +182,6 @@ export default function EmployerJobs() {
           setProfileUserId(empId);
           setProfileOpen(true);
         } else {
-          console.debug('Application detail has no employee id', appDetail);
           setNotify({ open: true, message: 'Không tìm thấy thông tin hồ sơ ứng viên', severity: 'error' });
         }
       } catch (err) {

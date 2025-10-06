@@ -35,7 +35,7 @@ const ApiEndpoints = {
   APPLICATION_GET: (id) => `/api/applications/${id}`,
   APPLICATION_WITHDRAW: (id) => `/api/applications/${id}/withdrawn`,
   APPLICATION_STATUS: (id) => `/api/applications/${id}/status`,
-  APPLICATIONS_FOR_EMPLOYER_JOB: (employerId, jobId) => `/api/applications/employers/${employerId}/job/${jobId}/applications`,
+  APPLICATIONS_FOR_EMPLOYER_JOB: (employerId, jobId) => `/api/employer/${employerId}/job/${jobId}/applications`,
   APPLICATION_STATS: '/api/applications/stats',
 
   // Blogs

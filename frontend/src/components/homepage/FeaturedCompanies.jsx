@@ -3,12 +3,13 @@ import ApiEndpoints from '../../services/ApiEndpoints';
 import { get as apiGet } from '../../services/ApiClient';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 import InlineLoader from '../common/loading/InlineLoader';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function FeaturedCompanies({ setIsLoading }) {
   const [companies, setCompanies] = useState([]);
   const pageSize = 10;
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let mounted = true;
@@ -67,7 +68,9 @@ export default function FeaturedCompanies({ setIsLoading }) {
                   <div className="text-sm text-gray-500">{company.location}</div>
                 </div>
               </div>
-              <button className="bg-[#E7F0FA] text-[#0A65CC] px-10 py-1 rounded text-xs font-semibold mt-2 hover:text-white hover:bg-blue-500">Đang Tuyển Nhân Viên</button>
+              <div className="flex justify-center mt-2">
+                <button type="button" onClick={() => navigate(`/employer/${company.companyId || company.id}`)} className="inline-block bg-[#E7F0FA] text-[#0A65CC] px-6 py-1 rounded text-xs font-semibold hover:text-white hover:bg-blue-500">Xem chi tiết</button>
+              </div>
             </div>
           ))
         )}

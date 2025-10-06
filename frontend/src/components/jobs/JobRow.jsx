@@ -85,8 +85,18 @@ export default function JobRow({ job, onViewApplications = () => {}, onOpenMenu 
             </div>
           </div>
 
-          {/* Right area: salary */}
+          {/* Right area: status & salary */}
           <div className="flex-shrink-0 text-right">
+            {(() => {
+              const raw = (job?.jobStatus ?? job?.job_status ?? job?.status ?? '').toString().toLowerCase();
+              const label = raw ? String(raw).charAt(0).toUpperCase() + String(raw).slice(1) : '—';
+              const badgeClass = raw === 'open' ? 'bg-green-100 text-green-800' : raw === 'closed' ? 'bg-gray-100 text-gray-800' : 'bg-yellow-100 text-yellow-800';
+              return (
+                <div className="mb-2">
+                  <span className={`px-2 py-1 rounded text-xs font-semibold ${badgeClass}`}>{label}</span>
+                </div>
+              );
+            })()}
             <div className="text-sm font-medium text-gray-800">
               {formatSalary(job.salaryMin ?? job.jobSalaryMin, job.salaryMax ?? job.jobSalaryMax)}
             </div>
