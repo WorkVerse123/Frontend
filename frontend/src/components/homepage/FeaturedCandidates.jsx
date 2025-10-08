@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 import InlineLoader from '../common/loading/InlineLoader';
 import { Link, useNavigate } from 'react-router-dom';
+import MapLink from '../common/MapLink';
 import { Card, CardContent, CardActions, Button, Typography, Box } from '@mui/material';
 
 export default function FeaturedCandidates({ setIsLoading }) {
@@ -24,7 +25,9 @@ export default function FeaturedCandidates({ setIsLoading }) {
         const outer = result?.data ?? result;
         const payload = outer?.data ?? outer;
         const arr = payload?.candidates ?? payload?.data?.candidates ?? payload ?? [];
-        setCandidates(Array.isArray(arr) ? arr.slice(0, pageSize) : []);
+  const isPriority = v => v === true || v === 1 || String(v).toLowerCase() === 'true';
+  const filtered = Array.isArray(arr) ? arr.filter(x => isPriority(x.isPriority) || isPriority(x.is_priority)) : [];
+  setCandidates(filtered.slice(0, pageSize));
       } catch (err) {
         if (!mounted) return;
         setCandidates([]);
@@ -54,7 +57,9 @@ export default function FeaturedCandidates({ setIsLoading }) {
               <div>
                 <div className="font-semibold text-[#2563eb]">{c.fullName}</div>
                 <div className="text-gray-500 text-sm">
-                  {c.employeeLocation} • {c.employeeEducation} • {c.gender}
+                  <span className="inline-block mr-2"><MapLink address={c.employeeLocation} /></span>
+                  <span className="mr-2">{c.employeeEducation}</span>
+                  <span>{c.gender}</span>
                 </div>
               </div>
               <div>

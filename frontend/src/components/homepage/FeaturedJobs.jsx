@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { handleAsync } from '../../utils/HandleAPIResponse';
+import { formatPrice } from '../../utils/formatPrice';
 import InlineLoader from '../common/loading/InlineLoader';
 import { Link } from 'react-router-dom';
 import { set } from 'date-fns';
@@ -84,7 +85,7 @@ export default function FeaturedJobs({ setIsLoading }) {
                     <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs ml-2">{job.jobCategory}</span>
                   </div>
                   <div className="text-gray-500 text-sm">
-                    {job.jobLocation} • {job.jobSalaryMin} - {job.jobSalaryMax} VND
+                        {job.jobLocation} • {formatPrice(job.jobSalaryMin, 'VND')} - {formatPrice(job.jobSalaryMax, 'VND')}
                     {daysLeft && (
                       <span className="ml-2 text-xs text-green-600">
                         | Còn {daysLeft} ngày ứng tuyển

@@ -32,3 +32,10 @@ export const TYPE_MAP = {
   'Partnership': 6,
   'Other': 7,
 };
+
+// OTP purposes used across the frontend — keep centralized to avoid duplicates
+export const OtpPurpose = Object.freeze({
+  AccountVerification: 'AccountVerification',
+  PasswordReset: 'PasswordReset',
+  ChangeEmail: 'ChangeEmail',
+});

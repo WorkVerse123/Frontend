@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card } from '@mui/material';
+import MapLink from '../common/MapLink';
 
 export default function EmployerDetails({ employer }) {
   // Guard against null/undefined employer prop to prevent runtime errors
@@ -36,7 +37,7 @@ export default function EmployerDetails({ employer }) {
         <div className="text-sm text-slate-700">
           <div><strong>Email:</strong> {employer.contactEmail || '---'}</div>
           <div className="mt-1"><strong>Điện thoại:</strong> {employer.contactPhone || '---'}</div>
-          <div className="mt-1"><strong>Địa chỉ:</strong> {employer.companyAddress || '---'}</div>
+          <div className="mt-1"><strong>Địa chỉ:</strong>{' '}{employer.companyAddress ? <MapLink address={employer.companyAddress} /> : '---'}</div>
         </div>
       </Card>
 

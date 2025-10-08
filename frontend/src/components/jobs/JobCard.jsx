@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MapLink from '../common/MapLink';
+import { formatPrice } from '../../utils/formatPrice';
 import BookmarkButton from '../common/bookmark/BookmarkButton';
 import CategoryBadges from '../common/CategoryBadges';
 import ApiEndpoints from '../../services/ApiEndpoints';
@@ -77,10 +79,10 @@ export default function JobCard({ job, onBookmarkToggle }) {
           <div className="flex items-start justify-between">
             <div>
               <div className="font-semibold text-[#042852]">{job.jobTitle}</div>
-              <div className="text-sm text-gray-500">{job.companyName} • {job.jobLocation}</div>
+              <div className="text-sm text-gray-500"> <MapLink address={job.jobLocation} /></div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-700 font-semibold">{job.jobSalaryMin} - {job.jobSalaryMax} VND</div>
+              <div className="text-sm text-gray-700 font-semibold">{job.jobSalaryMin != null ? formatPrice(job.jobSalaryMin, job.jobSalaryCurrency || 'VND') : '—'}{job.jobSalaryMax != null ? ` - ${formatPrice(job.jobSalaryMax, job.jobSalaryCurrency || 'VND')}` : ''}</div>
             </div>
           </div>
 

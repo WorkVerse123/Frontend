@@ -198,20 +198,33 @@ export default function Header({ role = 'guest' }) {
             {/* Role-specific links */}
             <List sx={{ color: 'white' }}>
               {finalRole === 'employee' && (
-                <>
-                  <ListItem button component="a" href="/jobs" onClick={() => setDrawerOpen(false)}>
-                    <ListItemText primary="Tìm việc" />
-                  </ListItem>
-                </>
-              )}
+                  <>
+                    <ListItem button component="a" href="/jobs" onClick={() => setDrawerOpen(false)}>
+                      <ListItemText primary="Tìm việc" />
+                    </ListItem>
+                    <ListItem button onClick={() => { navigate('/notifications'); setDrawerOpen(false); }}>
+                      <ListItemText primary="Thông báo" />
+                    </ListItem>
+                    <ListItem button onClick={() => { navigate('/calendar'); setDrawerOpen(false); }}>
+                      <ListItemText primary="Lịch" />
+                    </ListItem>
+                  </>
+                )}
 
               {finalRole === 'employer' && (
                 <>
                   <ListItem button component="a" href="/employer/jobs" onClick={() => setDrawerOpen(false)}>
-                    <ListItemText primary="Quản lý tin tuyển dụng" />
+                    <ListItemText primary="Quản lý tuyển dụng" />
                   </ListItem>
                   <ListItem button component="a" href="/candidates" onClick={() => setDrawerOpen(false)}>
                     <ListItemText primary="Ứng viên" />
+                  </ListItem>
+                  <ListItem button onClick={() => { 
+                    const resolvedEmployerId = (user?.profileType === 'employer' && user?.profileId) ? user.profileId : (user?.employerId ?? user?._raw?.EmployerId ?? null);
+                    if (resolvedEmployerId) navigate(`/employer/${resolvedEmployerId}`); else navigate('/employer/setup');
+                    setDrawerOpen(false);
+                  }}>
+                    <ListItemText primary="Hồ sơ" />
                   </ListItem>
                 </>
               )}
@@ -245,48 +258,61 @@ export default function Header({ role = 'guest' }) {
               )}
 
               {finalRole === 'guest' && (
-                <ListItem button component="a" href="/auth" onClick={() => setDrawerOpen(false)}>
-                  <ListItemText primary="Đăng nhập / Đăng ký" />
-                </ListItem>
+                <>
+                  <ListItem button component="a" href="/jobs" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Việc làm" />
+                  </ListItem>
+                  <ListItem button component="a" href="/companies" onClick={() => setDrawerOpen(false)}>
+                    <ListItemText primary="Nhà tuyển dụng" />
+                  </ListItem>
+                </>
               )}
             </List>
 
             <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
 
-            {/* Account actions */}
+            {/* Account actions: show profile/logout only when logged in; otherwise show login/register */}
             <List>
-              <ListItem button onClick={() => {
-                // Profile routing logic simplified
-                  try {
-                    // Try role-based redirection similar to UserMenu
-                    const roleCandidate = (user && (user.roleId || user.RoleId)) || null;
-                    const n = roleCandidate ? Number(roleCandidate) : null;
-                    if (n === 3 || user?.profileType === 'employer') {
-                      // prefer explicit employerId fields; fall back to profileId only when profileType === 'employer'
-                      const resolvedEmployerId = (user?.profileType === 'employer' && user?.profileId) ? user.profileId : (user?.employerId ?? user?._raw?.EmployerId ?? user?.id ?? null);
-                      if (resolvedEmployerId) { navigate(`/employer/${resolvedEmployerId}`); setDrawerOpen(false); return; }
-                      navigate('/employer/setup'); setDrawerOpen(false); return;
-                    }
-                    if (n === 4 || user?.profileType === 'employee') {
-                      const resolvedEmployeeId = (user?.profileType === 'employee' && user?.profileId) ? user.profileId : (user?.employeeId ?? user?._raw?.EmployeeId ?? null);
-                      // Navigate to dashboard (overview) for employees
-                      navigate('/employee/dashboard'); setDrawerOpen(false); return;
-                    }
-                  } catch (e) { /* ignore */ }
-                navigate('/profile'); setDrawerOpen(false);
-              }}>
-                <ListItemIcon><AccountCircleIcon sx={{ color: 'white' }} /></ListItemIcon>
-                <ListItemText primary={user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : 'Hồ sơ'} />
-              </ListItem>
+              {user ? (
+                <>
+                  <ListItem button onClick={() => {
+                    try {
+                      const roleCandidate = (user && (user.roleId || user.RoleId)) || null;
+                      const n = roleCandidate ? Number(roleCandidate) : null;
+                      if (n === 3 || user?.profileType === 'employer') {
+                        const resolvedEmployerId = (user?.profileType === 'employer' && user?.profileId) ? user.profileId : (user?.employerId ?? user?._raw?.EmployerId ?? user?.id ?? null);
+                        if (resolvedEmployerId) { navigate(`/employer/${resolvedEmployerId}`); setDrawerOpen(false); return; }
+                        navigate('/employer/setup'); setDrawerOpen(false); return;
+                      }
+                      if (n === 4 || user?.profileType === 'employee') {
+                        navigate('/employee/dashboard'); setDrawerOpen(false); return;
+                      }
+                    } catch (e) { /* ignore */ }
+                    navigate('/profile'); setDrawerOpen(false);
+                  }}>
+                    <ListItemIcon><AccountCircleIcon sx={{ color: 'white' }} /></ListItemIcon>
+                    <ListItemText primary={user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : 'Hồ sơ'} />
+                  </ListItem>
 
-              <ListItem button onClick={() => {
-                deleteCookie('token'); deleteCookie('user'); try { setUser(null); } catch (e) { }
-                navigate('/');
-                setDrawerOpen(false);
-              }}>
-                <ListItemIcon><LogoutIcon sx={{ color: 'white' }} /></ListItemIcon>
-                <ListItemText primary="Đăng xuất" />
-              </ListItem>
+                  <ListItem button onClick={() => {
+                    deleteCookie('token'); deleteCookie('user'); try { setUser(null); } catch (e) { }
+                    navigate('/');
+                    setDrawerOpen(false);
+                  }}>
+                    <ListItemIcon><LogoutIcon sx={{ color: 'white' }} /></ListItemIcon>
+                    <ListItemText primary="Đăng xuất" />
+                  </ListItem>
+                </>
+              ) : (
+                <>
+                  <ListItem button onClick={() => { setDrawerOpen(false); navigate('/auth?form=login'); }}>
+                    <ListItemText primary="Đăng nhập" />
+                  </ListItem>
+                  <ListItem button onClick={() => { setDrawerOpen(false); navigate('/auth?form=register'); }}>
+                    <ListItemText primary="Đăng ký" />
+                  </ListItem>
+                </>
+              )}
             </List>
           </div>
         </div>

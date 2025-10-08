@@ -1,6 +1,8 @@
 import React from 'react';
 import { formatDateToDDMMYYYY } from '../../utils/formatDate';
+import { formatPrice } from '../../utils/formatPrice';
 import { useNavigate } from 'react-router-dom';
+import MapLink from '../common/MapLink';
 
 export default function JobSidebarInfo({ job }) {
   const navigate = useNavigate();
@@ -20,11 +22,14 @@ export default function JobSidebarInfo({ job }) {
       <div className="bg-white rounded-xl p-4 border">
         <h4 className="font-semibold text-[#042852] mb-3">Tổng quan công việc</h4>
         <div className="text-sm text-gray-600 space-y-2">
-          <div><strong>Địa điểm:</strong> {job?.jobLocation ?? 'Không rõ'}</div>
+          <div>
+            <strong>Địa điểm:</strong>{' '}
+            {job?.jobLocation ? <MapLink address={job.jobLocation} /> : 'Không rõ'}
+          </div>
           <div>
             <strong>Lương:</strong>{' '}
             {job?.jobSalaryMin != null || job?.jobSalaryMax != null ? (
-              <span className='font-bold'>{job?.jobSalaryMin ?? '—'} - {job?.jobSalaryMax ?? '—'} VND</span>
+                <span className='font-bold'>{job?.jobSalaryMin != null ? formatPrice(job.jobSalaryMin, job.jobSalaryCurrency || 'VND') : '—'}{job?.jobSalaryMax != null ? ` - ${formatPrice(job.jobSalaryMax, job.jobSalaryCurrency || 'VND')}` : ''}</span>
             ) : (
               'Thương lượng'
             )}

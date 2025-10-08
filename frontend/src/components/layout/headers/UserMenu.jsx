@@ -166,7 +166,6 @@ export default function UserMenu() {
           onClose={handleClose}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          ModalProps={{ disableScrollLock: true }}
         >
           <MenuItem onClick={handleProfile} >
             <ListItemIcon>

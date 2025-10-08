@@ -1,8 +1,9 @@
-import React from 'react';
-import ReactQuill from 'react-quill';
+import React, { lazy, Suspense } from 'react';
 import 'react-quill/dist/quill.snow.css';
 
-export default function RichTextEditor({ value = '', onChange, placeholder = '' }) {
+const ReactQuill = lazy(() => import('react-quill'));
+
+export default function RichTextEditor({ value = '', onChange, placeholder = '', readOnly = false }) {
   const modules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
@@ -30,14 +31,22 @@ export default function RichTextEditor({ value = '', onChange, placeholder = '' 
 
   return (
     <div className="richtext">
-      <ReactQuill
-        theme="snow"
-        value={value}
-        onChange={onChange}
-        modules={modules}
-        formats={formats}
-        placeholder={placeholder}
-      />
+      {readOnly ? (
+        <div className="ql-snow">
+          <div className="ql-editor" dangerouslySetInnerHTML={{ __html: value || '' }} />
+        </div>
+      ) : (
+        <Suspense fallback={<div>Đang tải trình soạn thảo...</div>}>
+          <ReactQuill
+            theme="snow"
+            value={value}
+            onChange={onChange}
+            modules={modules}
+            formats={formats}
+            placeholder={placeholder}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

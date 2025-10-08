@@ -97,7 +97,7 @@ export default function CompaniesPage() {
     <MainLayout hasSidebar={false}>
       <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar filters */}
-        <aside className="col-span-1 bg-white rounded-xl p-4 shadow border">
+        <aside className="col-span-1 bg-white rounded-xl p-4 shadow border h-fit">
           <h3 className="font-semibold text-lg mb-3">Bộ lọc</h3>
           <div className="mb-3">
             <label className="block text-sm text-gray-600 mb-1">Từ khóa</label>

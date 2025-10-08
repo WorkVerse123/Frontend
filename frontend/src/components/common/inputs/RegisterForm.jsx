@@ -8,6 +8,8 @@ import { handleAsync } from '../../../utils/HandleAPIResponse';
 import { setCookie } from '../../../services/AuthCookie';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
+import EmailVerification from '../../auth/EmailVerification';
+import { OtpPurpose } from '../../../utils/emun/Enum';
 
 export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +41,8 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     const [submitError, setSubmitError] = useState('');
     const navigate = useNavigate();
     const { setUser } = useAuth();
+    const [showVerifyModal, setShowVerifyModal] = useState(false);
+    const [pendingNav, setPendingNav] = useState(null); // { route: string, state?: any }
 
     // validation errors
     const [errors, setErrors] = useState({
@@ -157,16 +161,15 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                     try { setCookie('user', JSON.stringify(user), 7); } catch (e) { /* ignore */ }
                     try { setUser(user); } catch (e) { /* ignore */ }
                 }
-                // Redirect based on the chosen role in the registration form
-                // roleId: 3 = Nhà Tuyển Dụng (employer)
+                // Instead of navigating immediately, show OTP verification modal.
+                // After OTP is verified we will navigate to the setup/profile page.
                 if (Number(role) === 3) {
-                    navigate('/employer/setup');
+                    setPendingNav({ route: '/employer/setup' });
                 } else {
-                    // default to candidate profile setup page
-                    // extract userId from the server response (payload.data.userId per provided format)
                     const newUserId = serverData?.userId || serverData?.id || user?.id || payload.user?.id || payload.id || null;
-                    navigate('/employee/profile', { state: { forceCreate: true, userId: newUserId } });
+                    setPendingNav({ route: '/employee/profile', state: { forceCreate: true, userId: newUserId } });
                 }
+                setShowVerifyModal(true);
                 // No full page reload; AuthContext updated via setUser above
             } catch (err) {
                 setSubmitError(err?.response?.data?.message || err?.message || 'Có lỗi khi đăng ký');
@@ -179,6 +182,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     const isSubmitDisabled = !email.trim() || !phoneNumber.trim() || !password || !confirm || !agreed || loading;
     
     return (
+        <>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
             <h2 className="text-2xl font-bold mb-2 text-[#2563eb] text-center">Tạo tài khoản</h2>
             {submitError && <div className="text-sm text-red-600 text-center">{submitError}</div>}
@@ -314,5 +318,22 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
             </div>
             <SocialLogin />
         </form>
+        {showVerifyModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                    <h3 className="text-lg font-semibold mb-2">Xác thực email</h3>
+                    <p className="text-sm text-gray-600 mb-4">Vui lòng nhập mã OTP đã gửi tới <strong>{email}</strong></p>
+                    <EmailVerification
+                        email={email}
+                        purpose={OtpPurpose.AccountVerification}
+                        onVerified={() => {
+                            setShowVerifyModal(false);
+                            if (pendingNav) navigate(pendingNav.route, { state: pendingNav.state });
+                        }}
+                    />
+                </div>
+            </div>
+        )}
+        </>
     );
 }

@@ -384,7 +384,7 @@ export default function EmployerJobs() {
                   {selectedPlan ? (
                     <div className="mt-2 p-3 border rounded bg-gray-50">
                       <div className="font-semibold">{selectedPlan.name ?? selectedPlan.plan_name ?? 'Gói đã chọn'}</div>
-                      <div className="text-sm text-gray-600">{selectedPlan.price ? `${selectedPlan.price} đ` : ''}</div>
+                      <div className="text-sm text-gray-600">{selectedPlan.price ? formatPrice(selectedPlan.price, selectedPlan.currency || selectedPlan.currencyCode || 'VND') : ''}</div>
                     </div>
                   ) : (
                     <div className="text-sm text-gray-500">Chưa chọn gói nào</div>

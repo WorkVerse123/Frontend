@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Chip, Box, Typography } from '@mui/material';
+import { formatPrice } from '../../utils/formatPrice';
 import ApiEndpoints from '../../services/ApiEndpoints';
 import { post, del } from '../../services/ApiClient';
 import { handleAsync } from '../../utils/HandleAPIResponse';
@@ -48,12 +49,12 @@ export default function JobRow({ job, onViewApplications = () => {}, onOpenMenu 
       console.error('Bookmark toggle failed', err);
     }
   };
-  const formatSalary = (min, max) => {
-    const fmt = (v) => (v == null ? null : Number(v).toLocaleString());
-    const a = fmt(min); const b = fmt(max);
-    if (a && b) return `${a} - ${b} VND`;
-    if (a) return `${a} VND`;
-    if (b) return `${b} VND`;
+  const formatSalary = (min, max, currency = 'VND') => {
+    const a = (min == null) ? null : formatPrice(min, currency);
+    const b = (max == null) ? null : formatPrice(max, currency);
+    if (a && b) return `${a} - ${b}`;
+    if (a) return a;
+    if (b) return b;
     return '';
   };
 

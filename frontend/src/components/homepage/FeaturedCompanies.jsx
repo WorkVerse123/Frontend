@@ -4,6 +4,7 @@ import { get as apiGet } from '../../services/ApiClient';
 import { handleAsync } from '../../utils/HandleAPIResponse';
 import InlineLoader from '../common/loading/InlineLoader';
 import { Link, useNavigate } from 'react-router-dom';
+import MapLink from '../common/MapLink';
 
 export default function FeaturedCompanies({ setIsLoading }) {
   const [companies, setCompanies] = useState([]);
@@ -29,8 +30,11 @@ export default function FeaturedCompanies({ setIsLoading }) {
           : Array.isArray(res)
           ? res
           : [];
-        // limit to pageSize
-        setCompanies(arr.slice(0, pageSize));
+  // only show priority companies on homepage
+  const isPriority = v => v === true || v === 1 || String(v).toLowerCase() === 'true';
+  const filtered = (Array.isArray(arr) ? arr : []).filter(c => isPriority(c.isPriority) || isPriority(c.is_priority));
+  // limit to pageSize
+  setCompanies(filtered.slice(0, pageSize));
       } catch (e) {
         if (!mounted) return;
         setCompanies([]);
@@ -65,7 +69,9 @@ export default function FeaturedCompanies({ setIsLoading }) {
                 <img src={company.logo} alt={company.name} className="w-10 h-10 rounded mb-2 col-span-1" />
                 <div className='col-span-2'>
                   <div className="font-semibold mb-1">{company.name}</div>
-                  <div className="text-sm text-gray-500">{company.location}</div>
+                  <div className="text-sm text-gray-500">
+                    <MapLink address={company.location} />
+                  </div>
                 </div>
               </div>
               <div className="flex justify-center mt-2">

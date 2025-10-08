@@ -63,7 +63,20 @@ const ApiEndpoints = {
 
   //AI chat
   AI_CHAT_EMPLOYEE: '/api/chatbot-ai/employee',
-  AI_CHAT_EMPLOYER: '/api/chatbot-ai/employer'
+  AI_CHAT_EMPLOYER: '/api/chatbot-ai/employer',
+
+
+  //subscription plans
+  SUBSCRIPTION_PLANS: '/api/subscriptions/plans',
+  SUBSCRIPTION_PLANS_BY_ID: (id) => `/api/subscriptions/user/${id}`,
+  SUBSCRIPTION_REGISTER: `/api/subscriptions/register`,
+
+ //otp
+  OTP_REQUEST: '/api/auth/otp/send',
+  OTP_VERIFY: '/api/auth/otp/verify',
+
+  //payments 
+  PAYMENT_INTENT: '/api/payments/create-payment-intent',
 };
 
 

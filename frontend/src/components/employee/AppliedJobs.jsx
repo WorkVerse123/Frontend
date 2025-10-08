@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatPrice } from '../../utils/formatPrice';
 import { useNavigate } from 'react-router-dom';
 
 function StatusBadge({ status }) {
@@ -47,7 +48,7 @@ export default function AppliedJobs({ items = [], onView = () => {} }) {
           // salary display fallback
           let salaryDisplay = rawJob.salaryDisplay || rawJob.jobSalaryDisplay || rawJob.salary || '';
           if (!salaryDisplay && rawJob.jobSalaryMin != null && rawJob.jobSalaryMax != null) {
-            salaryDisplay = `${rawJob.jobSalaryMin} - ${rawJob.jobSalaryMax} ${rawJob.jobSalaryCurrency || ''} • ${rawJob.jobTime || ''}`.trim();
+            salaryDisplay = `${formatPrice(rawJob.jobSalaryMin, rawJob.jobSalaryCurrency || 'VND')} - ${formatPrice(rawJob.jobSalaryMax, rawJob.jobSalaryCurrency || 'VND')} ${rawJob.jobTime ? `• ${rawJob.jobTime}` : ''}`.trim();
           }
 
           // Resolve job id from various shapes: nested job object, top-level fields, or common id fields
@@ -61,7 +62,8 @@ export default function AppliedJobs({ items = [], onView = () => {} }) {
                 <div className="w-10 h-10 bg-[#eaf2fb] rounded flex items-center justify-center font-semibold text-[#2563eb]">{avatar}</div>
                 <div>
                   <div className="font-semibold">{title}</div>
-                  <div className="text-sm text-gray-500">{companyName} • {location}</div>
+                  <div className="text-sm text-gray-500">Tên doanh nghiệp: {companyName}</div>
+                  <div className="text-sm text-gray-500">Địa chỉ: {location}</div>
                   <div className="text-xs text-gray-400 mt-1">Ứng tuyển: {applied}</div>
                 </div>
               </div>

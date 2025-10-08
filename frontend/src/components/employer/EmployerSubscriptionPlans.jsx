@@ -46,7 +46,7 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
   if (error) return (<div className="w-full text-center py-8"><div className="text-red-600 mb-2">Có lỗi: {error}</div><Button onClick={() => window.location.reload()}>Tải lại</Button></div>);
 
   // demo: assume employer already purchased 'employer_premium'
-  const activePlanId = 'premium';
+  const activePlanId = 'employer_premium';
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
@@ -55,7 +55,8 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
           <SubscriptionCard
             key={plan.id}
             plan={plan}
-            highlighted={plan.type === 'premium' || plan.id.includes('premium')}
+            // defensive: plan.id may be undefined from upstream data; coerce to string before includes()
+            highlighted={plan.type === 'premium' || (plan.id && String(plan.id).includes('premium'))}
             isActive={activePlanId === plan.id}
             onManage={(p) => console.log('Manage employer plan', p)}
             onSelect={(p) => { onSelect(p); console.log('Employer selected plan', p); }}

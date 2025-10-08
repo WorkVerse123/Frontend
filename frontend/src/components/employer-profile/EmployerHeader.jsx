@@ -4,6 +4,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LanguageIcon from '@mui/icons-material/Language';
 import BusinessIcon from '@mui/icons-material/Business';
 import EditIcon from '@mui/icons-material/Edit';
+import MapLink from '../common/MapLink';
 
 function ensureUrl(raw) {
   if (!raw) return '';
@@ -62,7 +63,11 @@ export default function EmployerHeader({ employer = {}, isOwner = false, onEdit 
             <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:gap-4 text-sm text-slate-600">
               <div className="flex items-center gap-2">
                 <LocationOnIcon fontSize="small" className="text-slate-400" />
-                <span className="truncate">{address || 'Đang cập nhật địa chỉ'}</span>
+                {address ? (
+                  <MapLink address={address} className="truncate" />
+                ) : (
+                  <span className="truncate">Đang cập nhật địa chỉ</span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <LanguageIcon fontSize="small" className="text-slate-400" />

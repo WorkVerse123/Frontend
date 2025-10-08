@@ -9,7 +9,8 @@ export const fetchMock = async (path, config = {}) => {
   const tryNativeFetch = async () => {
     try {
       const res = await fetch(path, config);
-      return await res.json();
+      const text = await res.text();
+      try { return text ? JSON.parse(text) : null } catch { return text }
     } catch (e) {
       throw e;
     }

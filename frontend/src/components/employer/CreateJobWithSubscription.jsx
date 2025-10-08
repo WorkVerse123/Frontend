@@ -1,6 +1,7 @@
 import React, { useEffect, useState, cloneElement } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Select, InputLabel, FormControl, Box, Typography } from '@mui/material';
 import useSubscriptionPlans from '../../hooks/useSubscriptionPlans';
+import { formatPrice } from '../../utils/formatPrice';
 import JobForm from '../common/inputs/JobForm';
 
 export default function CreateJobWithSubscription({ onCreated = () => {}, children = null }) {
@@ -93,7 +94,7 @@ export default function CreateJobWithSubscription({ onCreated = () => {}, childr
                 {safePlans.map(p => {
                   const keyVal = p?.plan_id ?? p?.id ?? p?.planId ?? p?.name ?? '';
                   const label = p?.plan_name ?? p?.name ?? p?.title ?? 'Gói';
-                  const priceLabel = p?.price ? `${p.price} đ` : (p?.price_display ?? '');
+                  const priceLabel = p?.price ? formatPrice(p.price, p?.currency || p?.currencyCode || 'VND') : (p?.price_display ?? '');
                   return (
                     <MenuItem key={String(keyVal)} value={keyVal}>
                       <div className="flex flex-col text-sm">

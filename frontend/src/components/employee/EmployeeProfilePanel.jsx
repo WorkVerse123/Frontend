@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Grid, TextField, Paper, Avatar, IconButton, Button, Typography, CircularProgress, Box, MenuItem } from '@mui/material';
-import ReactQuill from 'react-quill';
+import React, { lazy, Suspense } from 'react'; 
+const ReactQuill = lazy(() => import('react-quill'));
 import 'react-quill/dist/quill.snow.css';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -365,16 +366,23 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
               '& .ql-editor': { pointerEvents: editing ? 'auto' : 'none', minHeight: 110, color: '#000' }
             }}
           >
-            <ReactQuill
-              key={editing ? 'bio-edit' : 'bio-view'}
-              value={form.bio || ''}
-              onChange={value => change('bio', value)}
-              readOnly={!editing}
-              ref={bioRef}
-              theme={editing ? 'snow' : 'bubble'}
-              modules={{ toolbar: editing ? [['bold', 'italic'], [{ list: 'ordered' }, { list: 'bullet' }], ['link']] : false }}
-              style={{ minHeight: 110, background: 'transparent' }}
-            />
+            {editing ? (
+              <Suspense fallback={<div>Đang tải trình soạn thảo...</div>}>
+                <ReactQuill
+                  value={form.bio || ''}
+                  onChange={value => change('bio', value)}
+                  readOnly={false}
+                  ref={bioRef}
+                  theme="snow"
+                  modules={{ toolbar: [['bold', 'italic'], [{ list: 'ordered' }, { list: 'bullet' }], ['link']] }}
+                  style={{ minHeight: 110, background: 'transparent' }}
+                />
+              </Suspense>
+            ) : (
+              <div className="ql-snow" style={{ background: 'transparent' }}>
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: form.bio || '' }} />
+              </div>
+            )}
           </Paper>
         </Grid>
 
@@ -390,16 +398,23 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
               '& .ql-editor': { pointerEvents: editing ? 'auto' : 'none', minHeight: 90, color: '#000' }
             }}
           >
-            <ReactQuill
-              key={editing ? 'skills-edit' : 'skills-view'}
-              value={form.skills || ''}
-              onChange={value => change('skills', value)}
-              readOnly={!editing}
-              ref={skillsRef}
-              theme={editing ? 'snow' : 'bubble'}
-              modules={{ toolbar: editing ? [['bold', 'italic'], [{ list: 'bullet' }]] : false }}
-              style={{ minHeight: 90, background: 'transparent' }}
-            />
+            {editing ? (
+                <Suspense fallback={<div>Đang tải trình soạn thảo...</div>}>
+                  <ReactQuill
+                    value={form.skills || ''}
+                    onChange={value => change('skills', value)}
+                    readOnly={false}
+                    ref={skillsRef}
+                    theme="snow"
+                    modules={{ toolbar: [['bold', 'italic'], [{ list: 'bullet' }]] }}
+                    style={{ minHeight: 90, background: 'transparent' }}
+                  />
+                </Suspense>
+            ) : (
+              <div className="ql-snow" style={{ background: 'transparent' }}>
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: form.skills || '' }} />
+              </div>
+            )}
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -414,16 +429,23 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
               '& .ql-editor': { pointerEvents: editing ? 'auto' : 'none', minHeight: 90, color: '#000' }
             }}
           >
-            <ReactQuill
-              key={editing ? 'education-edit' : 'education-view'}
-              value={form.education || ''}
-              onChange={value => change('education', value)}
-              readOnly={!editing}
-              ref={educationRef}
-              theme={editing ? 'snow' : 'bubble'}
-              modules={{ toolbar: editing ? [['bold', 'italic'], [{ list: 'ordered' }, { list: 'bullet' }]] : false }}
-              style={{ minHeight: 90, background: 'transparent' }}
-            />
+            {editing ? (
+                <Suspense fallback={<div>Đang tải trình soạn thảo...</div>}>
+                  <ReactQuill
+                    value={form.education || ''}
+                    onChange={value => change('education', value)}
+                    readOnly={false}
+                    ref={educationRef}
+                    theme="snow"
+                    modules={{ toolbar: [['bold', 'italic'], [{ list: 'ordered' }, { list: 'bullet' }]] }}
+                    style={{ minHeight: 90, background: 'transparent' }}
+                  />
+                </Suspense>
+            ) : (
+              <div className="ql-snow" style={{ background: 'transparent' }}>
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: form.education || '' }} />
+              </div>
+            )}
           </Paper>
         </Grid>
 
@@ -439,16 +461,23 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
               '& .ql-editor': { pointerEvents: editing ? 'auto' : 'none', minHeight: 110, color: '#000' }
             }}
           >
-            <ReactQuill
-              key={editing ? 'work-edit' : 'work-view'}
-              value={form.workExperience || ''}
-              onChange={value => change('workExperience', value)}
-              readOnly={!editing}
-              ref={workRef}
-              theme={editing ? 'snow' : 'bubble'}
-              modules={{ toolbar: editing ? [['bold', 'italic'], [{ list: 'ordered' }, { list: 'bullet' }], ['link']] : false }}
-              style={{ minHeight: 110, background: 'transparent' }}
-            />
+            {editing ? (
+                <Suspense fallback={<div>Đang tải trình soạn thảo...</div>}>
+                  <ReactQuill
+                    value={form.workExperience || ''}
+                    onChange={value => change('workExperience', value)}
+                    readOnly={false}
+                    ref={workRef}
+                    theme="snow"
+                    modules={{ toolbar: [['bold', 'italic'], [{ list: 'ordered' }, { list: 'bullet' }], ['link']] }}
+                    style={{ minHeight: 110, background: 'transparent' }}
+                  />
+                </Suspense>
+            ) : (
+              <div className="ql-snow" style={{ background: 'transparent' }}>
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: form.workExperience || '' }} />
+              </div>
+            )}
           </Paper>
         </Grid>
 
