@@ -76,7 +76,11 @@ const ApiEndpoints = {
   OTP_VERIFY: '/api/auth/otp/verify',
 
   //payments 
-  PAYMENT_INTENT: '/api/payments/create-payment-intent',
+  PAYMENT_INTENT: '/api/payment',
+  PAYMENT_WEBHOOK: '/api/payment/webhook',
+  PAYMENT_SUCCESS: '/payment/success',
+  PAYMENT_CANCEL: '/payment/cancel',
+  PAYMENT: (id) => `/api/payment/${id}`,
 };
 
 

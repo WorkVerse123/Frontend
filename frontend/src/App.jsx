@@ -16,6 +16,8 @@ import EmployeeDashboard from './pages/EmployeeDashboard'
 import JobDetail from './pages/JobDetail'
 import EditEmployer from './pages/edits/EditEmployer'
 import Subscription from './pages/Subscription'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentCancel from './pages/PaymentCancel'
 import './App.css'
 
 function App() {
@@ -39,6 +41,8 @@ function App() {
         <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
         <Route path="/employer/:id/edit" element={<EditEmployer />} />
         <Route path="/subscription" element={<Subscription />} />
+  <Route path="/payment/success" element={<PaymentSuccess />} />
+  <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
