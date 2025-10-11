@@ -144,7 +144,7 @@ export default function UserMenu() {
             <List>
               <ListItem button onClick={() => { handleProfile(); handleClose(); }}>
                 <ListItemIcon><AccountCircleIcon /></ListItemIcon>
-                <ListItemText primary={user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : 'Hồ sơ'} />
+                <ListItemText primary={user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : (user?.profileType === 'employer' || user?.role === 'employer' ? 'Hồ sơ' : 'Cá nhân')} />
               </ListItem>
 
               <ListItem button onClick={() => { handleLogout(); handleClose(); }}>
@@ -171,7 +171,7 @@ export default function UserMenu() {
             <ListItemIcon>
               <AccountCircleIcon fontSize="small" />
             </ListItemIcon>
-            {user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : 'Hồ sơ'}
+            {user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : (user?.profileType === 'employer' || user?.role === 'employer' ? 'Hồ sơ' : 'Cá nhân')}
           </MenuItem>
           <MenuItem onClick={handleLogout}>
             <ListItemIcon>

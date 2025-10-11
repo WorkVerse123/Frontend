@@ -4,6 +4,7 @@ import { formatPrice } from '../../utils/formatPrice';
 import InlineLoader from '../common/loading/InlineLoader';
 import { Link } from 'react-router-dom';
 import { set } from 'date-fns';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function FeaturedJobs({ setIsLoading }) {
   const [jobs, setJobs] = useState([]);
@@ -56,6 +57,24 @@ export default function FeaturedJobs({ setIsLoading }) {
   }, [setIsLoading]);
 
 
+  const { user } = useAuth();
+  // normalize role to string (handle RoleId, roleId, role, role_id, numeric values)
+  const roleRaw = user?.role || user?.RoleId || user?.roleId || user?.role_id || '';
+  const role = (() => {
+    if (roleRaw === null || roleRaw === undefined || roleRaw === '') return '';
+    const n = Number(roleRaw);
+    if (!Number.isNaN(n) && n > 0) {
+      switch (n) {
+        case 1: return 'admin';
+        case 2: return 'staff';
+        case 3: return 'employer';
+        case 4: return 'employee';
+        default: return String(roleRaw).toLowerCase();
+      }
+    }
+    return String(roleRaw).toLowerCase();
+  })();
+
   return (
     <section className="max-w-6xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-4">
@@ -93,7 +112,11 @@ export default function FeaturedJobs({ setIsLoading }) {
                     )}
                   </div>
                 </div>
-                <button onClick={() => window.location.href = `/jobs/${job.jobId || job.id}`} className="bg-[#2563eb] text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">Ứng Tuyển Ngay</button>
+                { (role === 'admin' || role === 'staff' || role === 'employer') ? (
+                  <Link to={`/jobs/${job.jobId || job.id}`} className="bg-gray-100 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition">Xem</Link>
+                ) : (
+                  <button onClick={() => window.location.href = `/jobs/${job.jobId || job.id}`} className="bg-[#2563eb] text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">Ứng Tuyển Ngay</button>
+                )}
               </div>
             );
           })

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Grid, TextField, Paper, Avatar, IconButton, Button, Typography, CircularProgress, Box, MenuItem } from '@mui/material';
 import React, { lazy, Suspense } from 'react'; 
+import DOMPurify from 'dompurify';
 const ReactQuill = lazy(() => import('react-quill'));
 import 'react-quill/dist/quill.snow.css';
 import PersonIcon from '@mui/icons-material/Person';
@@ -25,6 +26,8 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
     dateOfBirth: '',
     gender: '',
     address: '',
+    email: '',
+    phoneNumber: '',
     avatarUrl: '',
     bio: '',
     skills: '',
@@ -60,6 +63,8 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
         dateOfBirth: (employee.dateOfBirth || employee.date_of_birth || '').slice(0,10),
         gender: employee.gender || '',
         address: employee.address || '',
+        email: employee.email || employee.emailAddress || employee.email_address || '',
+        phoneNumber: employee.phoneNumber || employee.phone_number || employee.phone || '',
         avatarUrl: employee.avatarUrl || employee.avatar_url || '',
         bio: employee.bio || '',
         skills: employee.skills || '',
@@ -98,6 +103,8 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
           dateOfBirth: (emp.dateOfBirth || emp.date_of_birth || emp.dob || '').slice(0,10),
           gender: emp.gender || '',
           address: emp.address || '',
+          email: emp.email || emp.emailAddress || emp.email_address || '',
+          phoneNumber: emp.phoneNumber || emp.phone_number || emp.phone || '',
           avatarUrl: emp.avatarUrl || emp.avatar_url || emp.avatar || '',
           bio: emp.bio || '',
           skills: emp.skills || '',
@@ -108,7 +115,7 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
       } catch (err) {
         // keep console error for local debugging; UI stays with empty form
         // eslint-disable-next-line no-console
-        console.error('Failed to load employee profile:', err);
+  // debug removed
       } finally {
         if (mounted) setLoading(false);
       }
@@ -190,7 +197,7 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
       setEditing(false);
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Failed to save employee profile:', err);
+  // debug removed
       setSaveError(err?.message || 'Lỗi khi lưu hồ sơ');
     } finally {
       setSaving(false);
@@ -309,6 +316,27 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
         </Grid>
         <Grid item xs={12} sm={6}>
           {editing ? (
+            <TextField fullWidth label="Email" value={form.email} onChange={e => change('email', e.target.value)} />
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.98rem' }}>Email:</Typography>
+              <Typography sx={{ color: '#000' }}>{form.email || '—'}</Typography>
+            </Box>
+          )}
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          {editing ? (
+            <TextField fullWidth label="Số điện thoại" value={form.phoneNumber} onChange={e => change('phoneNumber', e.target.value)} />
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.98rem' }}>Số điện thoại:</Typography>
+              <Typography sx={{ color: '#000' }}>{form.phoneNumber || '—'}</Typography>
+            </Box>
+          )}
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          {editing ? (
             <TextField fullWidth label="Ngày sinh" type="date" value={form.dateOfBirth} onChange={e => change('dateOfBirth', e.target.value)} InputLabelProps={{ shrink: true }} />
           ) : (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -380,7 +408,7 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
               </Suspense>
             ) : (
               <div className="ql-snow" style={{ background: 'transparent' }}>
-                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: form.bio || '' }} />
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: DOMPurify ? DOMPurify.sanitize(form.bio || '') : (form.bio || '') }} />
               </div>
             )}
           </Paper>
@@ -412,7 +440,7 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
                 </Suspense>
             ) : (
               <div className="ql-snow" style={{ background: 'transparent' }}>
-                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: form.skills || '' }} />
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: DOMPurify ? DOMPurify.sanitize(form.skills || '') : (form.skills || '') }} />
               </div>
             )}
           </Paper>
@@ -443,7 +471,7 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
                 </Suspense>
             ) : (
               <div className="ql-snow" style={{ background: 'transparent' }}>
-                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: form.education || '' }} />
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: DOMPurify ? DOMPurify.sanitize(form.education || '') : (form.education || '') }} />
               </div>
             )}
           </Paper>
@@ -475,7 +503,7 @@ export default function EmployeeProfilePanel({ employee = null, onSave = () => {
                 </Suspense>
             ) : (
               <div className="ql-snow" style={{ background: 'transparent' }}>
-                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: form.workExperience || '' }} />
+                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: DOMPurify ? DOMPurify.sanitize(form.workExperience || '') : (form.workExperience || '') }} />
               </div>
             )}
           </Paper>

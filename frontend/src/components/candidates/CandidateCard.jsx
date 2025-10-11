@@ -8,6 +8,7 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import CandidateProfileModal from './CandidateProfileModal';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * CandidateCard
@@ -16,6 +17,7 @@ import CandidateProfileModal from './CandidateProfileModal';
 export default function CandidateCard({ candidate }) {
   const [bookmarked, setBookmarked] = useState(Boolean(candidate?.bookmarked));
   const [openProfile, setOpenProfile] = useState(false);
+  const navigate = useNavigate();
 
   const handleToggle = async (next) => {
     // optimistic update
@@ -45,8 +47,8 @@ export default function CandidateCard({ candidate }) {
                 </Typography>
               </div>
               <div className="flex items-center gap-2">
-                <BookmarkButton bookmarked={bookmarked} onToggle={handleToggle} size="small" />
-                <Button variant="contained" size="small" color="primary" onClick={() => setOpenProfile(true)}>Xem Hồ Sơ</Button>
+                {/* <BookmarkButton bookmarked={bookmarked} onToggle={handleToggle} size="small" /> */}
+                <Button variant="contained" size="small" color="primary" onClick={() => navigate(`/candidates/${candidate?.employeeId || candidate?.id}`)}>Xem Hồ Sơ</Button>
               </div>
             </Box>
             {candidate.employeeEducation ? (

@@ -72,11 +72,11 @@ export default function WorkCalendar() {
                     };
                 }).filter(Boolean) : [];
                 // debug: log counts to help diagnose missing events in UI
-                console.debug('WorkCalendar: jobEvents=', jobEvents.length, 'busyEvents=', busyEvents.length);
-                if (busyEvents.length) console.debug('WorkCalendar busy sample:', busyEvents.slice(0,3));
+                // debug removed
+                // debug removed
                 setEvents([...jobEvents, ...busyEvents]);
             }).catch(err => {
-                console.error(err);
+                // debug removed
             }).finally(() => mounted && setLoading(false));
             return () => { mounted = false; ac.abort(); };
     }, [user]);
@@ -193,12 +193,12 @@ export default function WorkCalendar() {
                 const { post } = await import('../services/ApiClient');
                 const ApiEndpoints = (await import('../services/ApiEndpoints')).default;
                 const res = await handleAsync(post(ApiEndpoints.EMPLOYEE_BUSY_TIMES(empId), payload));
-                console.log('Saved busy times response:', res);
+                // debug removed
             } else {
-                console.warn('No employee id available, skipped POST to EMPLOYEE_BUSY_TIMES');
+                // debug removed
             }
         } catch (err) {
-            console.error('Failed to POST busy times:', err);
+            // debug removed
         } finally {
             setDialogOpen(false);
         }
@@ -242,7 +242,7 @@ export default function WorkCalendar() {
             const { del } = await import('../services/ApiClient');
             const ApiEndpoints = (await import('../services/ApiEndpoints')).default;
             const res = await handleAsync(del(ApiEndpoints.EMPLOYEE_BUSY_TIME(empId, busyId)));
-            console.log('Deleted busy time response:', res);
+            // debug removed
             // remove matching events
             setEvents(ev => ev.filter(e => {
                 const bid = e?.raw?.busyTimeId ?? e?.raw?.id ?? e?.id;
@@ -253,7 +253,7 @@ export default function WorkCalendar() {
             setForm({ title: '', date: format(new Date(), 'yyyy-MM-dd'), start: '09:00', end: '10:00', type: 'busy' });
             showSnackbar('Đã xóa lịch bận', 'success');
         } catch (err) {
-            console.error('Failed to delete busy time:', err);
+            // debug removed
             showSnackbar('Xóa lịch bận thất bại', 'error');
         } finally {
             setDialogOpen(false);

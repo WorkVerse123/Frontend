@@ -40,11 +40,11 @@ export default function SubscriptionPlans({ apiUrl = null, onSelect = () => {} }
             plan={plan}
             highlighted={plan.id === 'premium' || plan.type === 'premium'}
             isActive={activePlanId === plan.id}
-            onManage={(p) => console.log('Manage plan', p)}
+            onManage={(p) => { /* debug removed */ }}
             onSelect={(p) => {
               onSelect(p);
               // eslint-disable-next-line no-console
-              console.log('Selected plan:', p);
+              /* debug removed */
             }}
           />
         ))}

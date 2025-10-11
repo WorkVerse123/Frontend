@@ -195,7 +195,7 @@ export default function JobsPage() {
     const empId = user?.employeeId || user?.id || user?.userId || user?._raw?.EmployeeId || null;
     if (!empId) return;
     // debug to help trace reload issues
-    console.debug('JobsPage: rehydrating bookmarks/applied — employeeId=', empId, 'jobsCount=', allJobs.length);
+  // debug removed
     const mountedRef = { v: true };
     markAppliedOnJobs(allJobs, mountedRef);
     return () => { mountedRef.v = false; };

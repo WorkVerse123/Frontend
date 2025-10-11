@@ -26,7 +26,7 @@ export default function EditJob() {
         if (!mounted) return;
         setJob(payload?.data ?? payload ?? null);
       } catch (e) {
-        console.error('Failed to load job detail', e);
+  // debug removed
         if (mounted) setError(e);
       } finally {
         if (mounted) setLoading(false);

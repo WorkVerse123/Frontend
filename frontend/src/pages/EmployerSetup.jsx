@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
-import { TextField, MenuItem, FormControl, InputLabel, Select, FormHelperText, Snackbar, Alert } from '@mui/material';
+import { TextField, MenuItem, FormControl, InputLabel, Select, FormHelperText, Snackbar } from '@mui/material';
 import MainLayout from '../components/layout/MainLayout';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ApiEndpoints from '../services/ApiEndpoints';
 import { post } from '../services/ApiClient';
@@ -13,6 +14,7 @@ import { get as apiGet } from '../services/ApiClient';
 
 
 export default function EmployerSetup() {
+    const navigate = useNavigate();
     const [step, setStep] = useState(0);
     const [saving, setSaving] = useState(false);
     const [done, setDone] = useState(false);
@@ -35,6 +37,15 @@ export default function EmployerSetup() {
     const [snackbarMsg, setSnackbarMsg] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const showSnackbar = (msg, severity = 'success') => { setSnackbarMsg(msg); setSnackbarSeverity(severity); setSnackbarOpen(true); };
+
+    const redirectedRef = useRef(false);
+    const performRedirect = () => {
+        if (redirectedRef.current) return;
+        redirectedRef.current = true;
+        try { navigate('/auth', { replace: true }); } catch (e) {}
+        const t = setTimeout(() => { try { window.location.href = '/auth'; } catch (e) {} }, 700);
+        setTimeout(() => clearTimeout(t), 1500);
+    };
 
     const { user } = useAuth();
     const location = useLocation();
@@ -103,7 +114,7 @@ export default function EmployerSetup() {
                 const list = res?.data?.data || res?.data || [];
                 setEmployerTypes(Array.isArray(list) ? list : []);
             } catch (e) {
-                console.error('Failed to load employer types', e);
+                // debug removed
                 setEmployerTypes([]);
             }
         })();
@@ -157,7 +168,7 @@ export default function EmployerSetup() {
                     else if (Array.isArray(be?.data?.logoUrls)) logoUrls.push(...be.data.logoUrls);
                 }
                 } catch (e) {
-                console.error('Logo upload failed', e);
+                // debug removed
                 showSnackbar('Upload logo thất bại, thử lại', 'error');
                 setSaving(false);
                 setLogoUploadProgress(0);
@@ -192,14 +203,14 @@ export default function EmployerSetup() {
         };
 
         // print formatted payload (send to API when ready)
-        console.log('Employer setup payload:', JSON.stringify(payload, null, 2));
+    // debug removed
 
         setSaving(true);
         try {
             const res = await post(ApiEndpoints.COMPANY_SETUP, payload);
             const ok = res?.status === 200 || res?.status === 201 || (res?.data && (res.data.statusCode === 200 || res.data.statusCode === 201));
                 if (!ok) {
-                console.error('Company setup failed', res);
+                // debug removed
                 const serverMsg = res?.data?.message || res?.data || JSON.stringify(res);
                 showSnackbar('Lưu thất bại: ' + serverMsg, 'error');
             } else {
@@ -207,7 +218,7 @@ export default function EmployerSetup() {
             }
         } catch (e) {
             // try to surface useful server validation messages when available
-            console.error('Company setup error', e);
+            // debug removed
             const serverDetail = e?.response?.data ?? e?.response ?? e?.message ?? e;
                 try {
                 // prefer explicit message field
@@ -235,6 +246,12 @@ export default function EmployerSetup() {
                         <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={() => window.location.href = '/jobs/create'}>Đăng Tin</button>
                     </div>
                 </div>
+                <Snackbar
+                    open={true}
+                    autoHideDuration={3000}
+                    onClose={() => performRedirect()}
+                    message="Hồ sơ doanh nghiệp đã hoàn thành — chuyển tới trang đăng nhập..."
+                />
             </MainLayout>
         );
     }
@@ -435,11 +452,5 @@ export default function EmployerSetup() {
         </MainLayout>
     );
 
-    function SnackbarCmp() {
-        return (
-            <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-                <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>{snackbarMsg}</Alert>
-            </Snackbar>
-        );
-    }
+    
 }

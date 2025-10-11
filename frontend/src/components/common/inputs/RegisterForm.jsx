@@ -311,12 +311,12 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
             >
                 {loading ? 'Đang tạo...' : 'Tạo Tài Khoản'}
             </Button>
-            <div className="flex items-center my-2">
+            {/* <div className="flex items-center my-2">
                 <span className="flex-1 border-t border-gray-300"></span>
                 <span className="mx-2 text-gray-400">hoặc</span>
                 <span className="flex-1 border-t border-gray-300"></span>
-            </div>
-            <SocialLogin />
+            </div> */}
+            {/* <SocialLogin /> */}
         </form>
         {showVerifyModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

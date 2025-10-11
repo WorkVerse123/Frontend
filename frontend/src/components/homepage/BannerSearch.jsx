@@ -29,7 +29,7 @@ export default function BannerSearch() {
   //     keyword: keyword?.value || null,
   //     location: location?.value || null
   //   };
-  //   console.log('Banner search submitted:', data);
+  //   /* debug removed */
   //   // TODO: gửi data lên API hoặc xử lý chuyển trang tìm kiếm
   // };
 

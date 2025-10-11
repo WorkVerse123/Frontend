@@ -146,11 +146,11 @@ export default function EmployeeDashboard() {
           {/* Main content */}
           <main className="md:col-span-9">
             {activeTab === 'applied' ? (
-              <AppliedJobs items={applications} onView={(app) => console.log('view', app)} />
+              <AppliedJobs items={applications} onView={(app) => { /* debug removed */ }} />
             ) : activeTab === 'saved' ? (
                 <SavedJobs
                 items={bookmarks}
-                onOpen={(b) => console.log('open bookmark', b)}
+                onOpen={(b) => { /* debug removed */ }}
                 onRemove={async (b) => {
                   // optimistic UI
                   setBookmarks(prev => prev.filter(x => x.bookmarkId !== (b.bookmarkId || b.bookmark_id)));
@@ -168,12 +168,12 @@ export default function EmployeeDashboard() {
                   } catch (err) {
                     // rollback
                     setBookmarks(prev => [b, ...prev]);
-                    console.error('Failed to remove bookmark', err);
+                    // debug removed
                   }
                 }}
               />
             ) : activeTab === 'profile' ? (
-              <EmployeeProfilePanel employee={null} onSave={(data) => console.log('save profile', data)} />
+              <EmployeeProfilePanel employee={null} onSave={(data) => { /* debug removed */ }} />
             ) : activeTab === 'subscription' ? (
               <SubscriptionPanel />
             ) : (

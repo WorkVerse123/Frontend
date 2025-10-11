@@ -45,7 +45,7 @@ export default function StatsPanel({ setIsLoading }) {
   }, [setIsLoading]);
 
   return (
-    <section className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 py-8 px-4">
+    <section className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 py-8 px-4 bg-white rounded-xl">
       {loading ? (
         <div className="col-span-2 md:col-span-4">
           <InlineLoader text="Đang tải thống kê..." />

@@ -15,7 +15,7 @@ import MenuItem from '@mui/material/MenuItem';
  * Uses MUI controls for visual consistency and reliable controlled behavior.
  * Props: query, setQuery, gender, setGender, education, setEducation
  */
-export default function FiltersSidebar({ query, setQuery, gender, setGender, education, setEducation }) {
+export default function FiltersSidebar({ query, setQuery, gender, setGender, education, setEducation, onApply, onReset }) {
   return (
     <aside className="bg-white p-4 rounded shadow-sm">
       <div>
@@ -62,6 +62,24 @@ export default function FiltersSidebar({ query, setQuery, gender, setGender, edu
             <MenuItem value="Cao đẳng">Cao đẳng</MenuItem>
           </Select>
         </FormControl>
+      </div>
+
+      {/* Actions */}
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => onApply && onApply()}
+          className="flex-1 px-3 py-2 bg-blue-600 text-white rounded text-sm"
+        >
+          Áp dụng
+        </button>
+        <button
+          type="button"
+          onClick={() => onReset ? onReset() : (setQuery(''), setGender('any'), setEducation('any'))}
+          className="px-3 py-2 border rounded bg-white text-sm"
+        >
+          Đặt lại
+        </button>
       </div>
     </aside>
   );

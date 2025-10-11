@@ -8,7 +8,7 @@ import AIChatWidget from '../common/AIChat/AIChatWidget';
 /**
  * Layout tổng quản lý header, sidebar, footer.
  */
-export default function MainLayout({ children, role = 'guest', hasSidebar = false }) {
+export default function MainLayout({ children, role = 'guest', hasSidebar = false, showFooter = true }) {
   useLayoutEffect(() => {
     // Ngăn browser tự động restore scroll khi reload/F5
     if ('scrollRestoration' in history) {
@@ -79,7 +79,7 @@ export default function MainLayout({ children, role = 'guest', hasSidebar = fals
         </main>
       </div>
 
-      <Footer />
+      {showFooter && <Footer />}
       <AIChatWidget />
     </div>
   );

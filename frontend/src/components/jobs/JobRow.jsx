@@ -20,7 +20,7 @@ export default function JobRow({ job, onViewApplications = () => {}, onOpenMenu 
     try {
       if (!employeeId) {
         // Not authenticated - can't perform bookmark actions
-        console.warn('Attempted to toggle bookmark while not authenticated');
+  // debug removed
         // rollback optimistic update
         setBookmarked(false);
         return;
@@ -46,7 +46,7 @@ export default function JobRow({ job, onViewApplications = () => {}, onOpenMenu 
       // rollback
       setBookmarked((s) => !s);
       // eslint-disable-next-line no-console
-      console.error('Bookmark toggle failed', err);
+  // debug removed
     }
   };
   const formatSalary = (min, max, currency = 'VND') => {

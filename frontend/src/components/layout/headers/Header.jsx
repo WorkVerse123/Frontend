@@ -248,12 +248,6 @@ export default function Header({ role = 'guest' }) {
                   <ListItem button component="a" href="/admin" onClick={() => setDrawerOpen(false)}>
                     <ListItemText primary="Dashboard" />
                   </ListItem>
-                  <ListItem button component="a" href="/admin/users" onClick={() => setDrawerOpen(false)}>
-                    <ListItemText primary="Người dùng" />
-                  </ListItem>
-                  <ListItem button component="a" href="/admin/reports" onClick={() => setDrawerOpen(false)}>
-                    <ListItemText primary="Báo cáo" />
-                  </ListItem>
                 </>
               )}
 

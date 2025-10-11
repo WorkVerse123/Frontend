@@ -13,6 +13,22 @@ export default function JobCard({ job, onBookmarkToggle }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const employeeId = user?.id || user?.userId || user?.employeeId || null;
+  // normalize role to support numeric RoleId, roleId, role, role_id
+  const roleRaw = user?.role || user?.RoleId || user?.roleId || user?.role_id || '';
+  const role = (() => {
+    if (roleRaw === null || roleRaw === undefined || roleRaw === '') return '';
+    const n = Number(roleRaw);
+    if (!Number.isNaN(n) && n > 0) {
+      switch (n) {
+        case 1: return 'admin';
+        case 2: return 'staff';
+        case 3: return 'employer';
+        case 4: return 'employee';
+        default: return String(roleRaw).toLowerCase();
+      }
+    }
+    return String(roleRaw).toLowerCase();
+  })();
   const [bookmarked, setBookmarked] = useState(Boolean(job?.bookmarked));
   const [bookmarkId, setBookmarkId] = useState(job?.bookmarkId || job?.bookmark_id || null);
 
@@ -26,7 +42,7 @@ export default function JobCard({ job, onBookmarkToggle }) {
     setBookmarked(Boolean(next));
     try {
       if (!employeeId) {
-        console.warn('Attempted to toggle bookmark while not authenticated');
+  // debug removed
         setBookmarked(false);
         return;
       }
@@ -62,19 +78,19 @@ export default function JobCard({ job, onBookmarkToggle }) {
     } catch (err) {
       setBookmarked((s) => !s);
       // eslint-disable-next-line no-console
-      console.error('Bookmark toggle failed', err);
+  // debug removed
     }
   };
   return (
     <div className="bg-white rounded-xl shadow p-4 border hover:shadow-md transition">
       <div className="flex items-start gap-4">
-        <div className="w-14 h-14 flex items-center justify-center bg-[#f3f7fb] rounded-md overflow-hidden">
+        {/* <div className="w-14 h-14 flex items-center justify-center bg-[#f3f7fb] rounded-md overflow-hidden">
           {job.logo ? (
             <img src={job.logo} alt={job.companyName || 'logo'} className="w-12 h-12 object-contain" />
           ) : (
             <div className="w-10 h-10 bg-[#2563eb] text-white rounded flex items-center justify-center font-bold">{(job.companyName || 'C').charAt(0)}</div>
           )}
-        </div>
+        </div> */}
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div>
@@ -98,7 +114,11 @@ export default function JobCard({ job, onBookmarkToggle }) {
                 if (typeof onBookmarkToggle === 'function') return onBookmarkToggle(job, next);
                 return handleToggleBookmark(next);
               }} size="small" />
-              <button onClick={() => navigate(`/jobs/${job.jobId || job.id}`)} className={`${job.applied ? 'bg-green-600 hover:bg-green-700' : 'bg-[#2563eb] hover:bg-blue-700'} text-white px-3 py-1 rounded text-sm font-semibold`}>{job.applied ? 'Đã ứng tuyển' : 'Ứng Tuyển'}</button>
+              { (role === 'admin' || role === 'staff' || role === 'employer') ? (
+                <button onClick={() => navigate(`/jobs/${job.jobId || job.id}`)} className={`bg-gray-100 text-gray-800 px-3 py-1 rounded text-sm font-semibold`}>Xem</button>
+              ) : (
+                <button onClick={() => navigate(`/jobs/${job.jobId || job.id}`)} className={`${job.applied ? 'bg-green-600 hover:bg-green-700' : 'bg-[#2563eb] hover:bg-blue-700'} text-white px-3 py-1 rounded text-sm font-semibold`}>{job.applied ? 'Đã ứng tuyển' : 'Ứng Tuyển'}</button>
+              )}
             </div>
           </div>
         </div>

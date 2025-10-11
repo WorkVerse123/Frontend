@@ -62,7 +62,7 @@ export default function SubscriptionPanel() {
   const allPlans = Array.isArray(pParsed?.data) ? pParsed.data : (pParsed || []);
   const normalizedPlans = Array.isArray(allPlans) ? allPlans.map(normalizePlan) : [];
   // eslint-disable-next-line no-console
-  console.debug('Fetched subscription plans (normalized):', normalizedPlans);
+  // debug removed
   setPlans(normalizedPlans);
 
         if (userId) {
@@ -72,7 +72,7 @@ export default function SubscriptionPanel() {
           const cp = uParsed?.data ?? uParsed ?? null;
           const normalizedCp = cp ? normalizePlan(cp) : null;
           // eslint-disable-next-line no-console
-          console.debug('Fetched current plan (normalized):', normalizedCp);
+          // debug removed
           setCurrentPlan(normalizedCp);
           // ensure plans list contains the current plan so UI can show 'Đang sử dụng'
           if (normalizedCp && normalizedCp.planId) {
@@ -100,13 +100,13 @@ export default function SubscriptionPanel() {
         const host = window.location.host; // includes port
         if (!e?.origin || !e.origin.endsWith(host)) {
           // eslint-disable-next-line no-console
-          console.debug('Ignored message from origin', e?.origin, 'expected host', host);
+          // debug removed
           return;
         }
         const data = e.data || {};
         // debug
         // eslint-disable-next-line no-console
-        console.debug('Received payment postMessage', e.origin, data);
+  // debug removed
         if (data?.type === 'payment:completed') {
           // When payment completes, call subscription register endpoint to activate the plan
           (async () => {
@@ -119,7 +119,7 @@ export default function SubscriptionPanel() {
               const orderCode = data?.orderCode ?? data?.order_code ?? null;
               // debug
               // eslint-disable-next-line no-console
-              console.debug('Handling payment completed message', { uid, pid, orderCode, selectedPlan, data });
+              // debug removed
               if (!Number.isFinite(uid) || uid <= 0) {
                 showNotify('Không tìm thấy userId để kích hoạt gói. Vui lòng thử lại.', 'error');
                 setPaymentStep('pending');
@@ -140,11 +140,11 @@ export default function SubscriptionPanel() {
                 showNotify('Thanh toán đã hoàn tất nhưng kích hoạt gói chưa xác nhận. Vui lòng kiểm tra lại sau.', 'info');
                 setPaymentStep('pending');
                 // eslint-disable-next-line no-console
-                console.debug('registerSubscription returned false for', { uid, pid, orderCode });
+                // debug removed
               }
             } catch (err) {
               // eslint-disable-next-line no-console
-              console.error('Error handling payment completed message', err);
+              // debug removed
               showNotify('Lỗi khi xử lý callback thanh toán. Vui lòng thử lại.', 'error');
               setPaymentStep('pending');
             }

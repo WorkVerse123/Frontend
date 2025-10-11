@@ -6,12 +6,12 @@ import EmployeeProfileForm from '../components/employee/EmployeeProfileForm';
 export default function EmployeeProfilePage() {
   const location = useLocation();
   const state = location.state || {};
-  const forceCreate = !!state.forceCreate;
   const passedUserId = state.userId || null;
+  const forceCreate = !!state.forceCreate || !!passedUserId;
 
   return (
     <div className="p-6">
-      <EmployeeProfileForm userId={passedUserId} mode={forceCreate ? 'create' : 'update'} />
+  <EmployeeProfileForm userId={passedUserId} mode={forceCreate ? 'create' : 'update'} />
     </div>
   );
 }

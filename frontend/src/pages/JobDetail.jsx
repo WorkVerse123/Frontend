@@ -12,6 +12,7 @@ import DOMPurify from 'dompurify';
 import ApiEndpoints from '../services/ApiEndpoints';
 import BookmarkButton from '../components/common/bookmark/BookmarkButton';
 import CategoryBadges from '../components/common/CategoryBadges';
+import JobReviews from '../components/jobs/JobReviews';
 import { post, del } from '../services/ApiClient';
 import { handleAsync } from '../utils/HandleAPIResponse';
 
@@ -25,6 +26,10 @@ export default function JobDetail() {
   const [bookmarkId, setBookmarkId] = useState(null);
   const { user } = useAuth();
   const employeeId = user?.id || user?.userId || user?.employeeId || null;
+  const role = (user?.role || user?.RoleId || user?.roleId || '').toString().toLowerCase();
+  const isAdmin = role === 'admin';
+  const isStaff = role === 'staff';
+  const isAdminOrStaff = isAdmin || isStaff;
 
   const [sanitizedDescription, setSanitizedDescription] = useState('');
   const [sanitizedRequirements, setSanitizedRequirements] = useState('');
@@ -163,7 +168,10 @@ export default function JobDetail() {
   }, [sanitizedDescription, sanitizedRequirements]);
 
   // Sync bookmark state for this job from server when job or user becomes available
+  // Skip bookmark logic for admin/staff — admin/staff don't have bookmarking feature
   useEffect(() => {
+    // Skip bookmark logic only for admin; staff can still use bookmarks
+    if (isAdmin) return;
     if (!job || !user) return;
     const resolvedEmployeeId = user?.profileId ?? user?.employeeId ?? user?.id ?? user?.userId ?? null;
     if (!resolvedEmployeeId) return;
@@ -187,7 +195,7 @@ export default function JobDetail() {
       }
     })();
     return () => { mounted = false; ac.abort(); };
-  }, [user, job]);
+  }, [user, job, isAdminOrStaff]);
 
   
 
@@ -238,7 +246,8 @@ export default function JobDetail() {
               </div>
               <div>
                     <div className="flex items-center gap-2">
-                    <BookmarkButton bookmarked={bookmarked} onToggle={async (n) => {
+                    { !isAdmin && (
+                      <BookmarkButton bookmarked={bookmarked} onToggle={async (n) => {
                       setBookmarked(Boolean(n));
                       try {
                         if (!employeeId) { setBookmarked(false); return; }
@@ -273,14 +282,33 @@ export default function JobDetail() {
                         }
                       } catch (err) {
                         setBookmarked((s) => !s);
-                        console.error('Bookmark toggle failed', err);
+                        // debug removed
                       }
-                    }} size="small" />
+                      }} size="small" />
+                    )}
                     {
                       (() => {
                         const expiredAt = job?.expiredAt ?? job?.jobExpiredAt ?? job?.expired_at ?? null;
                         const isExpired = expiredAt ? (new Date(expiredAt).getTime() < Date.now()) : false;
                         const open = isJobOpen(job);
+                        // normalize role (support numeric or string forms)
+                        const roleRaw = user?.role || user?.RoleId || user?.roleId || user?.role_id || '';
+                        const role = (() => {
+                          if (roleRaw === null || roleRaw === undefined || roleRaw === '') return '';
+                          const n = Number(roleRaw);
+                          if (!Number.isNaN(n) && n > 0) {
+                            switch (n) {
+                              case 1: return 'admin';
+                              case 2: return 'staff';
+                              case 3: return 'employer';
+                              case 4: return 'employee';
+                              default: return String(roleRaw).toLowerCase();
+                            }
+                          }
+                          return String(roleRaw).toLowerCase();
+                        })();
+                        const isAdminOrStaff = (role === 'admin' || role === 'staff' || role === 'employer');
+
                         if (appliedForThisJob) {
                           return (
                             <button className={`bg-green-600 text-white px-4 py-2 rounded font-semibold`} disabled>Đã ứng tuyển</button>
@@ -291,6 +319,13 @@ export default function JobDetail() {
                             <button className={`bg-gray-400 text-white px-4 py-2 rounded font-semibold`} disabled> Dừng ứng tuyển </button>
                           );
                         }
+                        // Admin/staff should not apply — show 'Xem' link instead
+                        if (isAdminOrStaff) {
+                          return (
+                            <a href={`/jobs/${job.jobId || job.id}`} className={`bg-gray-100 text-gray-800 px-4 py-2 rounded font-semibold`}>Xem</a>
+                          );
+                        }
+
                         return (
                           <button onClick={() => setApplyOpen(true)} className={`bg-[#2563eb] text-white px-4 py-2 rounded font-semibold`}>Ứng tuyển ngay</button>
                         );
@@ -316,6 +351,8 @@ export default function JobDetail() {
               )}
 
             </section>
+            {/* Job reviews component */}
+            <JobReviews jobId={job?.jobId || job?.id} />
           </div>
 
           <div className="lg:col-span-1">

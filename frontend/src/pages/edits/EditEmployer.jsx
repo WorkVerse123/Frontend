@@ -118,7 +118,7 @@ export default function EditEmployer() {
           const returnedUrl = (up && (up.url || up.secure_url || up.raw?.secure_url)) || null;
           if (returnedUrl) payload.logoUrl = returnedUrl;
         } catch (upErr) {
-          console.error('Logo upload failed', upErr);
+          // debug removed
           throw new Error(upErr?.response?.data?.message || upErr?.message || 'Upload logo thất bại');
         }
       }
@@ -126,7 +126,7 @@ export default function EditEmployer() {
       await apiPut(ApiEndpoints.EMPLOYER(resolvedEmployerId), payload);
       showSnackbar('Đã cập nhật nhà tuyển dụng', 'success');
     } catch (err) {
-      console.error('EditEmployer save failed', err);
+  // debug removed
       showSnackbar('Lỗi khi cập nhật: ' + (err?.response?.data?.message || err?.message || 'Kiểm tra console'), 'error');
     } finally { setSaving(false); }
   };

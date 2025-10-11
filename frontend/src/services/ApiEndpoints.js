@@ -4,6 +4,28 @@ const ApiEndpoints = {
   LOGIN: '/api/auth/login',
   REGISTER: '/api/auth/register',
 
+  // Admin
+  ADMIN_CREATE_ACCOUNT: '/api/Admin/create-account',
+  ADMIN_USERS: '/api/Admin/users',
+  ADMIN_USER_STATUS: (id) => `/api/Admin/user/${id}/status`,
+  ADMIN_USER_BY_ID: (id) => `/api/Admin/users/${id}`,
+  ADMIN_EMPLOYEES: '/api/Admin/employee',
+  ADMIN_EMPLOYEE_BY_ID: (id) => `/api/Admin/employee/${id}`,
+  ADMIN_EMPLOYERS: '/api/Admin/employer',
+  ADMIN_EMPLOYER_BY_ID: (id) => `/api/Admin/employer/${id}`,
+  ADMIN_STAFF: '/api/Admin/staff',
+  ADMIN_STAFF_BY_ID: (id) => `/api/Admin/staff/${id}`,
+  ADMIN_REPORTS: '/api/Admin/reports',
+  ADMIN_REPORT_BY_ID: (id) => `/api/Admin/reports/${id}`,
+  ADMIN_FEEDBACKS: '/api/Admin/feedbacks',
+  ADMIN_FEEDBACK_BY_ID: (id) => `/api/Admin/feedbacks/${id}`,
+  ADMIN_JOBS: '/api/Admin/jobs',
+  ADMIN_JOB_BY_ID: (id) => `/api/Admin/jobs/${id}`,
+  ADMIN_APPLICATIONS: '/api/Admin/applications',
+  ADMIN_APPLICATION_BY_ID: (id) => `/api/Admin/applications/${id}`,
+  ADMIN_STATS: '/api/Admin/stats',
+  ADMIN_CHART: '/api/Admin/chart',
+
 
 
   // Jobs
@@ -21,6 +43,7 @@ const ApiEndpoints = {
   EMPLOYER_JOBS: (id) => `/api/employer/${id}/jobs`,
   EMPLOYER_JOB: (id, jobId) => `/api/employer/${id}/jobs/${jobId}`,
   EMPLOYER_JOB_STATUS: (id, jobId) => `/api/employer/${id}/jobs/${jobId}/status`,
+  EMPLOYERS_FILTERS: '/employers-filter',
 
   // Employee
   EMPLOYEE_PROFILE_CREATE: (userId) => `/api/employees/${userId}`,

@@ -93,7 +93,8 @@ export default function EmployerProfile() {
     };
     load();
     return () => { mounted = false; ac.abort(); };
-  }, []);
+  // re-run when the route id or authenticated user changes so the page reflects owner state immediately after login
+  }, [routeId, user]);
 
   if (loading) return <Loading />;
 

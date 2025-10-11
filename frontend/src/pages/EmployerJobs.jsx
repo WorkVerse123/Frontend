@@ -5,7 +5,8 @@ import { handleAsync } from '../utils/HandleAPIResponse';
 import ApiEndpoints from '../services/ApiEndpoints';
 import { get as apiGet, put as apiPut } from '../services/ApiClient';
 import { Button, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import CreateJobWithSubscription from '../components/employer/CreateJobWithSubscription';
+import formatPrice from '../utils/formatPrice';
+// Navigation: open create job page directly instead of modal
 import JobRow from '../components/jobs/JobRow';
 import ActionsMenu from '../components/actions/ActionsMenu';
 import ApplicationsDialog from '../components/common/modals/ApplicationsDialog';
@@ -35,6 +36,7 @@ export default function EmployerJobs() {
   })();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [noJobsMessage, setNoJobsMessage] = useState(null);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -45,6 +47,10 @@ export default function EmployerJobs() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileUserId, setProfileUserId] = useState(null);
+    // Helper: trace job creation and origin
+    const chandleJobCreated = (job) => {
+      setJobs(prev => [job, ...prev]);
+    };
 
   useEffect(() => {
     let mounted = true;
@@ -66,6 +72,17 @@ export default function EmployerJobs() {
           return;
         }
         const res = await handleAsync(apiGet(ApiEndpoints.EMPLOYER_JOBS(resolvedEmployerId), { signal: ac.signal }));
+        // handleAsync may return { success: false, status, message, data }
+        // If API explicitly returns 404 (no jobs for employer), capture message for UI
+        try {
+          const statusCode = res?.status ?? res?.data?.statusCode ?? res?.data?.status ?? (res && res.success === false && res.statusCode) ?? null;
+          if (statusCode === 404) {
+            const msg = res?.data?.message || res?.message || 'Chưa có tin tuyển dụng';
+            setNoJobsMessage(msg);
+          } else {
+            setNoJobsMessage(null);
+          }
+        } catch (e) { /* ignore */ }
         if (!mounted) return;
         // Normalize response shapes. Some API wrappers return { data: {...} }, others return payload directly.
         const outer = res?.data ?? res;
@@ -83,8 +100,20 @@ export default function EmployerJobs() {
           list = [];
         } else {
           // if API returned a single job object, wrap it
-          if (payload && typeof payload === 'object') list = [payload];
-          else list = [];
+          if (payload && typeof payload === 'object') {
+            // Detect error-like payloads and treat them as empty.
+            // Some backends return { data: null, success: false, message: '...' }.
+            const hasJobLikeField = ['jobId', 'id', 'job_id', 'jobTitle', 'title', 'jobs'].some(k => k in payload);
+            const isExplicitError = payload?.success === false || (('message' in payload) && (payload.data === null || payload.data === undefined));
+            if (isExplicitError) {
+              list = [];
+            } else if (hasJobLikeField) {
+              list = [payload];
+            } else {
+              // fallback: treat as empty
+              list = [];
+            }
+          } else list = [];
         }
 
         // Map backend job fields to the UI's expected fields
@@ -122,7 +151,7 @@ export default function EmployerJobs() {
         };
 
         const normalizedList = Array.isArray(list) ? list.map(normalizeJob) : [];
-        setJobs(normalizedList || []);
+          setJobs(normalizedList || []);
       } catch (e) {
         // ignore — keep jobs empty
       } finally {
@@ -168,7 +197,7 @@ export default function EmployerJobs() {
       try {
         const appId = application.applicationId || application.id || null;
         if (!appId) {
-          console.debug('No applicationId on application', application);
+          // debug removed
           return;
         }
         const res = await handleAsync(apiGet(ApiEndpoints.APPLICATION_GET(appId)));
@@ -347,6 +376,7 @@ export default function EmployerJobs() {
 
           {/* Main content */}
           <main className="md:col-span-9">
+            {/* local debug removed */}
             {activeTab === 'jobs' ? (
               <div className="bg-white shadow rounded p-4 min-h-[160px]">
                 {loading ? (
@@ -354,9 +384,7 @@ export default function EmployerJobs() {
                 ) : jobs.length === 0 ? (
                   <div className="py-12 text-center">
                     <Typography className="text-gray-600 mb-4">Không có tin tuyển dụng nào.</Typography>
-                    <CreateJobWithSubscription onCreated={(job) => setJobs(prev => [job, ...prev])}>
-                      <Button variant="contained" color="primary">Đăng Tin Tuyển</Button>
-                    </CreateJobWithSubscription>
+                    <Button variant="contained" color="primary" onClick={() => navigate('/jobs/create')}>Đăng Tin Tuyển</Button>
                   </div>
                 ) : (
                   <div className="divide-y">
@@ -390,7 +418,7 @@ export default function EmployerJobs() {
                     <div className="text-sm text-gray-500">Chưa chọn gói nào</div>
                   )}
                 </div>
-                <EmployerSubscriptionPlans apiUrl={null} onSelect={(p) => setSelectedPlan(p)} />
+                <EmployerSubscriptionPlans apiUrl={ApiEndpoints.SUBSCRIPTION_PLANS} onSelect={(p) => setSelectedPlan(p)} />
               </div>
             ) : activeTab === 'create' ? (
               <div className="bg-white shadow rounded p-4 min-h-[160px]">
@@ -398,7 +426,7 @@ export default function EmployerJobs() {
                   <h2 className="text-lg font-medium">Tạo tin tuyển dụng mới</h2>
                   <p className="text-sm text-gray-500">Tạo nhanh một tin tuyển kèm chọn gói (nếu muốn)</p>
                 </div>
-                <CreateJobWithSubscription onCreated={(job) => { setJobs(prev => [job, ...prev]); setActiveTab('jobs'); }} />
+                    <Button variant="contained" color="primary" onClick={() => navigate('/jobs/create')}>Tạo Tin Tuyển</Button>
               </div>
             ) : (
               // overview
@@ -409,29 +437,28 @@ export default function EmployerJobs() {
                     <p className="text-sm text-gray-600">Trang tổng quan quản lý tin tuyển dụng của bạn</p>
                   </div>
                   <div>
-                    <CreateJobWithSubscription onCreated={(job) => setJobs(prev => [job, ...prev])}>
-                      <Button variant="contained" color="primary">Tạo Tin Tuyển</Button>
-                    </CreateJobWithSubscription>
+                    <Button variant="contained" color="primary" onClick={() => navigate('/jobs/create')}>Tạo Tin Tuyển</Button>
                   </div>
                 </div>
 
                 <StatsGrid items={stats} />
 
+                {/* Latest jobs: show message when empty, loading spinner when loading, or job rows when present */}
                 <div className="mt-6 bg-white rounded-lg border p-4">
                   <div className="flex items-center justify-between mb-4">
                     <div className="font-semibold">Tin tuyển mới nhất</div>
                     <div className="text-sm text-gray-500">Tất cả →</div>
                   </div>
-                  {loading ? <Loading /> : (
-                    jobs.length === 0 ? (
-                      <div className="py-6 text-center text-gray-500">Chưa có tin tuyển dụng</div>
-                    ) : (
-                      <div className="divide-y">
-                        {jobs.slice(0,3).map(j => (
-                          <JobRow key={j.jobId} job={j} onViewApplications={() => viewApplications(j)} onOpenMenu={(e) => openMenu(e, j)} />
-                        ))}
-                      </div>
-                    )
+                  {loading ? (
+                    <Loading />
+                  ) : Array.isArray(jobs) && jobs.length === 0 ? (
+                    <div className="py-6 text-center text-gray-500">{noJobsMessage || 'Chưa có tin tuyển dụng'}</div>
+                  ) : (
+                    <div className="divide-y">
+                      {jobs.slice(0,3).map(j => (
+                        <JobRow key={j.jobId} job={j} onViewApplications={() => viewApplications(j)} onOpenMenu={(e) => openMenu(e, j)} />
+                      ))}
+                    </div>
                   )}
                 </div>
               </>

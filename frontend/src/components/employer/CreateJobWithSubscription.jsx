@@ -81,7 +81,7 @@ export default function CreateJobWithSubscription({ onCreated = () => {}, childr
               closeDialog();
             }} />
 
-            <FormControl fullWidth>
+            {/* <FormControl fullWidth>
               <InputLabel id="plan-select-label">Gói dịch vụ</InputLabel>
               <Select
                 labelId="plan-select-label"
@@ -107,7 +107,7 @@ export default function CreateJobWithSubscription({ onCreated = () => {}, childr
               </Select>
             </FormControl>
 
-            <Typography variant="caption" color="textSecondary">Chọn gói nếu bạn muốn đăng kèm dịch vụ nổi bật hoặc tính phí.</Typography>
+            <Typography variant="caption" color="textSecondary">Chọn gói nếu bạn muốn đăng kèm dịch vụ nổi bật hoặc tính phí.</Typography> */}
           </Box>
         </DialogContent>
         <DialogActions>

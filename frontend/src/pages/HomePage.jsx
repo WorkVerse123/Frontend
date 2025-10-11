@@ -45,8 +45,18 @@ export default function HomePage() {
       <StatsPanel setIsLoading={setStatsLoading} />
       <RegisterBox />
       <PlatformSteps />
-      {normalizedRole === 'employer' ? (
+      { (normalizedRole === 'admin' || normalizedRole === 'staff') ? (
+        // Admin/staff see both featured jobs and featured candidates
+        <>
+          <FeaturedJobs setIsLoading={setJobsLoading} />
+          <FeaturedCandidates setIsLoading={setJobsLoading} />
+        </>
+      ) : normalizedRole === 'employer' ? (
+        // Employers should also see featured jobs (and get a 'Xem' link instead of 'Ứng Tuyển')
+       <>
+        <FeaturedJobs setIsLoading={setJobsLoading} />
         <FeaturedCandidates setIsLoading={setJobsLoading} />
+       </>
       ) : (
         <FeaturedJobs setIsLoading={setJobsLoading} />
       )}

@@ -23,7 +23,7 @@ export const fetchMock = async (path, config = {}) => {
 
     // If payload is a string (HTML error page) or not an object, fallback to native fetch once
     if (!payload || typeof payload === 'string') {
-      console.warn('[MocksService] unexpected payload, falling back to native fetch for', path);
+  // debug removed
       return await tryNativeFetch();
     }
 
@@ -44,7 +44,7 @@ export const fetchMock = async (path, config = {}) => {
     // On other errors, try a native fetch as a fallback once (helps when dev server
     // serves static files in a way axios misinterprets).
     try {
-      console.warn('[MocksService] axios.get failed, retrying with fetch for', path, err.message);
+  // debug removed
       return await tryNativeFetch();
     } catch (e) {
       // rethrow original axios error if native fetch also fails

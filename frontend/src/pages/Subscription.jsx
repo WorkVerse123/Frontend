@@ -37,9 +37,9 @@ export default function Subscription() {
         </Typography>
 
         {normalizedRole === 'employee' ? (
-          <SubscriptionPlans apiUrl={null} onSelect={(plan) => console.log('Employee selected plan:', plan)} />
+          <SubscriptionPlans apiUrl={null} onSelect={(plan) => { /* debug removed */ }} />
         ) : (
-          <EmployerSubscriptionPlans apiUrl={null} onSelect={(plan) => console.log('Employer selected plan:', plan)} />
+          <EmployerSubscriptionPlans apiUrl={null} onSelect={(plan) => { /* debug removed */ }} />
         )}
       </Box>
     </MainLayout>

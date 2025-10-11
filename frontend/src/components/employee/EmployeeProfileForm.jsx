@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, MenuItem, Select, FormControl, InputLabel, CircularProgress } from '@mui/material';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 import { post, put } from '../../services/ApiClient';
 import UploadService from '../../services/UploadService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,7 +27,7 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
   const [address, setAddress] = useState(initialData?.address || '');
   const [avatarUrl, setAvatarUrl] = useState(initialData?.avatarUrl || initialData?.avatar_url || '');
   const [avatarFileName, setAvatarFileName] = useState('');
-  const [avatarInputMode, setAvatarInputMode] = useState('url'); // 'url' or 'file'
+  const [avatarInputMode, setAvatarInputMode] = useState('url'); 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(initialData?.avatarUrl || initialData?.avatar_url || '');
   const objectUrlRef = useRef(null);
@@ -43,11 +45,12 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
   const [skills, setSkills] = useState(initialData?.skills || '');
   const [education, setEducation] = useState(initialData?.education || '');
   const [workExperience, setWorkExperience] = useState(initialData?.workExperience || initialData?.work_experience || '');
-  const [modeValue, setModeValue] = useState(initialData?.mode || '');
+  const [modeValue, setModeValue] = useState(initialData?.mode || 'public');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  // dialog removed: we will only show inline success message
 
   // For create mode we require a userId (passed from registration). For update mode, if no id is available show message.
   if (!effectiveUserId) {
@@ -58,14 +61,12 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
   }
 
   // If update mode and no initialData was provided, fetch existing profile to populate the form
-  const [fetched, setFetched] = useState(false);
   useEffect(() => {
     let mounted = true;
     const ac = new AbortController();
     (async () => {
       if (effectiveMode !== 'update') return;
       if (initialData) {
-        setFetched(true);
         return;
       }
       try {
@@ -92,17 +93,37 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
         }
       } catch (e) {
         // ignore fetch errors; user can still edit blank form
-        // eslint-disable-next-line no-console
-        console.error('Failed to fetch employee for edit:', e);
+        // debug removed
       } finally {
         if (mounted) {
-          setFetched(true);
           setLoading(false);
         }
       }
     })();
     return () => { mounted = false; ac.abort(); };
   }, [effectiveMode, effectiveUserId, initialData]);
+
+  // When success is set, trigger navigation from effect (avoid navigate inside submit handler)
+  useEffect(() => {
+    // instead of navigating immediately, show a Snackbar to the user; navigate after it closes
+    if (!success) return;
+    setSnack(s => ({ ...s, open: true, severity: 'success', message: success }));
+    // navigation will be handled in the Snackbar onClose to ensure user sees the message
+    return undefined;
+  }, [success, navigate]);
+
+  // perform redirect (SPA navigate + hard fallback)
+  const redirectedRef = useRef(false);
+  const performRedirect = () => {
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
+    try { navigate('/auth', { replace: true }); } catch (e) {}
+    const t = setTimeout(() => {
+      try { window.location.href = '/auth'; } catch (e) {}
+    }, 700);
+    // clear fallback timer after a short delay - no need to track it further here
+    setTimeout(() => clearTimeout(t), 1500);
+  };
 
   const toIsoString = (value) => {
     if (!value) return null;
@@ -184,9 +205,15 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
         setError(res.message || 'Lưu hồ sơ thất bại');
         return;
       }
-      setSuccess('Lưu hồ sơ thành công');
+  setSuccess('Tạo thông tin cá nhân thành công');
       if (typeof onSaved === 'function') onSaved(res.data || null);
-      // Do NOT navigate automatically after save — caller/page should decide when to redirect.
+      // Diagnostic: log effectiveMode/user to verify branch execution
+      try {
+        // eslint-disable-next-line no-console
+        console.log('[EmployeeProfileForm] success; effectiveMode=', effectiveMode, 'effectiveUserId=', effectiveUserId);
+      } catch (e) {}
+
+      // navigation now handled by effect watching `success`
     } catch (err) {
       setError(err?.message || 'Có lỗi khi gọi API');
     } finally {
@@ -195,8 +222,8 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4 bg-white rounded shadow-sm">
-      <h3 className="text-lg font-semibold mb-4">Thông tin ứng viên</h3>
+    <form onSubmit={handleSubmit} className="w-full max-w-full md:max-w-3xl lg:max-w-4xl mx-auto p-4 bg-white rounded shadow-sm">
+      <h1 className="text-lg font-semibold mb-4 ">Thông tin ứng viên</h1>
       {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
       {success && <div className="text-sm text-green-600 mb-2">{success}</div>}
 
@@ -220,7 +247,7 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
         <TextField label="Địa chỉ" value={address} onChange={e => setAddress(e.target.value)} />
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <Button size="small" variant={avatarInputMode === 'url' ? 'contained' : 'outlined'} onClick={() => setAvatarInputMode('url')}>Use URL</Button>
+            {/* <Button size="small" variant={avatarInputMode === 'url' ? 'contained' : 'outlined'} onClick={() => setAvatarInputMode('url')}>Use URL</Button> */}
             <Button size="small" variant={avatarInputMode === 'file' ? 'contained' : 'outlined'} onClick={() => setAvatarInputMode('file')}>Upload File</Button>
           </div>
 
@@ -273,14 +300,14 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
             </div>
           )}
         </div>
-  <TextField label="Chế độ (mode)" value={modeValue} onChange={e => setModeValue(e.target.value)} />
+  {/* <TextField label="Chế độ (mode)" value={modeValue} onChange={e => setModeValue(e.target.value)} /> */}
         <TextField label="Kỹ năng" value={skills} onChange={e => setSkills(e.target.value)} multiline minRows={2} />
         <TextField label="Học vấn" value={education} onChange={e => setEducation(e.target.value)} multiline minRows={2} />
         <TextField label="Kinh nghiệm làm việc" value={workExperience} onChange={e => setWorkExperience(e.target.value)} multiline minRows={2} />
         <TextField label="Tiểu sử (bio)" value={bio} onChange={e => setBio(e.target.value)} multiline minRows={3} className="md:col-span-2" />
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
+        <div className="mt-4 flex items-center gap-3">
         <Button type="submit" variant="contained" color="primary" disabled={loading}>
           {loading ? <CircularProgress size={20} color="inherit" /> : 'Lưu hồ sơ'}
         </Button>
@@ -289,6 +316,16 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
           setFullName(''); setDateOfBirth(''); setGender(''); setAddress(''); setAvatarUrl(''); setAvatarFileName(''); setAvatarInputMode('url'); setBio(''); setSkills(''); setEducation(''); setWorkExperience(''); setModeValue(''); setError(''); setSuccess('');
         }}>Đặt lại</Button>
       </div>
+      <Snackbar open={snack.open} autoHideDuration={4000} onClose={() => {
+        setSnack(s => ({ ...s, open: false }));
+        // if we had a success message, navigate after snackbar closes
+        if (success) performRedirect();
+      }}>
+        <Alert onClose={() => setSnack(s => ({ ...s, open: false }))} severity={snack.severity} sx={{ width: '100%' }}>
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </form>
   );
+  
 }
