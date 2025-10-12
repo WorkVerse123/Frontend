@@ -6,6 +6,7 @@ export default function CreateStaffAccount() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('Password@123');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [gender, setGender] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
@@ -94,6 +95,12 @@ export default function CreateStaffAccount() {
       {message && <div className="text-sm text-green-700">{message}</div>}
       <input required value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full border rounded px-3 py-2" />
       <input required value={phone} onChange={e => setPhone(e.target.value)} placeholder="Số điện thoại" className="w-full border rounded px-3 py-2" />
+      <div className="relative">
+        <input value={password} onChange={e => setPassword(e.target.value)} placeholder="Mật khẩu" type={showPassword ? 'text' : 'password'} className="w-full border rounded px-3 py-2 pr-10" />
+        <button type="button" onClick={() => setShowPassword(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-600">{showPassword ? 'Ẩn' : 'Hiện'}</button>
+      </div>
+      <div className="text-xs text-gray-500">Mật khẩu mặc định: Password@123 — có thể thay đổi tại đây</div>
+
       <input value={name} onChange={e => setName(e.target.value)} placeholder="Họ tên" className="w-full border rounded px-3 py-2" />
       <select value={gender} onChange={e => setGender(e.target.value)} className="w-full border rounded px-3 py-2">
         <option value="">Chọn giới tính</option>
