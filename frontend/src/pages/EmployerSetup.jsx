@@ -197,8 +197,8 @@ export default function EmployerSetup() {
             // backend (PUT /api/employer/:id) expects websiteUrl and logoUrl as single values
             websiteUrl,
             logoUrl,
-            // backend uses `dateEstablish` (see EditEmployer.jsx) — keep consistent
-            dateEstablish: establishedAt || '',
+            // backend uses `dateEstablished` (see EditEmployer.jsx) — keep consistent
+            dateEstablished: establishedAt || '',
             description: description || '',
         };
 

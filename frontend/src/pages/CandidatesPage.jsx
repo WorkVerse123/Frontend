@@ -6,6 +6,7 @@ import FiltersSidebar from '../components/candidates/FiltersSidebar';
 import ApiEndpoints from '../services/ApiEndpoints';
 import { get as apiGet } from '../services/ApiClient';
 import { handleAsync } from '../utils/HandleAPIResponse';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * CandidatesPage
@@ -15,6 +16,31 @@ import { handleAsync } from '../utils/HandleAPIResponse';
  * - Keeps API layer swappable: replace fetchMock() with real API call later
  */
 export default function CandidatesPage() {
+  const { user } = useAuth();
+  const roleRaw = user?.role || user?.RoleId || user?.roleId || user?.role_id || '';
+  const role = (() => {
+    if (roleRaw === null || roleRaw === undefined || roleRaw === '') return '';
+    const n = Number(roleRaw);
+    if (!Number.isNaN(n) && n > 0) {
+      switch (n) {
+        case 1: return 'admin';
+        case 2: return 'staff';
+        case 3: return 'employer';
+        case 4: return 'employee';
+        default: return String(roleRaw).toLowerCase();
+      }
+    }
+    return String(roleRaw).toLowerCase();
+  })();
+  const isPremium = (() => {
+    try {
+      const raw = user?.IsPremium ?? user?._raw?.IsPremium ?? user?.isPremium ?? user?.is_premium;
+      if (raw === true) return true;
+      if (typeof raw === 'string') return String(raw).toLowerCase() === 'true';
+      return Boolean(raw);
+    } catch (e) { return false; }
+  })();
+  const canViewCandidates = (role === 'employer' && isPremium) || role === 'admin';
   const [pageItems, setPageItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,10 +48,12 @@ export default function CandidatesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(10);
   const [query, setQuery] = useState('');
-  const [gender, setGender] = useState('any');
-  const [education, setEducation] = useState('any');
+  // multi-select filters: arrays of string ids (matching the API numeric codes)
+  const [gender, setGender] = useState([]);
+  const [education, setEducation] = useState([]);
+  const [locations, setLocations] = useState([]);
   // Draft vs applied filters: allow user to change controls and click "Áp dụng" to fetch
-  const [appliedFilters, setAppliedFilters] = useState({ query: '', gender: 'any', education: 'any' });
+  const [appliedFilters, setAppliedFilters] = useState({ query: '', gender: [], education: [], locations: [] });
 
   useEffect(() => {
     let mounted = true;
@@ -37,10 +65,22 @@ export default function CandidatesPage() {
         const qs = new URLSearchParams();
         qs.set('pageNumber', String(page));
         qs.set('pageSize', String(pageSize));
-        if (appliedFilters.query) qs.set('q', appliedFilters.query);
-        if (appliedFilters.gender && appliedFilters.gender !== 'any') qs.set('gender', appliedFilters.gender);
-        if (appliedFilters.education && appliedFilters.education !== 'any') qs.set('education', appliedFilters.education);
-        const url = `${ApiEndpoints.JOB_CANDIDATES(page, pageSize)}${appliedFilters.query || appliedFilters.gender !== 'any' || appliedFilters.education !== 'any' ? `&${qs.toString()}` : ''}`;
+        // Search -> map to Search param expected by API
+        if (appliedFilters.query) qs.set('Search', appliedFilters.query);
+        // Multiple employee education -> repeated EmployeeEducation params
+        if (Array.isArray(appliedFilters.education) && appliedFilters.education.length > 0) {
+          appliedFilters.education.forEach(val => qs.append('EmployeeEducation', String(val)));
+        }
+        // Multiple gender -> repeated Gender params
+        if (Array.isArray(appliedFilters.gender) && appliedFilters.gender.length > 0) {
+          appliedFilters.gender.forEach(val => qs.append('Gender', String(val)));
+        }
+        // Multiple locations -> repeated EmployeeLocation params
+        if (Array.isArray(appliedFilters.locations) && appliedFilters.locations.length > 0) {
+          appliedFilters.locations.forEach(val => qs.append('EmployeeLocation', String(val)));
+        }
+
+        const url = `${ApiEndpoints.JOB_CANDIDATES(page, pageSize)}&${qs.toString()}`;
         const res = await handleAsync(apiGet(url, { signal: ac.signal }));
         if (!mounted) return;
         const outer = res?.data ?? res;
@@ -59,22 +99,26 @@ export default function CandidatesPage() {
       }
     })();
     return () => { mounted = false; ac.abort(); };
-  }, [page, pageSize]);
+  }, [page, pageSize, appliedFilters]);
 
   // Handlers for FiltersSidebar
   const handleApply = () => {
     setPage(1);
-    setAppliedFilters({ query, gender, education });
+    setAppliedFilters({ query, gender, education, locations });
   };
   const handleReset = () => {
     setQuery(''); setGender('any'); setEducation('any');
     setPage(1);
-    setAppliedFilters({ query: '', gender: 'any', education: 'any' });
+    setGender([]); setEducation([]); setLocations([]);
+    setAppliedFilters({ query: '', gender: [], education: [], locations: [] });
   };
 
   return (
-    <MainLayout role='employer' hasSidebar={false}>
+    <MainLayout role={role} hasSidebar={false}>
       <div className="max-w-6xl mx-auto">
+        {!canViewCandidates ? (
+          <div className="p-6 bg-yellow-50 rounded text-sm text-slate-700">Chức năng tìm ứng viên chỉ dành cho nhà tuyển dụng trả phí (IsPremium). Vui lòng nâng cấp để truy cập.</div>
+        ) : (
         <div className="flex gap-6">
           {/* Sidebar - hidden on small screens */}
           <div className="hidden md:block w-72">
@@ -85,6 +129,10 @@ export default function CandidatesPage() {
               setGender={setGender}
               education={education}
               setEducation={setEducation}
+              locations={locations}
+              setLocations={setLocations}
+              onApply={handleApply}
+              onReset={handleReset}
             />
           </div>
 
@@ -112,6 +160,10 @@ export default function CandidatesPage() {
                 setGender={setGender}
                 education={education}
                 setEducation={setEducation}
+                locations={locations}
+                setLocations={setLocations}
+                onApply={handleApply}
+                onReset={handleReset}
               />
             </div>
 
@@ -138,6 +190,7 @@ export default function CandidatesPage() {
             )}
           </div>
         </div>
+        )}
       </div>
     </MainLayout>
   );

@@ -41,7 +41,7 @@ export default function HomePage() {
     <MainLayout role={normalizedRole} hasSidebar={false}>
         {/* Each child component manages its own loading state now. Removed global Loading overlay to avoid full-page reloads when a single component paginates. */}
       <BannerSearch />
-      <PromoBanner imageUrl={"https://scontent.fsgn2-3.fna.fbcdn.net/v/t39.30808-6/555736342_122168935118590474_6570772927044831720_n.png?_nc_cat=107&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeHiXZxTnukOM-_srDGpDCIOUJd_mi3Kc6lQl3-aLcpzqX0NELkNxainqOAnZRsylWmLD3eJyKplNrt5lqFTRanU&_nc_ohc=fWh4pazPQjsQ7kNvwGaqFTK&_nc_oc=AdkzNkindFUDe3xDSwJaie5i5FTRJP7mHyaX5bt4pkIZqWQ4dvvfLoVRZFj65gRRt1eIF6N9SnUUei-KRtd2mLsC&_nc_zt=23&_nc_ht=scontent.fsgn2-3.fna&_nc_gid=FEq7ev26bmlvnMz-yWcyzg&oh=00_AfbFzSLc3Zkx36SO6CwgleRLJod5K9BEMK6Rr12lpdJgzw&oe=68E2CBA3"} />
+      <PromoBanner imageUrl={"https://scontent.fsgn2-3.fna.fbcdn.net/v/t39.30808-6/555736342_122168935118590474_6570772927044831720_n.png?stp=dst-png_s960x960&_nc_cat=107&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeHiXZxTnukOM-_srDGpDCIOUJd_mi3Kc6lQl3-aLcpzqX0NELkNxainqOAnZRsylWmLD3eJyKplNrt5lqFTRanU&_nc_ohc=E7kEW0UfAb4Q7kNvwGVm-dK&_nc_oc=Admk3cAW8C1zy1ha-FcipgmiqINS5NGuhFrSBSm-Tl6XmHBBIPzHPG9pGv0f6BF-LGwyMh-3B0t44Ex6nRFR_ULr&_nc_zt=23&_nc_ht=scontent.fsgn2-3.fna&_nc_gid=rxK4Sexb1isPOEcwZAxklg&oh=00_Afej9c5PV9PpfeTD9C1A4NjGplcpWMea1aQGtVxvvFKV0Q&oe=68F18463"} />
       <StatsPanel setIsLoading={setStatsLoading} />
       <RegisterBox />
       <PlatformSteps />

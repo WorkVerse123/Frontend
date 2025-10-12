@@ -59,7 +59,7 @@ export default function EditEmployer() {
             address: e.address ?? e.companyAddress ?? e.company_address ?? '',
             websiteUrl: e.websiteUrl ?? e.companyWebsite ?? e.website ?? '',
             logoUrl: e.logoUrl ?? e.CompanyLogo ?? e.logo ?? '',
-            dateEstablish: e.dateEstablish ?? e.dateEstablish ?? e.dateEstablished ?? e.date_establish ?? null,
+            dateEstablished: e.dateEstablish ?? e.dateEstablish ?? e.dateEstablished ?? e.date_establish ?? null,
             description: e.description ?? e.desc ?? e.about ?? '',
             contactEmail: e.contactEmail ?? e.contact_email ?? e.email ?? '',
             contactPhone: e.contactPhone ?? e.contact_phone ?? e.phone ?? '',

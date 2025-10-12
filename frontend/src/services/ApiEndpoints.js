@@ -25,6 +25,7 @@ const ApiEndpoints = {
   ADMIN_APPLICATION_BY_ID: (id) => `/api/Admin/applications/${id}`,
   ADMIN_STATS: '/api/Admin/stats',
   ADMIN_CHART: '/api/Admin/chart',
+  ADMIN_PAYMENTS_FILTER: '/api/Admin/payments/filter',
 
 
 

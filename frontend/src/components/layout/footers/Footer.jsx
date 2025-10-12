@@ -1,6 +1,9 @@
 import { LAYOUT } from '../../../utils/emun/Enum';
+import { useState } from 'react';
+import FeedbackForm from '../../common/FeedbackForm';
 
 export default function Footer() {
+  const [fbOpen, setFbOpen] = useState(false);
   return (
     <footer className="w-full bg-[#042852] text-white pt-10 pb-4">
       <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-8">
@@ -77,7 +80,10 @@ export default function Footer() {
         <a href="https://www.facebook.com/profile.php?id=61567714224653" target="_blank" rel="noreferrer noopener"><i className="fab fa-facebook"></i></a>
         <a href="https://www.instagram.com/work.verse/" target="_blank" rel="noreferrer noopener"><i className="fab fa-instagram"></i></a>
         <a href="https://www.threads.com/@work.verse" target="_blank" rel="noreferrer noopener"><i className="fab fa-threads"></i></a>
+        {/* Feedback button */}
+        <button onClick={() => setFbOpen(true)} className="ml-4 bg-white text-[#042852] px-3 py-1 rounded text-sm font-semibold">Feedback</button>
       </div>
+  <FeedbackForm open={fbOpen} onClose={() => setFbOpen(false)} />
       {/* Copyright */}
       <div className="max-w-7xl mx-auto px-4 mt-6 text-center text-sm text-gray-400 border-t border-gray-700 pt-2">
         © {new Date().getFullYear()} WorkVerse. All rights reserved.

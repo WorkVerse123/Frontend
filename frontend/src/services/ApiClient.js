@@ -86,7 +86,22 @@ api.interceptors.response.use(
                     localStorage.removeItem('userData');
                     localStorage.removeItem('user');
                 } catch (e) {}
-            // Optionally: emit logout event, redirect, etc.
+            // Redirect to homepage so the app resets to unauthenticated state.
+            try {
+                if (typeof window !== 'undefined' && window.location) {
+                    // Avoid unnecessary navigation if already at homepage
+                    const path = window.location.pathname || '/';
+                    if (path !== '/' && path !== '/home') {
+                        // replace so back button won't return to protected page
+                        window.location.replace('/');
+                    } else {
+                        // already on homepage - reload to refresh UI
+                        window.location.reload();
+                    }
+                }
+            } catch (e) {
+                // ignore redirect errors
+            }
         }
         return Promise.reject(error);
     }

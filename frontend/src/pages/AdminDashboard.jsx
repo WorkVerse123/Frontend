@@ -8,6 +8,7 @@ import AdminReportsPanel from '../components/admin/AdminReportsPanel';
 import AdminEmployersPanel from '../components/admin/AdminEmployersPanel';
 import AdminEmployeesPanel from '../components/admin/AdminEmployeesPanel';
 import AdminIncomePanel from '../components/admin/AdminIncomePanel';
+import AdminIncomeHistoryPanel from '../components/admin/AdminIncomeHistoryPanel';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -51,7 +52,7 @@ export default function AdminDashboard() {
             )}
             {activePanel === 'income' && (
               <div>
-                <AdminIncomePanel />
+                <AdminIncomeHistoryPanel />
               </div>
             )}
             {activePanel === 'employees' && (

@@ -15,6 +15,7 @@ import CategoryBadges from '../components/common/CategoryBadges';
 import JobReviews from '../components/jobs/JobReviews';
 import { post, del } from '../services/ApiClient';
 import { handleAsync } from '../utils/HandleAPIResponse';
+import ReportForm from '../components/common/ReportForm';
 
 export default function JobDetail() {
   const { id: routeId } = useParams();
@@ -24,6 +25,7 @@ export default function JobDetail() {
   const [appliedForThisJob, setAppliedForThisJob] = useState(false);
   const [bookmarked, setBookmarked] = useState(Boolean(false));
   const [bookmarkId, setBookmarkId] = useState(null);
+  const [reportOpen, setReportOpen] = useState(false);
   const { user } = useAuth();
   const employeeId = user?.id || user?.userId || user?.employeeId || null;
   const role = (user?.role || user?.RoleId || user?.roleId || '').toString().toLowerCase();
@@ -332,6 +334,35 @@ export default function JobDetail() {
                       })()
                     }
                   </div>
+                    {/* Report button for users to report job or employer (hidden when current user is job owner) */}
+                    {job && user && (() => {
+                      const currentUserId = Number(user?.userId || user?.id || 0);
+                      // employerId may reference employer profile; prefer _employer.userId when available
+                      const jobOwnerUserId = Number(job?._employer?.userId || job?._employer?.user_id || job?._employer?.id || job?.employerUserId || 0);
+                      const isOwner = currentUserId && jobOwnerUserId && currentUserId === jobOwnerUserId;
+                        const roleRaw = user?.role || user?.RoleId || user?.roleId || user?.role_id || '';
+                        const role = (() => {
+                          if (roleRaw === null || roleRaw === undefined || roleRaw === '') return '';
+                          const n = Number(roleRaw);
+                          if (!Number.isNaN(n) && n > 0) {
+                            switch (n) {
+                              case 1: return 'admin';
+                              case 2: return 'staff';
+                              case 3: return 'employer';
+                              case 4: return 'employee';
+                              default: return String(roleRaw).toLowerCase();
+                            }
+                          }
+                          return String(roleRaw).toLowerCase();
+                        })();
+
+                        if (isOwner || role !== 'employee') return null;
+                      return (
+                        <div className="mt-2">
+                          <button onClick={() => setReportOpen(true)} className="text-sm text-red-600 underline">Báo cáo</button>
+                        </div>
+                      );
+                    })()}
               </div>
             </div>
 
@@ -373,6 +404,7 @@ export default function JobDetail() {
         employerId={job?._employer?.employerId || job?.employerId}
         initialApplied={appliedForThisJob}
       />
+      <ReportForm open={!!reportOpen} onClose={() => setReportOpen(false)} initialTargetType="job" initialTargetId={job?.jobId || job?.id} />
     </MainLayout>
   );
 }

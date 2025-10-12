@@ -3,6 +3,7 @@ import { get as apiGet } from '../../services/ApiClient';
 import ApiEndpoints from '../../services/ApiEndpoints';
 import { formatDateToDDMMYYYY } from '../../utils/formatDate';
 import DOMPurify from 'dompurify';
+import InlineLoader from '../common/loading/InlineLoader';
 
 export default function AdminEmployersPanel() {
   const [items, setItems] = useState([]);
@@ -66,62 +67,64 @@ export default function AdminEmployersPanel() {
 
   return (
     <div>
-      <h3 className="font-semibold mb-3">Nhà tuyển dụng</h3>
+      <h3 className="font-semibold mb-3 text-lg">Nhà tuyển dụng</h3>
       {loading ? <InlineLoader/>: (
         <div className="bg-white rounded shadow p-4">
           {items.length === 0 ? (
             <div className="text-sm text-gray-500">Không có nhà tuyển dụng hoặc dữ liệu chưa đúng định dạng (kiểm tra console)</div>
           ) : (
             <>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-gray-500">
-                    <th>Id</th>
-                    <th>Công ty</th>
-                    <th>Địa chỉ</th>
-                    <th>Liên hệ</th>
-                    <th>Ngày thành lập</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map(it => (
-                    <tr key={it.employerId || it.id} className="border-t">
-                      <td className="py-2">{it.employerId || it.id}</td>
-                      <td>{it.companyName}</td>
-                      <td>{it.address}</td>
-                      <td>{it.contactEmail || it.contactPhone}</td>
-                      <td>{formatDateToDDMMYYYY(it.dateEstablish)}</td>
-                      <td>
-                        <button onClick={async () => {
-                          // fetch employer profile when opening detail modal
-                          const id = it.employerId || it.id;
-                          if (!id) { setDetail(it); return; }
-                          try {
-                            setDetailLoading(true);
-                            const res = await apiGet(ApiEndpoints.EMPLOYER(id));
-                            try { console.debug('AdminEmployersPanel employer profile', res); } catch (e) {}
-                            const payload = res?.data ?? res;
-                            // server might wrap profile under data
-                            const profile = payload?.data ?? payload;
-                            setDetail(profile);
-                          } catch (e) {
-                            // fallback to raw item
-                            setDetail(it);
-                          } finally {
-                            setDetailLoading(false);
-                          }
-                        }} className="px-2 py-1 text-xs bg-gray-100 rounded">Xem</button>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-gray-500">
+                      <th className="py-2">Id</th>
+                      <th className="py-2">Công ty</th>
+                      <th className="py-2">Địa chỉ</th>
+                      <th className="py-2">Liên hệ</th>
+                      <th className="py-2">Ngày thành lập</th>
+                      <th className="py-2"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white">
+                    {items.map(it => (
+                      <tr key={it.employerId || it.id} className="border-t hover:bg-gray-50">
+                        <td className="py-3 pr-4">{it.employerId || it.id}</td>
+                        <td className="py-3 font-medium">{it.companyName}</td>
+                        <td className="py-3 text-sm text-gray-600">{it.address}</td>
+                        <td className="py-3 text-sm text-gray-600">{it.contactEmail || it.contactPhone}</td>
+                        <td className="py-3">{formatDateToDDMMYYYY(it.dateEstablish)}</td>
+                        <td className="py-3">
+                          <button onClick={async () => {
+                            // fetch employer profile when opening detail modal
+                            const id = it.employerId || it.id;
+                            if (!id) { setDetail(it); return; }
+                            try {
+                              setDetailLoading(true);
+                              const res = await apiGet(ApiEndpoints.EMPLOYER(id));
+                              try { console.debug('AdminEmployersPanel employer profile', res); } catch (e) {}
+                              const payload = res?.data ?? res;
+                              // server might wrap profile under data
+                              const profile = payload?.data ?? payload;
+                              setDetail(profile);
+                            } catch (e) {
+                              // fallback to raw item
+                              setDetail(it);
+                            } finally {
+                              setDetailLoading(false);
+                            }
+                          }} className="px-3 py-1 text-xs bg-blue-600 text-white rounded">Xem</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               <div className="mt-3 flex items-center gap-2 justify-end">
-                <button disabled={Number(page) <= 1} onClick={() => setPage(p => Math.max(1, Number(p) - 1))} className="px-3 py-1 bg-gray-100 rounded">Prev</button>
+                <button disabled={Number(page) <= 1} onClick={() => setPage(p => Math.max(1, Number(p) - 1))} className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50">Prev</button>
                 <span className="text-sm text-gray-600">{page} / {totalPages}</span>
-                <button disabled={Number(page) >= Number(totalPages)} onClick={() => setPage(p => Math.min(Number(totalPages), Number(p) + 1))} className="px-3 py-1 bg-gray-100 rounded">Next</button>
+                <button disabled={Number(page) >= Number(totalPages)} onClick={() => setPage(p => Math.min(Number(totalPages), Number(p) + 1))} className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50">Next</button>
               </div>
             </>
           )}
@@ -130,7 +133,7 @@ export default function AdminEmployersPanel() {
 
       {detail && (
         <div className="fixed inset-0 flex items-start justify-center bg-black/40 px-4 pt-16 pb-6">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl" style={{ maxHeight: 'calc(100vh - 96px)', overflow: 'auto' }}>
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-0" style={{ maxHeight: 'calc(100vh - 96px)', overflow: 'auto' }}>
             {detailLoading ? (
               <div className="p-6">Đang tải chi tiết...</div>
             ) : (
@@ -141,11 +144,13 @@ export default function AdminEmployersPanel() {
                 </div>
 
                 <div className="p-6 flex-1 overflow-auto text-sm text-gray-700 space-y-4">
-                  <div><strong>Địa chỉ:</strong> {detail.address}</div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1"><strong>Địa chỉ:</strong> {detail.address}</div>
+                    <div>{detail.logoUrl ? <img src={detail.logoUrl} alt="logo" className="h-16 w-16 rounded" /> : '-'}</div>
+                  </div>
                   <div><strong>Website:</strong> {detail.websiteUrl || detail.website_url}</div>
                   <div><strong>Email:</strong> {detail.contactEmail || detail.contact_email}</div>
                   <div><strong>Phone:</strong> {detail.contactPhone || detail.contact_phone}</div>
-                  <div><strong>Logo:</strong> {detail.logoUrl ? <img src={detail.logoUrl} alt="logo" className="h-16 w-16 rounded" /> : '-'}</div>
                   <div><strong>Ngày thành lập:</strong> {formatDateToDDMMYYYY(detail.dateEstablish || detail.date_establish)}</div>
                   <div><strong>Mô tả:</strong>
                     <div className="prose mt-1 max-w-none text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify ? DOMPurify.sanitize(detail.description || detail.content || '') : (detail.description || detail.content || '') }} />

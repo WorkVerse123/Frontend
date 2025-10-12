@@ -76,15 +76,22 @@ export function AuthProvider({ children }) {
 			const token = getCookie('token');
 			const userCookie = getCookie('user');
 
+			// If a user cookie exists, only trust it when a token cookie is present too.
+			// This prevents stale/partial cookie states where user data exists but no auth token.
 			if (userCookie) {
-				try {
-					const parsed = JSON.parse(userCookie);
-					// ensure cookie-provided user is normalized (numbers, role mapping)
-					const normalized = normalizeUser(parsed) || parsed;
-					if (mounted) setUser(normalized);
-					return;
-				} catch (e) {
-					// ignore parse error and continue to token parsing
+				if (!token) {
+					// don't set user from cookie when token missing - treat as unauthenticated
+					if (mounted) setUser(null);
+				} else {
+					try {
+						const parsed = JSON.parse(userCookie);
+						// ensure cookie-provided user is normalized (numbers, role mapping)
+						const normalized = normalizeUser(parsed) || parsed;
+						if (mounted) setUser(normalized);
+						return;
+					} catch (e) {
+						// ignore parse error and continue to token parsing
+					}
 				}
 			}
 
