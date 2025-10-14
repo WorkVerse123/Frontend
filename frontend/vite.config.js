@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: './',
   // Dev server proxy: forward any /api requests to the backend to avoid CORS
   // and prevent the frontend dev server (default :5173) from answering API calls.
   // Update the target if your backend runs on a different port or host.
