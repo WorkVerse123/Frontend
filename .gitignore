@@ -143,3 +143,4 @@ vite.config.ts.timestamp-*
 JSON_DATA/
 
 copilot-instructions.md
+.github
