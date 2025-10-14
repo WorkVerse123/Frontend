@@ -174,8 +174,7 @@ export default function AdminIncomeHistoryPanel({ className = '' }) {
               <th>Date</th>
               <th>User</th>
               <th>Plan</th>
-              <th className="text-right">Amount</th>
-              <th>Method</th>
+              <th className="text-center">Amount</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -186,9 +185,17 @@ export default function AdminIncomeHistoryPanel({ className = '' }) {
                 <td className="py-2">{p.paymentDate ? (new Date(p.paymentDate)).toISOString().slice(0,10) : ''}</td>
                 <td className="py-2">{p.user?.userId ?? p.userId}</td>
                 <td className="py-2">{p.plan?.planName ?? p.planId}</td>
-                <td className="py-2 text-right">{typeof p.amount === 'number' ? p.amount.toLocaleString() : p.amount}</td>
-                <td className="py-2">{p.paymentMethod}</td>
-                <td className="py-2"><span className="text-sm text-gray-600">{p.status}</span></td>
+                <td className="py-2 text-center">{typeof p.amount === 'number' ? p.amount.toLocaleString() : p.amount}<span> VND</span></td>
+                <td className="py-2">
+                  <span
+                    className={`text-sm px-2 py-0.5 rounded-full font-medium
+                      ${p.status === 'pending' ? 'bg-blue-100 text-blue-700' :
+                        p.status === 'completed' ? 'bg-green-100 text-green-700' :
+                        'bg-red-100 text-red-700'}`}
+                  >
+                    {p.status}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>

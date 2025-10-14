@@ -37,7 +37,9 @@ function LineChart({ points = [], height = 120, color = '#3b82f6' }) {
 }
 
 // Simple bar chart for payments
+
 import AdminIncomePanel from './AdminIncomePanel';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 
 
@@ -93,29 +95,76 @@ export default function OverviewPanel() {
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded shadow p-4">Người dùng: <div className="font-bold">{formatNumber(userStats?.totalUsers ?? userStats?.TotalUsers ?? userStats?.totalUsersCount ?? '-')}</div></div>
-        <div className="bg-white rounded shadow p-4">Việc làm: <div className="font-bold">{formatNumber(jobsTotal)}</div></div>
-        <div className="bg-white rounded shadow p-4">Ứng tuyển: <div className="font-bold">{formatNumber(applicationsTotal)}</div></div>
+        <div className="bg-blue-100 rounded shadow p-4">Người dùng: <div className="font-bold">{formatNumber(userStats?.totalUsers ?? userStats?.TotalUsers ?? userStats?.totalUsersCount ?? '-')}</div></div>
+        <div className="bg-green-100 rounded shadow p-4">Việc làm: <div className="font-bold">{formatNumber(jobsTotal)}</div></div>
+        <div className="bg-yellow-100 rounded shadow p-4">Ứng tuyển: <div className="font-bold">{formatNumber(applicationsTotal)}</div></div>
       </div>
 
-      <div className="bg-white rounded shadow p-4 mb-4">
+      <div className="bg-white rounded shadow p-4 mb-4 flex flex-col items-center">
         <h3 className="font-semibold mb-2">Thống kê người dùng</h3>
-        <table className="w-full text-sm">
-          <tbody>
-            <tr className="border-t">
-              <td className="py-2 font-medium">Tổng người dùng</td>
-              <td className="py-2 text-right">{formatNumber(userStats?.totalUsers ?? userStats?.TotalUsers ?? '-')}</td>
-            </tr>
-            <tr className="border-t">
-              <td className="py-2 font-medium">Nhà tuyển dụng</td>
-              <td className="py-2 text-right">{formatNumber(userStats?.totalEmployers ?? userStats?.TotalEmployers ?? '-')}</td>
-            </tr>
-            <tr className="border-t">
-              <td className="py-2 font-medium">Người tìm việc</td>
-              <td className="py-2 text-right">{formatNumber(userStats?.totalEmployees ?? userStats?.TotalEmployees ?? '-')}</td>
-            </tr>
-          </tbody>
-        </table>
+        {/* Biểu đồ tròn PieChart */}
+        {(() => {
+          const totalEmployers = Number(userStats?.totalEmployers ?? userStats?.TotalEmployers ?? 0);
+          const totalEmployees = Number(userStats?.totalEmployees ?? userStats?.TotalEmployees ?? 0);
+          const pieData = [
+            { name: 'Nhà tuyển dụng', value: totalEmployers },
+            { name: 'Người tìm việc', value: totalEmployees },
+          ];
+          const pieColors = ['#1adfaf', '#ae8ff7'];
+          // Tính tổng để lấy phần trăm
+          const total = totalEmployers + totalEmployees;
+          // Hàm hiển thị label phần trăm trên PieChart
+          const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+            const RADIAN = Math.PI / 180;
+            const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+            return (
+              <text x={x} y={y} fill="#222" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={14} fontWeight={600}>
+                {percent > 0 ? `${(percent * 100).toFixed(0)}%` : ''}
+              </text>
+            );
+          };
+          return (
+            <div className="w-full flex flex-col sm:flex-row items-center justify-center">
+              <ResponsiveContainer width={220} height={220}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={renderCustomizedLabel}
+                    labelLine={false}
+                  >
+                    {pieData.map((entry, idx) => (
+                      <Cell key={`cell-${idx}`} fill={pieColors[idx % pieColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <ul className="ml-6 text-sm">
+                <li className="flex items-center mb-1">
+                  <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ background: pieColors[0] }}></span>
+                  Nhà tuyển dụng: <span className="ml-1 font-semibold">{formatNumber(totalEmployers)}</span>
+                  {total > 0 && <span className="ml-2 text-xs text-gray-500">({((totalEmployers/total)*100).toFixed(1)}%)</span>}
+                </li>
+                <li className="flex items-center mb-1">
+                  <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ background: pieColors[1] }}></span>
+                  Người tìm việc: <span className="ml-1 font-semibold">{formatNumber(totalEmployees)}</span>
+                  {total > 0 && <span className="ml-2 text-xs text-gray-500">({((totalEmployees/total)*100).toFixed(1)}%)</span>}
+                </li>
+                <li className="flex items-center mt-2">
+                  <span className="text-xs text-gray-500">Tổng người dùng: </span>
+                  <span className="ml-1 font-bold">{formatNumber(userStats?.totalUsers ?? userStats?.TotalUsers ?? '-')}</span>
+                </li>
+              </ul>
+            </div>
+          );
+        })()}
       </div>
  {/* Shared date filter for job & payment charts */}
       <div className="bg-white rounded shadow p-4 mb-4">

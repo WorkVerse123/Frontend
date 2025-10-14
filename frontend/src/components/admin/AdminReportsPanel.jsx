@@ -132,18 +132,20 @@ export default function AdminReportsPanel() {
                   <td className="py-3">{r.reporter?.fullName ?? r.reporter?.full_name ?? r.reporter?.name ?? r.reporter?.userId ?? '-'}</td>
                   <td className="py-3">
                     <div className="flex items-center gap-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${r.status === 'resolved' ? 'bg-green-100 text-green-800' : r.status === 'dismissed' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>{r.status}</span>
-                      <div>
-                        <select
-                          value={editingStatus[r.reportId || r.report_id || r.id] ?? r.status}
-                          onChange={(e) => setEditingStatus(s => ({ ...s, [r.reportId || r.report_id || r.id]: e.target.value }))}
-                          className="p-1 border rounded text-sm"
-                        >
-                          <option value="pending">pending</option>
-                          <option value="resolved">resolved</option>
-                          <option value="dismissed">dismissed</option>
-                        </select>
-                      </div>
+                      <select
+                        value={editingStatus[r.reportId || r.report_id || r.id] ?? r.status}
+                        onChange={(e) => setEditingStatus(s => ({ ...s, [r.reportId || r.report_id || r.id]: e.target.value }))}
+                        className={`p-1 border rounded text-sm
+                          ${((editingStatus[r.reportId || r.report_id || r.id] ?? r.status) === 'resolved')
+                            ? 'bg-green-100 text-green-800'
+                            : ((editingStatus[r.reportId || r.report_id || r.id] ?? r.status) === 'dismissed')
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-blue-100 text-blue-800'}`}
+                      >
+                        <option value="pending">pending</option>
+                        <option value="resolved">resolved</option>
+                        <option value="dismissed">dismissed</option>
+                      </select>
                       { (editingStatus[r.reportId || r.report_id || r.id] ?? r.status) !== r.status && (
                         <div className="flex items-center gap-2">
                           <button
