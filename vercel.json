@@ -1,7 +1,6 @@
 {
   "version": 2,
-  "installCommand": "cd frontend && npm ci --include=dev || (cd frontend && npm install --include=dev)",
-  "buildCommand": "cd frontend && npm run build",
+  
   "builds": [
     {
       "src": "frontend/package.json",
