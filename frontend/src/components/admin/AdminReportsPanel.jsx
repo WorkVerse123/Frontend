@@ -142,9 +142,9 @@ export default function AdminReportsPanel() {
                               ? 'bg-red-100 text-red-800'
                               : 'bg-blue-100 text-blue-800'}`}
                       >
-                        <option value="pending">pending</option>
-                        <option value="resolved">resolved</option>
-                        <option value="dismissed">dismissed</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Dismissed">Dismissed</option>
                       </select>
                       { (editingStatus[r.reportId || r.report_id || r.id] ?? r.status) !== r.status && (
                         <div className="flex items-center gap-2">
