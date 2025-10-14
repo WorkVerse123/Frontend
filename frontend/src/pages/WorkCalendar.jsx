@@ -9,7 +9,7 @@ import MainLayout from '../components/layout/MainLayout';
 import Loading from '../components/common/loading/Loading';
 import EventDialog from '../components/calendar/EventDialog';
 import CalendarBoard from '../components/calendar/CalendarBoard';
-import { mapApiTimesToEvents } from '../utils/calendarMapper';
+import { mapApiTimesToEvents } from '../utils/CalendarMapper';
 
 
 
