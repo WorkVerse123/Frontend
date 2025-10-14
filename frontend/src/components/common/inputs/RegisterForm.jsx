@@ -43,6 +43,8 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     const { setUser } = useAuth();
     const [showVerifyModal, setShowVerifyModal] = useState(false);
     const [pendingNav, setPendingNav] = useState(null); // { route: string, state?: any }
+    const [otpVerified, setOtpVerified] = useState(false);
+    const [showOtpModal, setShowOtpModal] = useState(false);
 
     // validation errors
     const [errors, setErrors] = useState({
@@ -69,12 +71,25 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
         return !Object.values(next).some(v => v);
     };
 
+    const handleSendOtp = async () => {
+        // Gọi API gửi OTP về email
+        await post(ApiEndpoints.SEND_OTP, { email, purpose: OtpPurpose.AccountVerification });
+        setShowOtpModal(true);
+    };
+
+    const handleOtpVerified = () => {
+        setOtpVerified(true);
+        setShowOtpModal(false);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!validate()) {
-            console.error('Validation failed', errors);
+        if (!validate()) return;
+        if (!otpVerified) {
+            handleSendOtp();
             return;
         }
+        // Đã xác thực OTP, giờ mới gọi API register
         // minimal payload expected by backend
         const data = { email: email.trim(), phoneNumber: String(phoneNumber).trim(), password, roleId: Number(role), status: 'active' };
         setSubmitError('');
@@ -309,7 +324,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                         '&:hover': { bgcolor: '#1d4ed8' }
                     }}
                 >
-                    {loading ? 'Đang tạo...' : 'Tạo Tài Khoản'}
+                    {loading ? 'Đang tạo...' : otpVerified ? 'Tạo Tài Khoản' : 'Xác thực Email'}
                 </Button>
                 {/* <div className="flex items-center my-2">
                 <span className="flex-1 border-t border-gray-300"></span>
@@ -335,6 +350,13 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                         />
                     </div>
                 </div>
+            )}
+            {showOtpModal && (
+                <EmailVerification
+                    email={email}
+                    purpose={OtpPurpose.AccountVerification}
+                    onVerified={handleOtpVerified}
+                />
             )}
         </>
     );
