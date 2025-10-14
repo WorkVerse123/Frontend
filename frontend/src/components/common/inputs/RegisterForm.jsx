@@ -75,8 +75,8 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
             console.error('Validation failed', errors);
             return;
         }
-    // minimal payload expected by backend
-    const data = { email: email.trim(), phoneNumber: String(phoneNumber).trim(), password, roleId: Number(role), status: 'active' };
+        // minimal payload expected by backend
+        const data = { email: email.trim(), phoneNumber: String(phoneNumber).trim(), password, roleId: Number(role), status: 'active' };
         setSubmitError('');
         setLoading(true);
         (async () => {
@@ -106,7 +106,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                         const parts = t.split('.');
                         if (parts.length < 2) return null;
                         const payload = parts[1];
-                        const json = decodeURIComponent(atob(payload).split('').map(function(c) {
+                        const json = decodeURIComponent(atob(payload).split('').map(function (c) {
                             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                         }).join(''));
                         return JSON.parse(json);
@@ -115,7 +115,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                     }
                 };
 
-                if (resolvedToken) setCookie('token', resolvedToken, 7);
+                // if (resolvedToken) setCookie('token', resolvedToken, 7);
 
                 // If no explicit user object, try obtain from token payload
                 if (!user && resolvedToken) {
@@ -157,10 +157,10 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                     user = { ...user, employeeId: EmployeeId, employerId: EmployerId, roleId: finalRoleId, role: finalRole };
                 }
 
-                if (user) {
-                    try { setCookie('user', JSON.stringify(user), 7); } catch (e) { /* ignore */ }
-                    try { setUser(user); } catch (e) { /* ignore */ }
-                }
+                // if (user) {
+                //     try { setCookie('user', JSON.stringify(user), 7); } catch (e) { /* ignore */ }
+                //     try { setUser(user); } catch (e) { /* ignore */ }
+                // }
                 // Instead of navigating immediately, show OTP verification modal.
                 // After OTP is verified we will navigate to the setup/profile page.
                 if (Number(role) === 3) {
@@ -180,160 +180,162 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     };
 
     const isSubmitDisabled = !email.trim() || !phoneNumber.trim() || !password || !confirm || !agreed || loading;
-    
+
     return (
         <>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
-            <h2 className="text-2xl font-bold mb-2 text-[#2563eb] text-center">Tạo tài khoản</h2>
-            {submitError && <div className="text-sm text-red-600 text-center">{submitError}</div>}
-            <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-500">
-                    Bạn đã có tài khoản?
-                    <button
-                        type="button"
-                        className="text-blue-700 font-semibold underline"
-                        onClick={onShowLogin}
-                    >
-                        Đăng Nhập
-                    </button>
-                </span>
-                <FormControl size="small" sx={{ minWidth: 110 }}>
-                    <Select
-                        value={role}
-                        onChange={e => setRole(Number(e.target.value))}
-                        displayEmpty
-                        sx={{ bgcolor: 'white', borderRadius: 2, fontWeight: 600 }}
-                        inputProps={{ 'aria-label': 'role' }}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+                <h2 className="text-2xl font-bold mb-2 text-[#2563eb] text-center">Tạo tài khoản</h2>
+                {submitError && <div className="text-sm text-red-600 text-center">{submitError}</div>}
+                <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-500">
+                        Bạn đã có tài khoản?
+                        <button
+                            type="button"
+                            className="text-blue-700 font-semibold underline"
+                            onClick={onShowLogin}
+                        >
+                            Đăng Nhập
+                        </button>
+                    </span>
+                    <FormControl size="small" sx={{ minWidth: 110 }}>
+                        <Select
+                            value={role}
+                            onChange={e => setRole(Number(e.target.value))}
+                            displayEmpty
+                            sx={{ bgcolor: 'white', borderRadius: 2, fontWeight: 600 }}
+                            inputProps={{ 'aria-label': 'role' }}
                             MenuProps={{ disableScrollLock: true }}
-                    >
-                        <MenuItem value={4}>Ứng Viên</MenuItem>
-                        <MenuItem value={3}>Nhà Tuyển Dụng</MenuItem>
-                    </Select>
-                    {/* role luôn có value mặc định; nếu cần validate role, có thể bật FormHelperText */}
-                </FormControl>
-            </div>
-           
-            <TextField
-                required
-                label="Địa chỉ email"
-                variant="outlined"
-                size="small"
-                fullWidth
-                sx={{ bgcolor: 'white', borderRadius: 2 }}
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                error={!!errors.email}
-                helperText={errors.email || ''}
-            />
-             <div className="flex gap-2">
+                        >
+                            <MenuItem value={4}>Ứng Viên</MenuItem>
+                            <MenuItem value={3}>Nhà Tuyển Dụng</MenuItem>
+                        </Select>
+                        {/* role luôn có value mặc định; nếu cần validate role, có thể bật FormHelperText */}
+                    </FormControl>
+                </div>
+
                 <TextField
                     required
-                    label="Số điện thoại"
+                    label="Địa chỉ email"
                     variant="outlined"
                     size="small"
                     fullWidth
                     sx={{ bgcolor: 'white', borderRadius: 2 }}
-                    value={phoneNumber}
-                    onChange={e => setPhoneNumber(e.target.value)}
-                    error={!!errors.phoneNumber}
-                    helperText={errors.phoneNumber || ''}
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    error={!!errors.email}
+                    helperText={errors.email || ''}
                 />
-            </div>
-            <TextField
-                required
-                label="Mật khẩu"
-                variant="outlined"
-                size="small"
-                type={showPassword ? 'text' : 'password'}
-                fullWidth
-                sx={{ bgcolor: 'white', borderRadius: 2 }}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                error={!!errors.password}
-                helperText={errors.password || ''}
-                InputProps={{
-                    endAdornment: (
-                        <InputAdornment position="end">
-                            <IconButton onClick={() => setShowPassword(v => !v)} edge="end">
-                                {showPassword ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                        </InputAdornment>
-                    )
-                }}
-            />
-            <TextField
-                required
-                label="Xác nhận mật khẩu"
-                variant="outlined"
-                size="small"
-                type={showConfirm ? 'text' : 'password'}
-                fullWidth
-                sx={{ bgcolor: 'white', borderRadius: 2 }}
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                error={!!errors.confirm}
-                helperText={errors.confirm || ''}
-                InputProps={{
-                    endAdornment: (
-                        <InputAdornment position="end">
-                            <IconButton onClick={() => setShowConfirm(v => !v)} edge="end">
-                                {showConfirm ? <VisibilityOff /> : <Visibility />}
-                            </IconButton>
-                        </InputAdornment>
-                    )
-                }}
-            />
-            <div>
-                <FormControl error={!!errors.agreed} component="fieldset" variant="standard">
-                    <FormControlLabel
-                        control={<Checkbox checked={agreed} onChange={e => setAgreed(e.target.checked)} />}
-                        label={<span className="text-[#2563eb] text-sm">Tôi đồng ý với Điều khoản sử dụng và Chính sách bảo mật</span>}
+                <div className="flex gap-2">
+                    <TextField
+                        required
+                        label="Số điện thoại"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        sx={{ bgcolor: 'white', borderRadius: 2 }}
+                        value={phoneNumber}
+                        onChange={e => setPhoneNumber(e.target.value)}
+                        error={!!errors.phoneNumber}
+                        helperText={errors.phoneNumber || ''}
                     />
-                    {errors.agreed && <FormHelperText>{errors.agreed}</FormHelperText>}
-                </FormControl>
-            </div>
-            <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                endIcon={<ArrowForward />}
-                disabled={isSubmitDisabled}
-                sx={{
-                    py: 1.5,
-                    fontWeight: 'bold',
-                    fontSize: 16,
-                    borderRadius: 2,
-                    boxShadow: 2,
-                    bgcolor: '#2563eb',
-                    '&:hover': { bgcolor: '#1d4ed8' }
-                }}
-            >
-                {loading ? 'Đang tạo...' : 'Tạo Tài Khoản'}
-            </Button>
-            {/* <div className="flex items-center my-2">
+                </div>
+                <TextField
+                    required
+                    label="Mật khẩu"
+                    variant="outlined"
+                    size="small"
+                    type={showPassword ? 'text' : 'password'}
+                    fullWidth
+                    sx={{ bgcolor: 'white', borderRadius: 2 }}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    error={!!errors.password}
+                    helperText={errors.password || ''}
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton onClick={() => setShowPassword(v => !v)} edge="end">
+                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            </InputAdornment>
+                        )
+                    }}
+                />
+                <TextField
+                    required
+                    label="Xác nhận mật khẩu"
+                    variant="outlined"
+                    size="small"
+                    type={showConfirm ? 'text' : 'password'}
+                    fullWidth
+                    sx={{ bgcolor: 'white', borderRadius: 2 }}
+                    value={confirm}
+                    onChange={e => setConfirm(e.target.value)}
+                    error={!!errors.confirm}
+                    helperText={errors.confirm || ''}
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton onClick={() => setShowConfirm(v => !v)} edge="end">
+                                    {showConfirm ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                            </InputAdornment>
+                        )
+                    }}
+                />
+                <div>
+                    <FormControl error={!!errors.agreed} component="fieldset" variant="standard">
+                        <FormControlLabel
+                            control={<Checkbox checked={agreed} onChange={e => setAgreed(e.target.checked)} />}
+                            label={<span className="text-[#2563eb] text-sm">Tôi đồng ý với Điều khoản sử dụng và Chính sách bảo mật</span>}
+                        />
+                        {errors.agreed && <FormHelperText>{errors.agreed}</FormHelperText>}
+                    </FormControl>
+                </div>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    endIcon={<ArrowForward />}
+                    disabled={isSubmitDisabled}
+                    sx={{
+                        py: 1.5,
+                        fontWeight: 'bold',
+                        fontSize: 16,
+                        borderRadius: 2,
+                        boxShadow: 2,
+                        bgcolor: '#2563eb',
+                        '&:hover': { bgcolor: '#1d4ed8' }
+                    }}
+                >
+                    {loading ? 'Đang tạo...' : 'Tạo Tài Khoản'}
+                </Button>
+                {/* <div className="flex items-center my-2">
                 <span className="flex-1 border-t border-gray-300"></span>
                 <span className="mx-2 text-gray-400">hoặc</span>
                 <span className="flex-1 border-t border-gray-300"></span>
             </div> */}
-            {/* <SocialLogin /> */}
-        </form>
-        {showVerifyModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-                    <h3 className="text-lg font-semibold mb-2">Xác thực email</h3>
-                    <p className="text-sm text-gray-600 mb-4">Vui lòng nhập mã OTP đã gửi tới <strong>{email}</strong></p>
-                    <EmailVerification
-                        email={email}
-                        purpose={OtpPurpose.AccountVerification}
-                        onVerified={() => {
-                            setShowVerifyModal(false);
-                            if (pendingNav) navigate(pendingNav.route, { state: pendingNav.state });
-                        }}
-                    />
+                {/* <SocialLogin /> */}
+            </form>
+            {showVerifyModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                        <h3 className="text-lg font-semibold mb-2">Xác thực email</h3>
+                        <p className="text-sm text-gray-600 mb-4">Vui lòng nhập mã OTP đã gửi tới <strong>{email}</strong></p>
+                        <EmailVerification
+                            email={email}
+                            purpose={OtpPurpose.AccountVerification}
+                            onVerified={() => {
+                                if (resolvedToken) setCookie('token', resolvedToken, 7);
+                                if (user) { setCookie('user', JSON.stringify(user), 7); setUser(user); }
+                                setShowVerifyModal(false);
+                                if (pendingNav) navigate(pendingNav.route, { state: pendingNav.state });
+                            }}
+                        />
+                    </div>
                 </div>
-            </div>
-        )}
+            )}
         </>
     );
 }
