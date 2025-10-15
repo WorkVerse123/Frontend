@@ -129,6 +129,15 @@ export default function LoginForm({ onShowRegister, onForgotPassword }) {
                 try { setUser(user); } catch (e) { /* ignore */ }
             }
 
+            // Nếu là employee/employer mà chưa có profile thì chuyển sang trang tạo profile
+            if (user && user.role === 'employee' && (!user.employeeId || user.employeeId <= 0)) {
+                navigate('/employee/profile', { state: { forceCreate: true, userId: user.id || user.userId } });
+                return;
+            }
+            if (user && user.role === 'employer' && (!user.employerId || user.employerId <= 0)) {
+                navigate('/employer/profile', { state: { forceCreate: true, userId: user.id || user.userId } });
+                return;
+            }
             // Navigate to home (no full reload)
             navigate('/');
         } catch (err) {

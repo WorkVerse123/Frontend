@@ -80,7 +80,8 @@ export default function EmailVerification({ email, purpose, registerPayload, ini
       {registerError && <div className="p-2 mb-3 text-sm text-red-800 bg-red-100 rounded">{registerError}</div>}
       {registerSuccess && <div className="p-2 mb-3 text-sm text-green-800 bg-green-100 rounded">Tạo tài khoản thành công! Đang chuyển sang trang thiết lập hồ sơ...</div>}
 
-      {!registerSuccess && (
+      {/* Ẩn ô nhập OTP khi đang tạo tài khoản (loading sau xác thực OTP) */}
+      {!registerSuccess && !message?.includes('Đang tạo tài khoản') && (
         <form onSubmit={verifyOtp} className="space-y-3">
           <div>
             <label className="block text-sm text-gray-700">Mã OTP</label>
