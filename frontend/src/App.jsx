@@ -46,8 +46,8 @@ function App() {
         <Route path="/employer/:id/edit" element={<ProtectedRoute allowedRoles={['employer']}><EditEmployer /></ProtectedRoute>} />
         <Route path="/subscription" element={<ProtectedRoute allowedRoles={['employee', 'employer']}><Subscription /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="/payment/success" element={<PaymentSuccess />} />
-        <Route path="/payment/cancel" element={<PaymentCancel />} />
+        <Route path="/payment/success" element={<ProtectedRoute allowedRoles={['employee', 'employer']}><PaymentSuccess /></ProtectedRoute>} />
+        <Route path="/payment/cancel" element={<ProtectedRoute allowedRoles={['employee', 'employer']}><PaymentCancel /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -120,7 +120,6 @@ export default function EmailVerification({ email, purpose, registerPayload, ini
       if (!isRegSuccess) throw new Error(regMsg || 'Đăng ký thất bại');
 
       // success -> clear any previous error, store ids and show success
-      console.log('REGISTER response:', regData, regRes);
       setError(null);
       setRegisterError(null);
       setRegisteredRoleId(createdRoleId);
@@ -138,7 +137,6 @@ export default function EmailVerification({ email, purpose, registerPayload, ini
   // Chuyển hướng sau 3 giây khi đăng ký thành công
   useEffect(() => {
     if (registerSuccess) {
-      console.log('registerSuccess effect, roleId=', registeredRoleId, 'userId=', registeredUserId);
       const t = setTimeout(() => {
         const roleId = registeredRoleId || registerPayload?.roleId;
         // roleId: 4 = employee, 3 = employer

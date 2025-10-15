@@ -76,7 +76,10 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error?.response?.status === 401) {
-                // clear token from cookie and localStorage to force logout in UI
+                // Clear auth state (cookies/localStorage) but do NOT force a full-page redirect.
+                // Redirecting here causes public pages that trigger a 401 on background requests
+                // to be kicked back to the homepage unexpectedly (e.g. JobDetail). Let route
+                // components or the ProtectedRoute decide how to handle unauthenticated users.
                 try {
                     deleteCookie('token');
                     deleteCookie('user');
@@ -86,22 +89,17 @@ api.interceptors.response.use(
                     localStorage.removeItem('userData');
                     localStorage.removeItem('user');
                 } catch (e) {}
-            // Redirect to homepage so the app resets to unauthenticated state.
-            try {
-                if (typeof window !== 'undefined' && window.location) {
-                    // Avoid unnecessary navigation if already at homepage
-                    const path = window.location.pathname || '/';
-                    if (path !== '/' && path !== '/home') {
-                        // replace so back button won't return to protected page
-                        window.location.replace('/');
-                    } else {
-                        // already on homepage - reload to refresh UI
-                        window.location.reload();
+                // Optional: emit a global event so the app can react (e.g. show login modal)
+                try {
+                    if (typeof window !== 'undefined' && window.dispatchEvent) {
+                        window.dispatchEvent(new CustomEvent('app:unauthorized'));
                     }
+                    // Keep console trace for debugging during development
+                    // eslint-disable-next-line no-console
+                    console.debug('ApiClient: received 401 — cleared auth cookies/localStorage; no forced redirect');
+                } catch (e) {
+                    // ignore
                 }
-            } catch (e) {
-                // ignore redirect errors
-            }
         }
         return Promise.reject(error);
     }
