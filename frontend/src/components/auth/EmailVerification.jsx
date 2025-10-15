@@ -25,7 +25,6 @@ export default function EmailVerification({ email, purpose, registerPayload, ini
   }, [resendTimer])
 
   // Chỉ gửi OTP_REQUEST khi user bấm 'Gửi lại mã', không gửi khi modal mount
-  // otpRequested không còn dùng, có thể xóa
   async function sendOtp() {
     // Chỉ cho phép gửi lại khi hết cooldown
     if (resendTimer > 0) return;
@@ -38,7 +37,6 @@ export default function EmailVerification({ email, purpose, registerPayload, ini
       if (data.statusCode !== 200) throw new Error(data.message || 'Không thể gửi OTP')
       setMessage('Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.')
       setResendTimer(RESEND_COOLDOWN)
-      setOtpRequested(true)
     } catch (err) {
       setError(err.message || String(err))
     } finally {
