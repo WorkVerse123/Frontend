@@ -32,8 +32,8 @@ function App() {
         <Route path="/jobs" element={<JobsPage />} />
         <Route path="/companies" element={<CompaniesPage />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
-        <Route path="/auth" element={<NoAuthRoute><Auth /></NoAuthRoute>} />
-        <Route path="/employer/setup" element={<ProtectedRoute allowedRoles={['employer']}><EmployerSetup /></ProtectedRoute>} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/employer/setup" element={<EmployerSetup />} />
         <Route path="/employee/profile" element={<EmployeeProfilePage />} />
         <Route path="/calendar" element={<WorkCalendar />} />
         <Route path="/employer/jobs" element={<ProtectedRoute allowedRoles={['employer']}><EmployerJobs /></ProtectedRoute>} />
@@ -43,8 +43,8 @@ function App() {
         <Route path="/jobs/edit/:jobId" element={<ProtectedRoute allowedRoles={['employer']}><EditJob /></ProtectedRoute>} />
         <Route path="/employer/:id" element={<EmployerProfile />} />
         <Route path="/employee/dashboard" element={<ProtectedRoute allowedRoles={['employee']}><EmployeeDashboard /></ProtectedRoute>} />
-        <Route path="/employer/:id/edit" element={<EditEmployer />} />
-        <Route path="/subscription" element={<Subscription />} />
+        <Route path="/employer/:id/edit" element={<ProtectedRoute allowedRoles={['employer']}><EditEmployer /></ProtectedRoute>} />
+        <Route path="/subscription" element={<ProtectedRoute allowedRoles={['employee', 'employer']}><Subscription /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/cancel" element={<PaymentCancel />} />

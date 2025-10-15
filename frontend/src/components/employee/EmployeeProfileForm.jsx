@@ -50,6 +50,8 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  // Snackbar state for user feedback
+  const [snack, setSnack] = useState({ open: false, severity: 'info', message: '' });
   // dialog removed: we will only show inline success message
 
   // For create mode we require a userId (passed from registration). For update mode, if no id is available show message.
@@ -115,15 +117,24 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
   // perform redirect (SPA navigate + hard fallback)
   const redirectedRef = useRef(false);
   const performRedirect = () => {
-    if (redirectedRef.current) return;
-    redirectedRef.current = true;
-    try { navigate('/auth', { replace: true }); } catch (e) {}
-    const t = setTimeout(() => {
-      try { window.location.href = '/auth'; } catch (e) {}
-    }, 700);
-    // clear fallback timer after a short delay - no need to track it further here
-    setTimeout(() => clearTimeout(t), 1500);
-  };
+  if (redirectedRef.current) return;
+  redirectedRef.current = true;
+
+  // cố gắng SPA navigate trước
+  try {
+    navigate('/auth', { replace: true });
+  } catch (e) {
+    // ignore
+  }
+
+  // hard fallback ngay lập tức (đảm bảo rời trang dù router có chặn)
+  try {
+    // replace tránh tạo history entry
+    window.location.replace('/auth');
+  } catch (e) {
+    try { window.location.href = '/auth'; } catch (e) {}
+  }
+};
 
   const toIsoString = (value) => {
     if (!value) return null;
@@ -134,11 +145,17 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // clear previous messages
     setError('');
     setSuccess('');
+    setSnack({ open: false, severity: 'info', message: '' });
 
     // Minimal validation
-    if (!fullName.trim()) { setError('Họ và tên là bắt buộc'); return; }
+    if (!fullName.trim()) { 
+      const msg = 'Họ và tên là bắt buộc';
+      setSnack({ open: true, severity: 'error', message: msg });
+      return;
+    }
 
     const payload = {
       fullName: fullName.trim(),
@@ -201,32 +218,53 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
           res = await handleAsync(post(endpoint, payload));
         }
       }
-      if (!res.success) {
-        setError(res.message || 'Lưu hồ sơ thất bại');
+
+      // Treat HTTP 200/201 or wrapper success as success
+      const resStatus = res?.status || res?.statusCode || res?.data?.statusCode;
+      const ok = Boolean(res?.success) || resStatus === 200 || resStatus === 201;
+      if (!ok) {
+        const msg = res?.message || res?.data?.message || 'Lưu hồ sơ thất bại';
+        setSnack({ open: true, severity: 'error', message: msg });
         return;
       }
-  setSuccess('Tạo thông tin cá nhân thành công');
+      const successMsg = res?.message || res?.data?.message || 'Tạo thông tin cá nhân thành công';
+      setSuccess(successMsg);
       if (typeof onSaved === 'function') onSaved(res.data || null);
-      // Diagnostic: log effectiveMode/user to verify branch execution
+
       try {
         // eslint-disable-next-line no-console
-        console.log('[EmployeeProfileForm] success; effectiveMode=', effectiveMode, 'effectiveUserId=', effectiveUserId);
       } catch (e) {}
+      // show snackbar success immediately; performRedirect will run when snackbar closes
+      setSnack({ open: true, severity: 'success', message: successMsg });
+      // debug: ensure snack state set
+      // eslint-disable-next-line no-console
 
-      // navigation now handled by effect watching `success`
     } catch (err) {
-      setError(err?.message || 'Có lỗi khi gọi API');
+      const msg = err?.response?.data?.message || err?.message || 'Có lỗi khi gọi API';
+      setSnack({ open: true, severity: 'error', message: msg });
     } finally {
       setLoading(false);
     }
   };
 
+  // show error via Snackbar (success handled above)
+  useEffect(() => {
+    if (error) {
+      setSnack({ open: true, severity: 'error', message: error });
+      setError(''); // clear inline state to avoid duplicate UI
+      // eslint-disable-next-line no-console
+    }
+  }, [error]);
+
+  // debug: watch snack state changes
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+  }, [snack]);
+
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-full md:max-w-3xl lg:max-w-4xl mx-auto p-4 bg-white rounded shadow-sm">
       <h1 className="text-lg font-semibold mb-4 ">Thông tin ứng viên</h1>
-      {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
-      {success && <div className="text-sm text-green-600 mb-2">{success}</div>}
-
+    
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <TextField label="Họ và tên" value={fullName} onChange={e => setFullName(e.target.value)} required />
         <TextField
@@ -316,10 +354,14 @@ export default function EmployeeProfileForm({ userId, onSaved, mode = 'create', 
           setFullName(''); setDateOfBirth(''); setGender(''); setAddress(''); setAvatarUrl(''); setAvatarFileName(''); setAvatarInputMode('url'); setBio(''); setSkills(''); setEducation(''); setWorkExperience(''); setModeValue(''); setError(''); setSuccess('');
         }}>Đặt lại</Button>
       </div>
-      <Snackbar open={snack.open} autoHideDuration={4000} onClose={() => {
+      <Snackbar open={snack.open} autoHideDuration={1500} onClose={(event, reason) => {
+        // eslint-disable-next-line no-console
+        const wasSuccess = snack.severity === 'success';
         setSnack(s => ({ ...s, open: false }));
-        // if we had a success message, navigate after snackbar closes
-        if (success) performRedirect();
+        if (wasSuccess) {
+          // eslint-disable-next-line no-console
+          performRedirect();
+        }
       }}>
         <Alert onClose={() => setSnack(s => ({ ...s, open: false }))} severity={snack.severity} sx={{ width: '100%' }}>
           {snack.message}

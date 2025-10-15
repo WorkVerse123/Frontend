@@ -190,7 +190,7 @@ export default function EmployerSetup() {
         const payload = {
             userId: resolvedUserId,
             companyName: companyName || '',
-            employerType: employerType,
+            EmployerType: employerType,
             address: address || '',
             ContactPhone: phone || '',
             ContactEmail: email || '',
@@ -259,7 +259,7 @@ export default function EmployerSetup() {
     const progress = Math.round((step / (STEPS.length - 1)) * 100);
 
     return (
-        <MainLayout role={normalizedRole} hasSidebar={false}>
+       
             <div className="max-w-4xl mx-auto py-8 px-4">
                 <div className="mb-6">
                     <div className="flex items-center justify-between">
@@ -449,7 +449,7 @@ export default function EmployerSetup() {
                     </div>
                 </div>
             </div>
-        </MainLayout>
+       
     );
 
     

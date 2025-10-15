@@ -240,7 +240,12 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
             </form>
             {showVerifyModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+                        <div className="absolute top-3 right-3">
+                            <IconButton aria-label="Đóng" size="small" onClick={() => setShowVerifyModal(false)}>
+                                ✕
+                            </IconButton>
+                        </div>
                         <EmailVerification
                             email={email}
                             purpose={OtpPurpose.AccountVerification}
