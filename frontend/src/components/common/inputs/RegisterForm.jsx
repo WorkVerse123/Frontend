@@ -44,7 +44,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     const [showVerifyModal, setShowVerifyModal] = useState(false);
     const [pendingNav, setPendingNav] = useState(null); // { route: string, state?: any }
     const [otpVerified, setOtpVerified] = useState(false);
-    const [showOtpModal, setShowOtpModal] = useState(false);
+    const [otpModal, setOtpModal] = useState({ open: false, error: '', allowInput: false });
 
     // validation errors
     const [errors, setErrors] = useState({
@@ -76,22 +76,21 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
         setSubmitError('');
         try {
             const res = await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
-            // Nếu backend trả về status khác 201 hoặc có trường báo lỗi
             if (res.status !== 201 && res.status !== 200) {
-                setErrors(prev => ({ ...prev, email: res.message || 'Không gửi được OTP. Vui lòng thử lại.' }));
+                setOtpModal({ open: true, error: res.message || 'Không gửi được OTP. Vui lòng thử lại.', allowInput: false });
                 return;
             }
-            // Nếu có trường báo lỗi trong response
             if (res.error || res.exists) {
-                setErrors(prev => ({ ...prev, email: res.message || 'Email đã tồn tại hoặc không hợp lệ.' }));
+                setOtpModal({ open: true, error: res.message || 'Email đã tồn tại hoặc không hợp lệ.', allowInput: false });
                 return;
             }
-            setShowOtpModal(true);
+            setOtpModal({ open: true, error: '', allowInput: true });
         } catch (err) {
-            setErrors(prev => ({
-                ...prev,
-                email: err?.response?.data?.message || err?.message || 'Không gửi được OTP. Vui lòng thử lại.'
-            }));
+            setOtpModal({
+                open: true,
+                error: err?.response?.data?.message || err?.message || 'Không gửi được OTP. Vui lòng thử lại.',
+                allowInput: false
+            });
         } finally {
             setLoading(false);
         }
@@ -99,7 +98,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
 
     const handleOtpVerified = () => {
         setOtpVerified(true);
-        setShowOtpModal(false);
+        setOtpModal({ open: false, error: '', allowInput: false });
     };
 
     const handleSubmit = (e) => {
@@ -352,6 +351,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                 <span className="flex-1 border-t border-gray-300"></span>
             </div> */}
                 {/* <SocialLogin /> */}
+                {errors.email && (<div className="text-sm text-red-600 text-center">{errors.email}</div>)}
             </form>
             {showVerifyModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -371,12 +371,37 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                     </div>
                 </div>
             )}
-            {showOtpModal && (
-                <EmailVerification
-                    email={email}
-                    purpose={OtpPurpose.AccountVerification}
-                    onVerified={handleOtpVerified}
-                />
+            {otpModal.open && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+                        <h3 className="text-lg font-semibold mb-2">Xác thực email</h3>
+                        {otpModal.error && (
+                            <>
+                                <div className="text-red-600 mb-4">{otpModal.error}</div>
+                                <button
+                                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+                                    onClick={() => setOtpModal({ open: false, error: '', allowInput: false })}
+                                    aria-label="Đóng"
+                                >✕</button>
+                            </>
+                        )}
+                        {otpModal.allowInput && (
+                            <>
+                                <p className="text-sm text-gray-600 mb-4">Vui lòng nhập mã OTP đã gửi tới <strong>{email}</strong></p>
+                                <EmailVerification
+                                    email={email}
+                                    purpose={OtpPurpose.AccountVerification}
+                                    onVerified={() => {
+                                        setOtpVerified(true);
+                                        setOtpModal({ open: false, error: '', allowInput: false });
+                                    }}
+                                    // Không cho tắt popup khi đang nhập OTP
+                                    disableClose
+                                />
+                            </>
+                        )}
+                    </div>
+                </div>
             )}
         </>
     );
