@@ -225,7 +225,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                         '&:hover': { bgcolor: '#1d4ed8' }
                     }}
                 >
-                    {loading ? 'Đang tạo...' : otpVerified ? 'Tạo Tài Khoản' : 'Xác thực Email'}
+                    {loading ? 'Đang tạo...' : 'Xác thực Email'}
                 </Button>
                 {/* <div className="flex items-center my-2">
                 <span className="flex-1 border-t border-gray-300"></span>
