@@ -66,8 +66,12 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
         setLoading(true);
         setOtpError('');
         try {
-            // Gửi OTP, nếu thành công thì mở modal xác thực
-            // (ở đây chỉ setShowVerifyModal, không dùng otpModal nữa)
+            // Gửi OTP thực sự qua API
+            const res = await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
+            if (res.data.statusCode !== 200) {
+                setOtpError(res.data.message || 'Không gửi được OTP. Vui lòng thử lại.');
+                return;
+            }
             setShowVerifyModal(true);
         } catch (err) {
             setOtpError(
