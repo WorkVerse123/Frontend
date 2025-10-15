@@ -72,9 +72,29 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     };
 
     const handleSendOtp = async () => {
-        // Gọi API gửi OTP về email
-        await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
-        setShowOtpModal(true);
+        setLoading(true);
+        setSubmitError('');
+        try {
+            const res = await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
+            // Nếu backend trả về status khác 201 hoặc có trường báo lỗi
+            if (res.status !== 201 && res.status !== 200) {
+                setErrors(prev => ({ ...prev, email: res.message || 'Không gửi được OTP. Vui lòng thử lại.' }));
+                return;
+            }
+            // Nếu có trường báo lỗi trong response
+            if (res.error || res.exists) {
+                setErrors(prev => ({ ...prev, email: res.message || 'Email đã tồn tại hoặc không hợp lệ.' }));
+                return;
+            }
+            setShowOtpModal(true);
+        } catch (err) {
+            setErrors(prev => ({
+                ...prev,
+                email: err?.response?.data?.message || err?.message || 'Không gửi được OTP. Vui lòng thử lại.'
+            }));
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleOtpVerified = () => {
