@@ -1,19 +1,19 @@
 import React, { useState } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import ApiEndpoints from '../../services/ApiEndpoints'
-import { OtpPurpose } from '../../utils/emun/Enum'
 import { post } from '../../services/ApiClient'
 
-// REUSABLE Email verification component
-// Props:
-//  - email (string) required
-//  - onVerified() callback when OTP verified successfully
-export default function EmailVerification({ email, onVerified, purpose = OtpPurpose.AccountVerification }) {
+export default function EmailVerification({ email, purpose, registerPayload, initialMessage }) {
   const [otp, setOtp] = useState('')
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState(null)
+  const [message, setMessage] = useState(initialMessage || null)
   const [error, setError] = useState(null)
   const [resendTimer, setResendTimer] = useState(0)
+  const [registerSuccess, setRegisterSuccess] = useState(false)
+  const [registerError, setRegisterError] = useState(null)
   const RESEND_COOLDOWN = 180
+  const navigate = useNavigate();
 
   // Không tự động gửi OTP khi mount, chỉ gửi khi user bấm gửi lại
 
@@ -26,7 +26,7 @@ export default function EmailVerification({ email, onVerified, purpose = OtpPurp
   }, [resendTimer])
 
   // Chỉ gửi OTP_REQUEST khi user bấm 'Gửi lại mã', không gửi khi modal mount
-  const [otpRequested, setOtpRequested] = useState(true) // Đã gửi OTP thành công ở RegisterForm
+  // otpRequested không còn dùng, có thể xóa
   async function sendOtp() {
     // Chỉ cho phép gửi lại khi hết cooldown
     if (resendTimer > 0) return;
@@ -52,15 +52,24 @@ export default function EmailVerification({ email, onVerified, purpose = OtpPurp
     setLoading(true)
     setError(null)
     setMessage(null)
+    setRegisterError(null)
     try {
       if (!/^[0-9]{4,8}$/.test(otp)) throw new Error('Mã OTP không hợp lệ')
       const res = await post(ApiEndpoints.OTP_VERIFY, { email, otpCode: otp, purpose })
       const data = res.data || res
       if (data.statusCode !== 200) throw new Error(data.message || 'Xác thực thất bại')
-      setMessage('Xác thực thành công! Chuyển sang phần tạo hồ sơ...')
-      if (typeof onVerified === 'function') onVerified(data)
+      // Xác thực OTP thành công, gọi API REGISTER
+      setMessage('Đang tạo tài khoản...')
+      const regRes = await post(ApiEndpoints.REGISTER, registerPayload)
+      const regData = regRes.data || regRes
+      if (regData.statusCode !== 200) throw new Error(regData.message || 'Đăng ký thất bại')
+      setRegisterSuccess(true)
+      setMessage('Tạo tài khoản thành công! Đang chuyển sang trang thiết lập hồ sơ...')
+      setTimeout(() => {
+        navigate('/employee/profile', { state: { forceCreate: true, userId: regData?.data?.userId || regData?.data?.id } })
+      }, 3000)
     } catch (err) {
-      setError(err.message || String(err))
+      setRegisterError(err.message || String(err))
     } finally {
       setLoading(false)
     }
@@ -73,42 +82,46 @@ export default function EmailVerification({ email, onVerified, purpose = OtpPurp
 
       {message && <div className="p-2 mb-3 text-sm text-green-800 bg-green-100 rounded">{message}</div>}
       {error && <div className="p-2 mb-3 text-sm text-red-800 bg-red-100 rounded">{error}</div>}
+      {registerError && <div className="p-2 mb-3 text-sm text-red-800 bg-red-100 rounded">{registerError}</div>}
+      {registerSuccess && <div className="p-2 mb-3 text-sm text-green-800 bg-green-100 rounded">Tạo tài khoản thành công! Đang chuyển sang trang thiết lập hồ sơ...</div>}
 
-      <form onSubmit={verifyOtp} className="space-y-3">
-        <div>
-          <label className="block text-sm text-gray-700">Mã OTP</label>
-          <input
-            value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
-            className="mt-1 block w-full border rounded px-3 py-2"
-            placeholder="Nhập mã OTP (chỉ số, 4-8 chữ số)"
-            required
-            inputMode="numeric"
-            minLength={4}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
-          >
-            {loading ? 'Đang xác thực...' : 'Xác thực'}
-          </button>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={sendOtp}
-              disabled={resendTimer > 0 || loading}
-              className="text-sm text-blue-600 underline disabled:opacity-50"
-            >
-              {resendTimer > 0 ? `Gửi lại (${resendTimer}s)` : 'Gửi lại mã'}
-            </button>
+      {!registerSuccess && (
+        <form onSubmit={verifyOtp} className="space-y-3">
+          <div>
+            <label className="block text-sm text-gray-700">Mã OTP</label>
+            <input
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+              className="mt-1 block w-full border rounded px-3 py-2"
+              placeholder="Nhập mã OTP (chỉ số, 4-8 chữ số)"
+              required
+              inputMode="numeric"
+              minLength={4}
+            />
           </div>
-        </div>
-      </form>
+
+          <div className="flex items-center justify-between">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
+            >
+              {loading ? 'Đang xác thực...' : 'Xác thực'}
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={sendOtp}
+                disabled={resendTimer > 0 || loading}
+                className="text-sm text-blue-600 underline disabled:opacity-50"
+              >
+                {resendTimer > 0 ? `Gửi lại (${resendTimer}s)` : 'Gửi lại mã'}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
     </div>
   )
 }

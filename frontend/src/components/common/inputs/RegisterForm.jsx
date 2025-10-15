@@ -1,13 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TextField, Button, IconButton, Checkbox, InputAdornment, Select, MenuItem, FormControl, FormHelperText, FormControlLabel } from '@mui/material';
 import { Visibility, VisibilityOff, ArrowForward } from '@mui/icons-material';
-import SocialLogin from '../buttons/SocicalLogin';
-import { post } from '../../../services/ApiClient';
-import ApiEndpoints from '../../../services/ApiEndpoints';
-import { handleAsync } from '../../../utils/HandleAPIResponse';
-import { setCookie } from '../../../services/AuthCookie';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
 import EmailVerification from '../../auth/EmailVerification';
 import { OtpPurpose } from '../../../utils/emun/Enum';
 
@@ -40,12 +34,8 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     const [loading, setLoading] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const navigate = useNavigate();
-    const { setUser } = useAuth();
     const [showVerifyModal, setShowVerifyModal] = useState(false);
-    const [pendingNav, setPendingNav] = useState(null); // { route: string, state?: any }
-    const [otpVerified, setOtpVerified] = useState(false);
-    const [otpModal, setOtpModal] = useState({ open: false, error: '', allowInput: false });
-    const [otpError, setOtpError] = useState(''); // Thêm state cho lỗi OTP
+    const [otpError, setOtpError] = useState('');
 
     // validation errors
     const [errors, setErrors] = useState({
@@ -93,121 +83,13 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
         }
     };
 
-    const handleOtpVerified = () => {
-        setOtpVerified(true);
-        setOtpModal({ open: false, error: '', allowInput: false });
-    };
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!validate()) return;
-        if (!otpVerified) {
-            handleSendOtp();
-            return;
-        }
-        // Đã xác thực OTP, giờ mới gọi API register
-        // minimal payload expected by backend
-        const data = { email: email.trim(), phoneNumber: String(phoneNumber).trim(), password, roleId: Number(role), status: 'active' };
-        setSubmitError('');
-        setLoading(true);
-        (async () => {
-            try {
-                const res = await handleAsync(post(ApiEndpoints.REGISTER, data));
-                if (!res.success) {
-                    setSubmitError(res.message || 'Đăng ký thất bại');
-                    setLoading(false);
-                    return;
-                }
-                const payload = res.data || {};
-                // Some backends wrap the useful content under `data` (see example in request)
-                const serverData = payload.data || payload;
-                const token = payload.token || payload.accessToken || serverData?.token || (serverData && serverData.token) || null;
-                // try several shapes for a returned user object
-                let user = payload.user || serverData?.user || payload?.userData || null;
-                if (!user && serverData && typeof serverData === 'object') {
-                    if ('id' in serverData || 'email' in serverData) user = serverData;
-                }
-                // If server returned a plain token string under payload or serverData
-                // payload may be { data: '<token>' } or { data: { userId, token } }
-                const resolvedToken = token || (typeof serverData === 'string' ? serverData : null);
-
-                const parseJwtPayload = (t) => {
-                    if (!t || typeof t !== 'string') return null;
-                    try {
-                        const parts = t.split('.');
-                        if (parts.length < 2) return null;
-                        const payload = parts[1];
-                        const json = decodeURIComponent(atob(payload).split('').map(function (c) {
-                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                        }).join(''));
-                        return JSON.parse(json);
-                    } catch (e) {
-                        try { return JSON.parse(atob((t.split('.')[1] || ''))); } catch (_) { return null; }
-                    }
-                };
-
-                // if (resolvedToken) setCookie('token', resolvedToken, 7);
-
-                // If no explicit user object, try obtain from token payload
-                if (!user && resolvedToken) {
-                    const payload = parseJwtPayload(resolvedToken);
-                    if (payload) user = payload;
-                }
-
-                if (user && typeof user === 'object') {
-                    const EmployeeRaw = user.EmployeeId ?? user.employeeId ?? user.EmployeeID ?? user.employee_id ?? null;
-                    const EmployerRaw = user.EmployerId ?? user.employerId ?? user.EmployerID ?? user.employer_id ?? null;
-                    const rawRoleId = user.RoleId ?? user.roleId ?? user.role ?? user.Role ?? user.role_id ?? null;
-
-                    const toPositiveIntOrNull = (v) => {
-                        if (v === null || v === undefined) return null;
-                        const n = Number(v);
-                        return Number.isFinite(n) && n > 0 ? n : null;
-                    };
-
-                    const EmployeeId = toPositiveIntOrNull(EmployeeRaw);
-                    const EmployerId = toPositiveIntOrNull(EmployerRaw);
-                    const roleId = rawRoleId != null ? Number(rawRoleId) : null;
-
-                    const mapRole = (id) => {
-                        switch (id) {
-                            case 1: return 'admin';
-                            case 2: return 'staff';
-                            case 3: return 'employer';
-                            case 4: return 'employee';
-                            default: return 'guest';
-                        }
-                    };
-
-                    let finalRole = 'guest';
-                    let finalRoleId = roleId;
-                    if (EmployeeId !== null) { finalRole = 'employee'; finalRoleId = finalRoleId || 4; }
-                    else if (EmployerId !== null) { finalRole = 'employer'; finalRoleId = finalRoleId || 3; }
-                    else finalRole = mapRole(roleId);
-
-                    user = { ...user, employeeId: EmployeeId, employerId: EmployerId, roleId: finalRoleId, role: finalRole };
-                }
-
-                // if (user) {
-                //     try { setCookie('user', JSON.stringify(user), 7); } catch (e) { /* ignore */ }
-                //     try { setUser(user); } catch (e) { /* ignore */ }
-                // }
-                // Instead of navigating immediately, show OTP verification modal.
-                // After OTP is verified we will navigate to the setup/profile page.
-                if (Number(role) === 3) {
-                    setPendingNav({ route: '/employer/setup' });
-                } else {
-                    const newUserId = serverData?.userId || serverData?.id || user?.id || payload.user?.id || payload.id || null;
-                    setPendingNav({ route: '/employee/profile', state: { forceCreate: true, userId: newUserId } });
-                }
-                setShowVerifyModal(true);
-                // No full page reload; AuthContext updated via setUser above
-            } catch (err) {
-                setSubmitError(err?.response?.data?.message || err?.message || 'Có lỗi khi đăng ký');
-            } finally {
-                setLoading(false);
-            }
-        })();
+        // Khi chưa xác thực OTP thì gửi OTP và mở modal xác thực
+        handleSendOtp();
     };
 
     const isSubmitDisabled = !email.trim() || !phoneNumber.trim() || !password || !confirm || !agreed || loading;
@@ -356,17 +238,17 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
             {showVerifyModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-semibold mb-2">Xác thực email</h3>
-                        <p className="text-sm text-gray-600 mb-4">Vui lòng nhập mã OTP đã gửi tới <strong>{email}</strong></p>
                         <EmailVerification
                             email={email}
                             purpose={OtpPurpose.AccountVerification}
-                            onVerified={() => {
-                                if (resolvedToken) setCookie('token', resolvedToken, 7);
-                                if (user) { setCookie('user', JSON.stringify(user), 7); setUser(user); }
-                                setShowVerifyModal(false);
-                                if (pendingNav) navigate(pendingNav.route, { state: pendingNav.state });
+                            registerPayload={{
+                                email: email.trim(),
+                                phoneNumber: String(phoneNumber).trim(),
+                                password,
+                                roleId: Number(role),
+                                status: 'active'
                             }}
+                            initialMessage={"Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư."}
                         />
                     </div>
                 </div>
