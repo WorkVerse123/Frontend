@@ -4,8 +4,8 @@ import { Visibility, VisibilityOff, ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import EmailVerification from '../../auth/EmailVerification';
 import { OtpPurpose } from '../../../utils/emun/Enum';
-import { post } from '../../services/ApiClient';
-import ApiEndpoints from '../../services/ApiEndpoints';
+import { post } from '../../../services/ApiClient';
+import ApiEndpoints from '../../../services/ApiEndpoints';
 
 export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     const [showPassword, setShowPassword] = useState(false);
