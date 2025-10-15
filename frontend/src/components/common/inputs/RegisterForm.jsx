@@ -73,7 +73,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
 
     const handleSendOtp = async () => {
         // Gọi API gửi OTP về email
-        await post(ApiEndpoints.SEND_OTP, { email, purpose: OtpPurpose.AccountVerification });
+        await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
         setShowOtpModal(true);
     };
 
