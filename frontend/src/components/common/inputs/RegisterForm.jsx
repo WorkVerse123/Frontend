@@ -77,6 +77,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
         setOtpError('');
         try {
             const res = await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
+            // Nếu lỗi, chỉ hiện lỗi phía trên nút, không mở modal
             if (res.status !== 201 && res.status !== 200) {
                 setOtpError(res.message || 'Không gửi được OTP. Vui lòng thử lại.');
                 return;
@@ -85,6 +86,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                 setOtpError(res.message || 'Email đã tồn tại hoặc không hợp lệ.');
                 return;
             }
+            // Thành công mới mở modal nhập OTP
             setOtpModal({ open: true, error: '', allowInput: true });
         } catch (err) {
             setOtpError(
@@ -375,35 +377,20 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                     </div>
                 </div>
             )}
-            {otpModal.open && (
+            {otpModal.open && otpModal.allowInput && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
                         <h3 className="text-lg font-semibold mb-2">Xác thực email</h3>
-                        {otpModal.error && (
-                            <>
-                                <div className="text-red-600 mb-4">{otpModal.error}</div>
-                                <button
-                                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
-                                    onClick={() => setOtpModal({ open: false, error: '', allowInput: false })}
-                                    aria-label="Đóng"
-                                >✕</button>
-                            </>
-                        )}
-                        {otpModal.allowInput && (
-                            <>
-                                <p className="text-sm text-gray-600 mb-4">Vui lòng nhập mã OTP đã gửi tới <strong>{email}</strong></p>
-                                <EmailVerification
-                                    email={email}
-                                    purpose={OtpPurpose.AccountVerification}
-                                    onVerified={() => {
-                                        setOtpVerified(true);
-                                        setOtpModal({ open: false, error: '', allowInput: false });
-                                    }}
-                                    // Không cho tắt popup khi đang nhập OTP
-                                    disableClose
-                                />
-                            </>
-                        )}
+                        <p className="text-sm text-gray-600 mb-4">Vui lòng nhập mã OTP đã gửi tới <strong>{email}</strong></p>
+                        <EmailVerification
+                            email={email}
+                            purpose={OtpPurpose.AccountVerification}
+                            onVerified={() => {
+                                setOtpVerified(true);
+                                setOtpModal({ open: false, error: '', allowInput: false });
+                            }}
+                            disableClose
+                        />
                     </div>
                 </div>
             )}
