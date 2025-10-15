@@ -94,28 +94,11 @@ export default function EditEmployer() {
         values?.employerType ?? values?.employerTypeId ?? values?._raw?.employerType ?? values?._raw?.employerTypeId ?? null
       );
 
-      // Client-side validation: if user provided an employerType-like value but it's not a positive number,
-      // show an error and abort the save. This prevents backend 400 errors like:
-      // { statusCode: 400, message: 'EmployerType must be a valid positive number.' }
-      const rawEmployerTypeProvided = (
-        values?.employerType !== undefined && values?.employerType !== null && values?.employerType !== ''
-      ) || (
-        values?.employerTypeId !== undefined && values?.employerTypeId !== null && values?.employerTypeId !== ''
-      ) || (
-        values?._raw?.employerType !== undefined && values?._raw?.employerType !== null && values?._raw?.employerType !== ''
-      ) || (
-        values?._raw?.employerTypeId !== undefined && values?._raw?.employerTypeId !== null && values?._raw?.employerTypeId !== ''
-      );
-      if (rawEmployerTypeProvided && !derivedEmployerType) {
-        showSnackbar('EmployerType phải là một số dương hợp lệ.', 'error');
-        setSaving(false);
-        return;
-      }
       const payload = {
         ...(resolvedUserId ? { userId: resolvedUserId } : {}),
         companyName: values?.companyName ?? values?.CompanyName ?? values?.name ?? '',
         // backend expects 'employerType' as a positive number (not employerTypeId)
-        ...(derivedEmployerType ? { EmployerType: derivedEmployerType } : {}),
+        ...(derivedEmployerType ? { employerTypeId: derivedEmployerType } : {}),
         address: values?.address ?? values?.companyAddress ?? values?.company_address ?? '',
         websiteUrl: values?.websiteUrl ?? values?.companyWebsite ?? values?.website ?? '',
         logoUrl: values?.logoUrl ?? values?.CompanyLogo ?? values?.logo ?? '',

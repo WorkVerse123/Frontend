@@ -190,7 +190,7 @@ export default function EmployerSetup() {
         const payload = {
             userId: resolvedUserId,
             companyName: companyName || '',
-            EmployerType: employerType,
+            employerTypeId: employerType,
             address: address || '',
             ContactPhone: phone || '',
             ContactEmail: email || '',
@@ -240,10 +240,9 @@ export default function EmployerSetup() {
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 6" stroke="#0b66d6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </div>
                     <h2 className="text-2xl font-semibold mb-2">🎉 Xin chúc mừng, hồ sơ đã hoàn thành 100%!</h2>
-                    <p className="text-gray-600 max-w-xl">Bạn có thể tiếp tục đăng tin hoặc về trang tổng quan để quản lý doanh nghiệp và ứng viên.</p>
+                    <p className="text-gray-600 max-w-xl">Vui lòng đăng nhập lại!</p>
                     <div className="mt-6 flex gap-3">
-                        <button className="px-4 py-2 rounded bg-white border" onClick={() => window.location.href = '/'}>Trang chủ</button>
-                        <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={() => window.location.href = '/jobs/create'}>Đăng Tin</button>
+                        <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={() => window.location.href = '/auth'}>Đăng nhập</button>
                     </div>
                 </div>
                 <Snackbar
