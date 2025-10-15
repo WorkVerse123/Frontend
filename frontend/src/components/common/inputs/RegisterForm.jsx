@@ -77,8 +77,8 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
         setOtpError('');
         try {
             const res = await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
-            if (res.statusCode !== 200) {
-                setOtpError(res.message || 'Không gửi được OTP. Vui lòng thử lại.');
+            if (res.data.statusCode !== 200) {
+                setOtpError(res.data.message || 'Không gửi được OTP. Vui lòng thử lại.');
                 return;
             }
             setOtpModal({ open: true, error: '', allowInput: true });
