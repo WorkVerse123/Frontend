@@ -66,12 +66,9 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
         setLoading(true);
         setOtpError('');
         try {
-            const res = await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
-            if (res.data.statusCode !== 200) {
-                setOtpError(res.data.message || 'Không gửi được OTP. Vui lòng thử lại.');
-                return;
-            }
-            setOtpModal({ open: true, error: '', allowInput: true });
+            // Gửi OTP, nếu thành công thì mở modal xác thực
+            // (ở đây chỉ setShowVerifyModal, không dùng otpModal nữa)
+            setShowVerifyModal(true);
         } catch (err) {
             setOtpError(
                 err?.response?.data?.message ||
@@ -253,23 +250,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                     </div>
                 </div>
             )}
-            {otpModal.open && otpModal.allowInput && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-                        <h3 className="text-lg font-semibold mb-2">Xác thực email</h3>
-                        <p className="text-sm text-gray-600 mb-4">Vui lòng nhập mã OTP đã gửi tới <strong>{email}</strong></p>
-                        <EmailVerification
-                            email={email}
-                            purpose={OtpPurpose.AccountVerification}
-                            onVerified={() => {
-                                setOtpVerified(true);
-                                setOtpModal({ open: false, error: '', allowInput: false });
-                            }}
-                            disableClose
-                        />
-                    </div>
-                </div>
-            )}
+
         </>
     );
 }
