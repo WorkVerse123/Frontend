@@ -45,6 +45,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
     const [pendingNav, setPendingNav] = useState(null); // { route: string, state?: any }
     const [otpVerified, setOtpVerified] = useState(false);
     const [otpModal, setOtpModal] = useState({ open: false, error: '', allowInput: false });
+    const [otpError, setOtpError] = useState(''); // Thêm state cho lỗi OTP
 
     // validation errors
     const [errors, setErrors] = useState({
@@ -73,24 +74,24 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
 
     const handleSendOtp = async () => {
         setLoading(true);
-        setSubmitError('');
+        setOtpError('');
         try {
             const res = await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
             if (res.status !== 201 && res.status !== 200) {
-                setOtpModal({ open: true, error: res.message || 'Không gửi được OTP. Vui lòng thử lại.', allowInput: false });
+                setOtpError(res.message || 'Không gửi được OTP. Vui lòng thử lại.');
                 return;
             }
             if (res.error || res.exists) {
-                setOtpModal({ open: true, error: res.message || 'Email đã tồn tại hoặc không hợp lệ.', allowInput: false });
+                setOtpError(res.message || 'Email đã tồn tại hoặc không hợp lệ.');
                 return;
             }
             setOtpModal({ open: true, error: '', allowInput: true });
         } catch (err) {
-            setOtpModal({
-                open: true,
-                error: err?.response?.data?.message || err?.message || 'Không gửi được OTP. Vui lòng thử lại.',
-                allowInput: false
-            });
+            setOtpError(
+                err?.response?.data?.message ||
+                err?.message ||
+                'Không gửi được OTP. Vui lòng thử lại.'
+            );
         } finally {
             setLoading(false);
         }
@@ -326,6 +327,9 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                         {errors.agreed && <FormHelperText>{errors.agreed}</FormHelperText>}
                     </FormControl>
                 </div>
+                {otpError && (
+                    <div className="text-sm text-red-600 text-center mb-2">{otpError}</div>
+                )}
                 <Button
                     type="submit"
                     variant="contained"
@@ -351,7 +355,7 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
                 <span className="flex-1 border-t border-gray-300"></span>
             </div> */}
                 {/* <SocialLogin /> */}
-                {errors.email && (<div className="text-sm text-red-600 text-center">{errors.email}</div>)}
+
             </form>
             {showVerifyModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
