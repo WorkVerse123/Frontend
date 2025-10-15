@@ -77,16 +77,10 @@ export default function RegisterForm({ onShowLogin, initialRole = 1 }) {
         setOtpError('');
         try {
             const res = await post(ApiEndpoints.OTP_REQUEST, { email, purpose: OtpPurpose.AccountVerification });
-            // Nếu lỗi, chỉ hiện lỗi phía trên nút, không mở modal
-            if (res.statusCode !== 201 && res.statusCode !== 200) {
+            if (res.statusCode !== 200) {
                 setOtpError(res.message || 'Không gửi được OTP. Vui lòng thử lại.');
                 return;
             }
-            if (res.error || res.exists) {
-                setOtpError(res.message || 'Email đã tồn tại hoặc không hợp lệ.');
-                return;
-            }
-            // Thành công mới mở modal nhập OTP
             setOtpModal({ open: true, error: '', allowInput: true });
         } catch (err) {
             setOtpError(
