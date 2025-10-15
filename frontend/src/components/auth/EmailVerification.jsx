@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import ApiEndpoints from '../../services/ApiEndpoints'
 import { OtpPurpose } from '../../utils/emun/Enum'
+import { post } from '../../services/ApiClient'
 
 // REUSABLE Email verification component
 // Props:
@@ -12,16 +13,11 @@ export default function EmailVerification({ email, onVerified, purpose = OtpPurp
   const [message, setMessage] = useState(null)
   const [error, setError] = useState(null)
   const [resendTimer, setResendTimer] = useState(0)
-  const RESEND_COOLDOWN = 30
+  const RESEND_COOLDOWN = 180
 
-  useEffect(() => {
-    if (!email) return
-    // Auto-send OTP when component mounts
-    sendOtp()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email])
+  // Không tự động gửi OTP khi mount, chỉ gửi khi user bấm gửi lại
 
-  useEffect(() => {
+  React.useEffect(() => {
     let t
     if (resendTimer > 0) {
       t = setTimeout(() => setResendTimer(resendTimer - 1), 1000)
@@ -29,24 +25,21 @@ export default function EmailVerification({ email, onVerified, purpose = OtpPurp
     return () => clearTimeout(t)
   }, [resendTimer])
 
+  // Chỉ gửi OTP_REQUEST khi user bấm 'Gửi lại mã', không gửi khi modal mount
+  const [otpRequested, setOtpRequested] = useState(true) // Đã gửi OTP thành công ở RegisterForm
   async function sendOtp() {
+    // Chỉ cho phép gửi lại khi hết cooldown
+    if (resendTimer > 0) return;
     setLoading(true)
     setError(null)
     setMessage(null)
     try {
-  // purpose must be one of the allowed strings. Default to AccountVerification.
-  const body = { email, purpose }
-      const res = await fetch(ApiEndpoints.OTP_REQUEST, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-  let data = null
-  const text = await res.text()
-  try { data = text ? JSON.parse(text) : null } catch { data = null }
-  if (!res.ok) throw new Error((data && data.message) || 'Không thể gửi OTP')
+      const res = await post(ApiEndpoints.OTP_REQUEST, { email, purpose })
+      const data = res.data || res
+      if (data.statusCode !== 200) throw new Error(data.message || 'Không thể gửi OTP')
       setMessage('Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.')
-  setResendTimer(RESEND_COOLDOWN) // cooldown
+      setResendTimer(RESEND_COOLDOWN)
+      setOtpRequested(true)
     } catch (err) {
       setError(err.message || String(err))
     } finally {
@@ -60,18 +53,10 @@ export default function EmailVerification({ email, onVerified, purpose = OtpPurp
     setError(null)
     setMessage(null)
     try {
-      // basic client validation
       if (!/^[0-9]{4,8}$/.test(otp)) throw new Error('Mã OTP không hợp lệ')
-  const body = { email, otpCode: otp, purpose }
-      const res = await fetch(ApiEndpoints.OTP_VERIFY, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-  let data = null
-  const text = await res.text()
-  try { data = text ? JSON.parse(text) : null } catch { data = null }
-  if (!res.ok) throw new Error((data && data.message) || 'Xác thực thất bại')
+      const res = await post(ApiEndpoints.OTP_VERIFY, { email, otpCode: otp, purpose })
+      const data = res.data || res
+      if (data.statusCode !== 200) throw new Error(data.message || 'Xác thực thất bại')
       setMessage('Xác thực thành công! Chuyển sang phần tạo hồ sơ...')
       if (typeof onVerified === 'function') onVerified(data)
     } catch (err) {
@@ -84,7 +69,7 @@ export default function EmailVerification({ email, onVerified, purpose = OtpPurp
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
       <h3 className="text-lg font-semibold mb-2">Xác thực email</h3>
-      <p className="text-sm text-gray-600 mb-4">Chúng tôi đã gửi mã OTP tới <strong>{email}</strong></p>
+      <p className="text-sm text-gray-600 mb-4">Vui lòng nhập mã OTP đã gửi tới <strong>{email}</strong></p>
 
       {message && <div className="p-2 mb-3 text-sm text-green-800 bg-green-100 rounded">{message}</div>}
       {error && <div className="p-2 mb-3 text-sm text-red-800 bg-red-100 rounded">{error}</div>}
