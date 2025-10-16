@@ -111,7 +111,7 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
       else if (t === 'basic' || t === '1') typeNum = 1;
     }
     const type = typeNum === 2 ? 'premium' : (planObj.typeName ?? planObj.planType ?? (String(name).toLowerCase().includes('pro') ? 'premium' : 'standard'));
-    return { id, name, price, currency, period, features, type, typeNum };
+    return { id, planId: id, name, price, currency, period, features, type, typeNum };
   };
 
   const normalized = baseList.map(normalizePlan);
@@ -139,7 +139,9 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
         description: selectedPlan.description ?? '',
         price: Number(selectedPlan.price ?? 0) || 0,
         durationDays: Number(selectedPlan.duration ?? selectedPlan.durationDays ?? 0) || 0,
-        features: selectedPlan.features ?? ''
+        features: Array.isArray(selectedPlan.features) 
+          ? selectedPlan.features.join(';') 
+          : String(selectedPlan.features ?? '')
       };
 
       const paymentRes = await handleAsync(apiPost(ApiEndpoints.PAYMENT_INTENT, paymentIntentData));

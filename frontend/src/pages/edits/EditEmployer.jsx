@@ -54,12 +54,12 @@ export default function EditEmployer() {
           return {
             employerId: e.employerId ?? e.EmployerId ?? e.id ?? null,
             companyName: e.companyName ?? e.CompanyName ?? e.name ?? '',
-            employerTypeName: e.employerTypeName ?? (e.employerType && (e.employerType.name || e.employerType.employerTypeName)) ?? '',
-            employerType: e.employerType ?? e.employerTypeId ?? null,
+            employerTypeName: e.employerTypeName ?? (e.employerTypeId && (e.employerTypeId.name || e.employerTypeId.employerTypeName)) ?? '',
+            employerTypeId: e.employerTypeId ?? e.employerTypeId ?? null,
             address: e.address ?? e.companyAddress ?? e.company_address ?? '',
             websiteUrl: e.websiteUrl ?? e.companyWebsite ?? e.website ?? '',
             logoUrl: e.logoUrl ?? e.CompanyLogo ?? e.logo ?? '',
-            dateEstablished: e.dateEstablish ?? e.dateEstablish ?? e.dateEstablished ?? e.date_establish ?? null,
+            dateEstablish: e.dateEstablish ?? e.dateEstablish ?? e.dateEstablished ?? e.date_establish ?? null,
             description: e.description ?? e.desc ?? e.about ?? '',
             contactEmail: e.contactEmail ?? e.contact_email ?? e.email ?? '',
             contactPhone: e.contactPhone ?? e.contact_phone ?? e.phone ?? '',
@@ -91,13 +91,13 @@ export default function EditEmployer() {
       };
       const resolvedUserId = pickPositive(values?.userId ?? values?.UserId ?? user?.userId ?? user?.id ?? user?._raw?.UserId ?? user?._raw?.userId);
       const derivedEmployerType = pickPositive(
-        values?.employerType ?? values?.employerTypeId ?? values?._raw?.employerType ?? values?._raw?.employerTypeId ?? null
+        values?.employerTypeId ?? values?.employerTypeId ?? values?._raw?.employerTypeId ?? values?._raw?.employerTypeId ?? null
       );
 
       const payload = {
         ...(resolvedUserId ? { userId: resolvedUserId } : {}),
         companyName: values?.companyName ?? values?.CompanyName ?? values?.name ?? '',
-        // backend expects 'employerType' as a positive number (not employerTypeId)
+        // backend expects 'employerTypeId' as a positive number (not employerTypeId)
         ...(derivedEmployerType ? { employerTypeId: derivedEmployerType } : {}),
         address: values?.address ?? values?.companyAddress ?? values?.company_address ?? '',
         websiteUrl: values?.websiteUrl ?? values?.companyWebsite ?? values?.website ?? '',

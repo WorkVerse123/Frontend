@@ -24,6 +24,8 @@ export default function JobForm({ initialValues = null, onSuccess = null, packag
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const showSnackbar = (msg, severity = 'success') => { setSnackbarMsg(msg); setSnackbarSeverity(severity); setSnackbarOpen(true); };
   const [form, setForm] = useState({
     jobTitle: '',
@@ -219,23 +221,61 @@ export default function JobForm({ initialValues = null, onSuccess = null, packag
         // Ensure payload carries the job id for update
         payload.jobId = id;
         const res = await put(updateEndpoint, payload);
-        showSnackbar('Cập nhật tin thành công', 'success');
-        if (typeof onSuccess === 'function') {
-          try { onSuccess(res); } catch (e) { /* allow parent to handle */ }
-        } else {
-          if (resolvedEmployerId) navigate(`/employer/${resolvedEmployerId}`); else navigate('/jobs');
-        }
+        
+        // Hiển thị thông báo thành công và bắt đầu đếm ngược
+        setIsRedirecting(true);
+        setCountdown(3);
+        showSnackbar('✅ Cập nhật tin thành công! Đang chuyển trang trong 3 giây...', 'success');
+        
+        // Đếm ngược từ 3 về 0
+        const countdownInterval = setInterval(() => {
+          setCountdown(prev => {
+            const newCount = prev - 1;
+            if (newCount > 0) {
+              setSnackbarMsg(`✅ Cập nhật tin thành công! Đang chuyển trang trong ${newCount} giây...`);
+              return newCount;
+            } else {
+              clearInterval(countdownInterval);
+              // Chuyển trang khi đếm về 0
+              if (typeof onSuccess === 'function') {
+                try { onSuccess(res); } catch (e) { /* allow parent to handle */ }
+              } else {
+                if (resolvedEmployerId) navigate(`/employer/${resolvedEmployerId}`); else navigate('/jobs');
+              }
+              return 0;
+            }
+          });
+        }, 1000);
         return res;
       }
 
       const endpoint = ApiEndpoints.EMPLOYER_JOBS(resolvedEmployerId) || '/api/jobs';
       const res = await post(endpoint, payload);
-      showSnackbar('Tạo tin thành công', 'success');
-      if (typeof onSuccess === 'function') {
-        try { onSuccess(res); } catch (e) { /* no-op */ }
-      } else {
-        if (resolvedEmployerId) navigate(`/employer/${resolvedEmployerId}`); else navigate('/jobs');
-      }
+      
+      // Hiển thị thông báo thành công và bắt đầu đếm ngược
+      setIsRedirecting(true);
+      setCountdown(3);
+      showSnackbar('✅ Đăng tin thành công! Đang chuyển trang trong 3 giây...', 'success');
+      
+      // Đếm ngược từ 3 về 0
+      const countdownInterval = setInterval(() => {
+        setCountdown(prev => {
+          const newCount = prev - 1;
+          if (newCount > 0) {
+            setSnackbarMsg(`✅ Đăng tin thành công! Đang chuyển trang trong ${newCount} giây...`);
+            return newCount;
+          } else {
+            clearInterval(countdownInterval);
+            // Chuyển trang khi đếm về 0
+            if (typeof onSuccess === 'function') {
+              try { onSuccess(res); } catch (e) { /* no-op */ }
+            } else {
+              if (resolvedEmployerId) navigate(`/employer/${resolvedEmployerId}`); else navigate('/jobs');
+            }
+            return 0;
+          }
+        });
+      }, 1000);
       return res;
     } catch (err) {
       console.error('Create/Update job failed', err);
@@ -347,6 +387,7 @@ export default function JobForm({ initialValues = null, onSuccess = null, packag
             value={form.jobExpireAt}
             onChange={(val) => onChange('jobExpireAt', val)}
             disablePast
+            renderInput={(params) => <TextField {...params} fullWidth />}
             slotProps={{ textField: { fullWidth: true } }}
           />
         </LocalizationProvider>
@@ -369,8 +410,13 @@ export default function JobForm({ initialValues = null, onSuccess = null, packag
       </div>
 
         <div className="flex items-center space-x-3">
-          <Button variant="contained" color="primary" type="submit" disabled={!resolvedEmployerId}>
-              {initialValues ? 'Chỉnh sửa' : 'Đăng Tin'}
+          <Button 
+            variant="contained" 
+            color="primary" 
+            type="submit" 
+            disabled={!resolvedEmployerId || isRedirecting}
+          >
+              {isRedirecting ? 'Đang xử lý...' : (initialValues ? 'Chỉnh sửa' : 'Đăng Tin')}
             </Button>
           {!initialValues ? (
             <Button
@@ -388,7 +434,12 @@ export default function JobForm({ initialValues = null, onSuccess = null, packag
             <Alert severity="warning">{employerError}</Alert>
           </div>
         ) : null}
-        <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Snackbar 
+          open={snackbarOpen} 
+          autoHideDuration={snackbarSeverity === 'success' ? null : 4000} 
+          onClose={() => setSnackbarOpen(false)} 
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
           <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
             {snackbarMsg}
           </Alert>
