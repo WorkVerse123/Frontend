@@ -226,7 +226,7 @@ export default function JobDetailDialog({ job, employerId, open, onClose }) {
             <div>
               <Typography variant="subtitle2" className="text-slate-700 mb-1">Mức lương</Typography>
               <Typography className="text-sm text-slate-600">
-                {formatSalary(localJob.jobSalaryMin, localJob.jobSalaryMax, localJob.jobSalaryCurrency, localJob.jobTime)}
+                {formatSalary(localJob.jobSalaryMin, localJob.jobSalaryMax, localJob.jobSalaryCurrency, 'hours')}
               </Typography>
             </div>
 

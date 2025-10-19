@@ -144,7 +144,7 @@ export default function EmployerJobsList({ employerId }) {
                 <div className="text-sm text-slate-600 font-bold">{job.jobTitle}</div>
                 <div className="text-xs text-slate-500 mt-1">Địa điểm: {job.jobLocation} </div>
                 <div className="text-xs text-slate-500 mt-1 font-semibold">Trạng thái: {job.jobStatus || '—'}</div>
-                <div className="text-xs text-slate-500 mt-1">Mức lương: {formatSalary(job.jobSalaryMin, job.jobSalaryMax, job.jobSalaryCurrency, job.jobTime)}</div>
+                <div className="text-xs text-slate-500 mt-1">Mức lương: {formatSalary(job.jobSalaryMin, job.jobSalaryMax, job.jobSalaryCurrency, 'hours')}</div>
                 <div className="text-xs text-slate-400 mt-1">Ứng viên đã ứng tuyển: {job.employeeApplyCount}</div>
               </div>
               <div className="text-sm font-medium text-sky-600">

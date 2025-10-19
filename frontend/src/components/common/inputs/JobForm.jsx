@@ -315,10 +315,10 @@ export default function JobForm({ initialValues = null, onSuccess = null, packag
             onChange={(e) => onChange('jobTime', e.target.value)}
             MenuProps={{ disableScrollLock: true }}
           >
-            <MenuItem value="FullTime">Toàn thời gian</MenuItem>
+            {/* <MenuItem value="FullTime">Toàn thời gian</MenuItem> */}
             <MenuItem value="PartTime">Bán thời gian</MenuItem>
-            <MenuItem value="Contract">Hợp đồng</MenuItem>
-            <MenuItem value="Internship">Thực tập</MenuItem>
+            {/* <MenuItem value="Contract">Hợp đồng</MenuItem> */}
+            {/* <MenuItem value="Internship">Thực tập</MenuItem> */}
           </Select>
         </FormControl>
       </div>

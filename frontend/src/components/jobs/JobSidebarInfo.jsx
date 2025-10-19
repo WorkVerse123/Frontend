@@ -29,7 +29,7 @@ export default function JobSidebarInfo({ job }) {
           <div>
             <strong>Lương:</strong>{' '}
             {job?.jobSalaryMin != null || job?.jobSalaryMax != null ? (
-                <span className='font-bold'>{job?.jobSalaryMin != null ? formatPrice(job.jobSalaryMin, job.jobSalaryCurrency || 'VND') : '—'}{job?.jobSalaryMax != null ? ` - ${formatPrice(job.jobSalaryMax, job.jobSalaryCurrency || 'VND')}` : ''}</span>
+                <span className='font-bold'>{job?.jobSalaryMin != null ? formatPrice(job.jobSalaryMin, job.jobSalaryCurrency || 'VND') : '—'}{job?.jobSalaryMax != null ? ` - ${formatPrice(job.jobSalaryMax, job.jobSalaryCurrency || 'VND')}` : ''} / giờ</span>
             ) : (
               'Thương lượng'
             )}
