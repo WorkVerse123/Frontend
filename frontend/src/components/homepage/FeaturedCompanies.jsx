@@ -73,7 +73,7 @@ export default function FeaturedCompanies({ setIsLoading }) {
                     <div className={isPriority ? 'font-semibold mb-1 text-yellow-700 flex items-center' : 'font-semibold mb-1'}>
                       {company.name}
                       {isPriority && (
-                        <span className="ml-2 px-2 py-1 rounded text-xs font-bold bg-yellow-300 text-yellow-900 border border-yellow-500">Ưu tiên</span>
+                        <span className="ml-2 px-2 py-1 rounded text-xs font-bold bg-yellow-300 text-yellow-900 border border-yellow-500 hidden sm:inline-block">Ưu tiên</span>
                       )}
                     </div>
                     <div className="text-sm text-gray-500">

@@ -110,7 +110,7 @@ export default function FeaturedJobs({ setIsLoading }) {
                       {job.jobTitle}
                       <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs ml-2">{job.jobCategory}</span>
                       {isPriority && (
-                        <span className="ml-2 px-2 py-1 rounded text-xs font-bold bg-yellow-300 text-yellow-900 border border-yellow-500">Ưu tiên</span>
+                        <span className="ml-2 px-2 py-1 rounded text-xs font-bold bg-yellow-300 text-yellow-900 border border-yellow-500 hidden sm:inline-block">Ưu tiên</span>
                       )}
                     </div>
                     <div className="text-gray-500 text-sm">

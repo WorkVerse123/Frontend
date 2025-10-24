@@ -97,7 +97,7 @@ export default function FeaturedCandidates({ setIsLoading }) {
                     <div className={isPriority ? 'font-semibold text-yellow-700 flex items-center' : 'font-semibold text-[#2563eb]'}>
                       {c.fullName}
                       {isPriority && (
-                        <span className="ml-2 px-2 py-1 rounded text-xs font-bold bg-yellow-300 text-yellow-900 border border-yellow-500">Ưu tiên</span>
+                        <span className="ml-2 px-2 py-1 rounded text-xs font-bold bg-yellow-300 text-yellow-900 border border-yellow-500 hidden sm:inline-block">Ưu tiên</span>
                       )}
                     </div>
                     <div className="text-gray-500 text-sm">
