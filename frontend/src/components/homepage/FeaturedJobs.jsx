@@ -92,7 +92,7 @@ export default function FeaturedJobs({ setIsLoading }) {
           <InlineLoader text="Đang tải việc làm..." />
         ) : (
           jobs
-            .filter(job => job.jobStatus === 'opened' || job.jobStatus === 'active')
+            .filter(job => job.jobStatus === 'open' || job.jobStatus === 'active')
             .map(job => {
               const isPriority = job.isPriority === 1 || job.isPriority === '1' || job.isPriority === true;
               const daysLeft = getDaysLeft(job.jobExpiredAt, job.jobStatus);
