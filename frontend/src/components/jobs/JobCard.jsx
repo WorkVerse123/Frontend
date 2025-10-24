@@ -82,7 +82,7 @@ export default function JobCard({ job, onBookmarkToggle }) {
     }
   };
   return (
-    <div className="bg-white rounded-xl shadow p-4 border hover:shadow-md transition">
+    <div className={`bg-white rounded-xl shadow p-4 border hover:shadow-md transition relative ${job.isPriority ? 'border-2 border-yellow-400' : ''}`}>
       <div className="flex items-start gap-4">
         {/* <div className="w-14 h-14 flex items-center justify-center bg-[#f3f7fb] rounded-md overflow-hidden">
           {job.logo ? (

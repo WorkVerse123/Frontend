@@ -20,7 +20,6 @@ export default function Footer() {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const rawRole = payload.role || payload.RoleId;
       role = roleMap[String(rawRole)] || String(rawRole).toLowerCase();
-      console.log('DEBUG Footer role from JWT:', role, payload);
     } catch (e) {
       console.log('JWT decode error:', e);
     }

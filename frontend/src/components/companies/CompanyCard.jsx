@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom';
 
 export default function CompanyCard({ company }) {
   return (
-    <div className="bg-white rounded-xl shadow p-4 border">
+    <div
+      className="rounded-xl shadow p-4 border relative bg-white"
+      style={company.isPriority ? { border: '2px solid #facc15' } : {}}
+    >
       <div className='flex items-center gap-3'>
         <img src={company.logo} alt={company.name} className="w-12 h-12 rounded" />
         <div>

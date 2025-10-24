@@ -92,6 +92,7 @@ export default function CompaniesPage() {
             logo: e.logoUrl ?? e.logo ?? '',
             location: e.address ?? e.location ?? '',
             employeeCount: e.employeeCount ?? e.size ?? null,
+            isPriority: e.isPriority ?? e.is_priority ?? false,
             // keep original raw object in case other components need it
             raw: e,
           }))

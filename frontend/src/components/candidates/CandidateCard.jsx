@@ -32,41 +32,45 @@ export default function CandidateCard({ candidate }) {
   };
   return (
     <>
-    <Card variant="outlined" className="shadow-sm">
-      <CardContent>
-        <Box className="flex items-center gap-4">
-          <Avatar variant="rounded" sx={{ width: 64, height: 64, bgcolor: 'grey.200' }} />
-          <Box className="flex-1">
-            <Box className="flex items-center justify-between">
-              <div>
-                <Typography variant="body2" component="div" sx={{ fontWeight: 600 }}>
-                  {candidate.fullName || candidate.employeeFullName || 'Ứng viên'}
+      <Card
+        variant="outlined"
+        className="shadow-sm relative"
+        style={candidate.isPriority ? { border: '2px solid #facc15' } : {}}
+      >
+        <CardContent>
+          <Box className="flex items-center gap-4">
+            <Avatar variant="rounded" sx={{ width: 64, height: 64, bgcolor: 'grey.200' }} />
+            <Box className="flex-1">
+              <Box className="flex items-center justify-between">
+                <div>
+                  <Typography variant="body2" component="div" sx={{ fontWeight: 600 }}>
+                    {candidate.fullName || candidate.employeeFullName || 'Ứng viên'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {candidate.employeeLocation || candidate.location || ''}
+                  </Typography>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* <BookmarkButton bookmarked={bookmarked} onToggle={handleToggle} size="small" /> */}
+                  <Button variant="contained" size="small" color="primary" onClick={() => navigate(`/candidates/${candidate?.employeeId || candidate?.id}`)}>Xem Hồ Sơ</Button>
+                </div>
+              </Box>
+              {candidate.employeeEducation ? (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', marginTop: 0.5 }}>
+                  Học vấn: {candidate.employeeEducation}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {candidate.employeeLocation || candidate.location || ''}
+              ) : null}
+              {candidate.gender ? (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', marginTop: 0.5 }}>
+                  Giới tính: {candidate.gender}
                 </Typography>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* <BookmarkButton bookmarked={bookmarked} onToggle={handleToggle} size="small" /> */}
-                <Button variant="contained" size="small" color="primary" onClick={() => navigate(`/candidates/${candidate?.employeeId || candidate?.id}`)}>Xem Hồ Sơ</Button>
-              </div>
+              ) : null}
             </Box>
-            {candidate.employeeEducation ? (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', marginTop: 0.5 }}>
-                Học vấn: {candidate.employeeEducation}
-              </Typography>
-            ) : null}
-            {candidate.gender ? (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', marginTop: 0.5 }}>
-                Giới tính: {candidate.gender}
-              </Typography>
-            ) : null}
           </Box>
-        </Box>
-      </CardContent>
-      <CardActions />
-    </Card>
-  <CandidateProfileModal open={openProfile} onClose={() => setOpenProfile(false)} employeeId={candidate?.employeeId || candidate?.id} />
+        </CardContent>
+        <CardActions />
+      </Card>
+      <CandidateProfileModal open={openProfile} onClose={() => setOpenProfile(false)} employeeId={candidate?.employeeId || candidate?.id} />
     </>
   );
 }
