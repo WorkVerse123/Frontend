@@ -42,9 +42,8 @@ export default function FeaturedJobs({ setIsLoading }) {
           : Array.isArray(result)
           ? result
           : [];
-  // keep only priority jobs and cap to pageSize (10)
-  const priority = arr.filter(j => (j.isPriority === 1 || j.isPriority === '1' || j.isPriority === true));
-  setJobs(priority.slice(0, pageSize));
+  // Hiển thị cả job isPriority=false và true, style nổi bật cho isPriority=true
+  setJobs(arr.slice(0, pageSize));
       } catch (err) {
         if (!mounted) return;
         setJobs([]);
@@ -78,51 +77,62 @@ export default function FeaturedJobs({ setIsLoading }) {
   return (
     <section className="max-w-6xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-4">
-      <h2 className="text-2xl font-bold mb-6 text-[#042852]">Việc làm nổi bật</h2>
-      <div className="mb-4">
-        <Link
-          to="/jobs"
-          className="text-sm text-[#2563eb] font-semibold hover:underline"
-        >
-          Xem tất cả
-        </Link>
-      </div>
+        <h2 className="text-2xl font-bold mb-6 text-[#042852]">Việc làm nổi bật</h2>
+        <div className="mb-4">
+          <Link
+            to="/jobs"
+            className="text-sm text-[#2563eb] font-semibold hover:underline"
+          >
+            Xem tất cả
+          </Link>
+        </div>
       </div>
       <div className="flex flex-col gap-4">
         {loading ? (
           <InlineLoader text="Đang tải việc làm..." />
         ) : (
           jobs
-          .filter(job => (job.isPriority === 1 || job.isPriority === '1' || job.isPriority === true) && (job.jobStatus === 'opened' || job.jobStatus === 'active'))
-          .map(job => {
-            const daysLeft = getDaysLeft(job.jobExpiredAt, job.jobStatus);
-            return (
-              <div key={job.jobId} className="bg-white rounded-xl shadow p-4 flex items-center justify-between border">
-                <div>
-                  <div className="font-semibold text-[#2563eb]">
-                    {job.jobTitle}
-                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs ml-2">{job.jobCategory}</span>
+            .filter(job => job.jobStatus === 'opened' || job.jobStatus === 'active')
+            .map(job => {
+              const isPriority = job.isPriority === 1 || job.isPriority === '1' || job.isPriority === true;
+              const daysLeft = getDaysLeft(job.jobExpiredAt, job.jobStatus);
+              return (
+                <div
+                  key={job.jobId}
+                  className={
+                    isPriority
+                      ? 'bg-white rounded-xl shadow-2xl p-4 flex items-center justify-between border-2 border-yellow-400'
+                      : 'bg-white rounded-xl shadow p-4 flex items-center justify-between border'
+                  }
+                >
+                  <div>
+                    <div className={isPriority ? 'font-semibold text-yellow-700 flex items-center' : 'font-semibold text-[#2563eb]'}>
+                      {job.jobTitle}
+                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs ml-2">{job.jobCategory}</span>
+                      {isPriority && (
+                        <span className="ml-2 px-2 py-1 rounded text-xs font-bold bg-yellow-300 text-yellow-900 border border-yellow-500">Ưu tiên</span>
+                      )}
+                    </div>
+                    <div className="text-gray-500 text-sm">
+                      {job.jobLocation} • {formatPrice(job.jobSalaryMin, 'VND')} - {formatPrice(job.jobSalaryMax, 'VND')}
+                      {daysLeft && (
+                        <span className="ml-2 text-xs text-green-600">
+                          | Còn {daysLeft} ngày ứng tuyển
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-gray-500 text-sm">
-                        {job.jobLocation} • {formatPrice(job.jobSalaryMin, 'VND')} - {formatPrice(job.jobSalaryMax, 'VND')}
-                    {daysLeft && (
-                      <span className="ml-2 text-xs text-green-600">
-                        | Còn {daysLeft} ngày ứng tuyển
-                      </span>
-                    )}
-                  </div>
+                  { (role === 'admin' || role === 'staff' || role === 'employer') ? (
+                    <Link to={`/jobs/${job.jobId || job.id}`} className="bg-gray-100 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition">Xem</Link>
+                  ) : (
+                    <button onClick={() => window.location.href = `/jobs/${job.jobId || job.id}`} className="bg-[#2563eb] text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">Ứng Tuyển Ngay</button>
+                  )}
                 </div>
-                { (role === 'admin' || role === 'staff' || role === 'employer') ? (
-                  <Link to={`/jobs/${job.jobId || job.id}`} className="bg-gray-100 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-200 transition">Xem</Link>
-                ) : (
-                  <button onClick={() => window.location.href = `/jobs/${job.jobId || job.id}`} className="bg-[#2563eb] text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition">Ứng Tuyển Ngay</button>
-                )}
-              </div>
-            );
-          })
+              );
+            })
         )}
       </div>
-      {/* No pagination — showing up to 10 priority jobs */}
+      {/* Hiển thị cả tin thường và tin ưu tiên, tin ưu tiên có style nổi bật */}
     </section>
   );
 }

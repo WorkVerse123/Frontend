@@ -202,12 +202,12 @@ export default function Header({ role = 'guest' }) {
                     <ListItem button component="a" href="/jobs" onClick={() => setDrawerOpen(false)}>
                       <ListItemText primary="Tìm việc" />
                     </ListItem>
-                    <ListItem button onClick={() => { navigate('/notifications'); setDrawerOpen(false); }}>
+                    {/* <ListItem button onClick={() => { navigate('/notifications'); setDrawerOpen(false); }}>
                       <ListItemText primary="Thông báo" />
-                    </ListItem>
-                    <ListItem button onClick={() => { navigate('/calendar'); setDrawerOpen(false); }}>
+                    </ListItem> */}
+                    {/* <ListItem button onClick={() => { navigate('/calendar'); setDrawerOpen(false); }}>
                       <ListItemText primary="Lịch" />
-                    </ListItem>
+                    </ListItem> */}
                   </>
                 )}
 

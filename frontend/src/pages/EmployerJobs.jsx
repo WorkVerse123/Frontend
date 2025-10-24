@@ -315,6 +315,14 @@ export default function EmployerJobs() {
 
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState('overview');
+  // Lấy activeTab từ query string nếu có
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('activeTab');
+    if (tab && ['overview','create','subscription'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, []);
 
   const stats = React.useMemo(() => {
     const total = jobs.length;

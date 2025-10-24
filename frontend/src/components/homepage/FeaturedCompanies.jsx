@@ -33,8 +33,8 @@ export default function FeaturedCompanies({ setIsLoading }) {
   // only show priority companies on homepage
   const isPriority = v => v === true || v === 1 || String(v).toLowerCase() === 'true';
   const filtered = (Array.isArray(arr) ? arr : []).filter(c => isPriority(c.isPriority) || isPriority(c.is_priority));
-  // limit to pageSize
-  setCompanies(filtered.slice(0, pageSize));
+  // Hiển thị cả công ty isPriority=false và true
+  setCompanies((Array.isArray(arr) ? arr : []).slice(0, pageSize));
       } catch (e) {
         if (!mounted) return;
         setCompanies([]);
@@ -63,22 +63,31 @@ export default function FeaturedCompanies({ setIsLoading }) {
             <InlineLoader text="Đang tải doanh nghiệp..." />
           </div>
         ) : (
-          companies.map(company => (
-            <div key={company.companyId || company.id} className="bg-white rounded-xl shadow p-4 items-center border">
-              <div className='grid grid-cols-3 grid-flow-col gap-2'>
-                <img src={company.logo} alt={company.name} className="w-10 h-10 rounded mb-2 col-span-1" />
-                <div className='col-span-2'>
-                  <div className="font-semibold mb-1">{company.name}</div>
-                  <div className="text-sm text-gray-500">
-                    <MapLink address={company.location} />
+          companies.map(company => {
+            const isPriority = company.isPriority === true || company.isPriority === 1 || String(company.isPriority).toLowerCase() === 'true' || company.is_priority === true || company.is_priority === 1 || String(company.is_priority).toLowerCase() === 'true';
+            return (
+              <div key={company.companyId || company.id} className={isPriority ? 'bg-white rounded-xl shadow-2xl p-4 items-center border-2 border-yellow-400 relative' : 'bg-white rounded-xl shadow p-4 items-center border'}>
+                <div className='grid grid-cols-3 grid-flow-col gap-2'>
+                  <img src={company.logo} alt={company.name} className="w-10 h-10 rounded mb-2 col-span-1" />
+                  <div className='col-span-2'>
+                    <div className={isPriority ? 'font-semibold mb-1 text-yellow-700 flex items-center' : 'font-semibold mb-1'}>
+                      {company.name}
+                      {isPriority && (
+                        <span className="ml-2 px-2 py-1 rounded text-xs font-bold bg-yellow-300 text-yellow-900 border border-yellow-500">Ưu tiên</span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <MapLink address={company.location} />
+                    </div>
                   </div>
                 </div>
+                <div className="flex justify-center mt-2">
+                  <button type="button" onClick={() => navigate(`/employer/${company.companyId || company.id}`)} className="inline-block bg-[#E7F0FA] text-[#0A65CC] px-6 py-1 rounded text-xs font-semibold hover:text-white hover:bg-blue-500">Xem chi tiết</button>
+                </div>
+                {/* Đã bỏ icon ngôi sao vàng cho doanh nghiệp ưu tiên */}
               </div>
-              <div className="flex justify-center mt-2">
-                <button type="button" onClick={() => navigate(`/employer/${company.companyId || company.id}`)} className="inline-block bg-[#E7F0FA] text-[#0A65CC] px-6 py-1 rounded text-xs font-semibold hover:text-white hover:bg-blue-500">Xem chi tiết</button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
       {/* No pagination — showing up to 10 companies */}

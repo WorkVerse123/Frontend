@@ -39,6 +39,14 @@ export default function EmployeeDashboard() {
   const [applications, setApplications] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
+  // Lấy activeTab từ query string nếu có
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('activeTab');
+    if (tab && ['overview','applied','saved','profile','subscription'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, []);
 
   useEffect(() => {
     const ac = new AbortController();

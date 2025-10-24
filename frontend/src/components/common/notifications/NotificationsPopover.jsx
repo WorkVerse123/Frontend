@@ -16,9 +16,9 @@ export default function NotificationsPopover({
 		if (initialNotifications && Array.isArray(initialNotifications)) return initialNotifications
 		// fallback mock data
 		return [
-			{ id: 1, title: 'New candidate applied', body: 'John Doe applied for Frontend Dev', when: '2h', read: false },
-			{ id: 2, title: 'Subscription expiring', body: 'Your plan will expire in 3 days', when: '1d', read: false },
-			{ id: 3, title: 'System update', body: 'We deployed an update to improve matching', when: '3d', read: true },
+			// { id: 1, title: 'New candidate applied', body: 'John Doe applied for Frontend Dev', when: '2h', read: false },
+			// { id: 2, title: 'Subscription expiring', body: 'Your plan will expire in 3 days', when: '1d', read: false },
+			// { id: 3, title: 'System update', body: 'We deployed an update to improve matching', when: '3d', read: true },
 		]
 	})
 

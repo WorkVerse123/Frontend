@@ -358,7 +358,7 @@ export default function JobDetail() {
 
                         if (isOwner || role !== 'employee') return null;
                       return (
-                        <div className="mt-2">
+                        <div className="mt-2 justify-self-end">
                           <button onClick={() => setReportOpen(true)} className="text-sm text-red-600 underline">Báo cáo</button>
                         </div>
                       );

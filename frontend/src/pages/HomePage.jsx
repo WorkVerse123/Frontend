@@ -39,28 +39,63 @@ export default function HomePage() {
 
   return (
     <MainLayout role={normalizedRole} hasSidebar={false}>
-        {/* Each child component manages its own loading state now. Removed global Loading overlay to avoid full-page reloads when a single component paginates. */}
-      <BannerSearch />
-      <PromoBanner imageUrl={"https://scontent.fsgn2-3.fna.fbcdn.net/v/t39.30808-6/555736342_122168935118590474_6570772927044831720_n.png?stp=dst-png_s960x960&_nc_cat=107&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeHiXZxTnukOM-_srDGpDCIOUJd_mi3Kc6lQl3-aLcpzqX0NELkNxainqOAnZRsylWmLD3eJyKplNrt5lqFTRanU&_nc_ohc=E7kEW0UfAb4Q7kNvwGVm-dK&_nc_oc=Admk3cAW8C1zy1ha-FcipgmiqINS5NGuhFrSBSm-Tl6XmHBBIPzHPG9pGv0f6BF-LGwyMh-3B0t44Ex6nRFR_ULr&_nc_zt=23&_nc_ht=scontent.fsgn2-3.fna&_nc_gid=rxK4Sexb1isPOEcwZAxklg&oh=00_Afej9c5PV9PpfeTD9C1A4NjGplcpWMea1aQGtVxvvFKV0Q&oe=68F18463"} />
-      <StatsPanel setIsLoading={setStatsLoading} />
-      <RegisterBox />
-      <PlatformSteps />
-      { (normalizedRole === 'admin' || normalizedRole === 'staff') ? (
-        // Admin/staff see both featured jobs and featured candidates
-        <>
-          <FeaturedJobs setIsLoading={setJobsLoading} />
-          <FeaturedCandidates setIsLoading={setJobsLoading} />
-        </>
-      ) : normalizedRole === 'employer' ? (
-        // Employers should also see featured jobs (and get a 'Xem' link instead of 'Ứng Tuyển')
-       <>
-        <FeaturedJobs setIsLoading={setJobsLoading} />
-        <FeaturedCandidates setIsLoading={setJobsLoading} />
-       </>
-      ) : (
-        <FeaturedJobs setIsLoading={setJobsLoading} />
+      {/* Banner section with gradient background */}
+      <div className="bg-gradient-to-r from-blue-100 via-white to-blue-50 py-6">
+        <BannerSearch />
+        <PromoBanner imageUrl={"https://res.cloudinary.com/dwkw9pfjq/image/upload/v1761277994/555736342_122168935118590474_6570772927044831720_n_ayvsw9.png"} />
+      </div>
+
+      {/* Stats section in card */}
+      <div className="max-w-7xl mx-auto px-4 mt-8">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <StatsPanel setIsLoading={setStatsLoading} />
+        </div>
+      </div>
+
+      {/* Register and steps section: only show for guests */}
+      {normalizedRole === 'guest' && (
+        <div className="max-w-7xl mx-auto px-4 mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-white rounded-xl shadow-lg p-6 flex items-center justify-center">
+            <RegisterBox />
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <PlatformSteps />
+          </div>
+        </div>
       )}
-      <FeaturedCompanies setIsLoading={setCompaniesLoading} />
+
+      {/* Featured Jobs & Candidates section */}
+      <div className="max-w-7xl mx-auto px-4 mt-12">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-[#042852] flex items-center gap-2 mb-4">
+            <span className="inline-block bg-blue-100 text-blue-600 rounded-full p-2"><i className="fas fa-briefcase"></i></span>
+            Việc làm nổi bật
+          </h2>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <FeaturedJobs setIsLoading={setJobsLoading} />
+          </div>
+        </div>
+        {(normalizedRole === 'admin' || normalizedRole === 'staff' || normalizedRole === 'employer') && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-[#042852] flex items-center gap-2 mb-4">
+              <span className="inline-block bg-green-100 text-green-600 rounded-full p-2"><i className="fas fa-user-tie"></i></span>
+              Ứng viên nổi bật
+            </h2>
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <FeaturedCandidates setIsLoading={setJobsLoading} />
+            </div>
+          </div>
+        )}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-[#042852] flex items-center gap-2 mb-4">
+            <span className="inline-block bg-yellow-100 text-yellow-600 rounded-full p-2"><i className="fas fa-building"></i></span>
+            Công ty nổi bật
+          </h2>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <FeaturedCompanies setIsLoading={setCompaniesLoading} />
+          </div>
+        </div>
+      </div>
     </MainLayout>
   );
 }

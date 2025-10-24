@@ -70,63 +70,24 @@ export default function EmployeeHeader() {
   return (
     <div className="flex items-center gap-4">
       <a href="/jobs" className="text-white hover:underline text-lg md:text-base">Tìm việc</a>
+      <Button
+        variant="outlined"
+        size="small"
+        sx={{ color: 'white', borderColor: 'white', ml: 1, display: { xs: 'none', md: 'inline-flex' } }}
+        onClick={() => navigate('/employee/dashboard?activeTab=subscription')}
+      >Gói đăng ký</Button>
       <div className="hidden md:flex items-center gap-2">
         <Select value="vi" size="small" displayEmpty sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' } }} MenuProps={{ disableScrollLock: true }}>
           <MenuItem value="vi">Tiếng Việt</MenuItem>
           {/* <MenuItem value="en">English</MenuItem> */}
         </Select>
         <NotificationsPopover />
-        <IconButton color="inherit" size="large" aria-label="Lịch" onClick={() => navigate('/calendar')}><CalendarTodayIcon /></IconButton>
+        {/* <IconButton color="inherit" size="large" aria-label="Lịch" onClick={() => navigate('/calendar')}><CalendarTodayIcon /></IconButton> */}
       </div>
-
-      {/* Mobile menu trigger */}
-      {/* <IconButton className="md:hidden" color="inherit" onClick={() => setMobileOpen(true)} aria-label="menu">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M3 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-      </IconButton> */}
-
-      {/* show standalone UserMenu only on md+ to avoid duplicate mobile dialogs */}
       <div className="hidden md:block">
         <UserMenu />
       </div>
-
-      {/* <Dialog fullScreen open={mobileOpen} onClose={() => setMobileOpen(false)}>
-        <AppBar position="relative">
-          <Toolbar>
-            <Typography variant="h6" sx={{ flex: 1 }}>Menu</Typography>
-            <IconButton edge="end" color="inherit" onClick={() => setMobileOpen(false)} aria-label="close">
-              <CloseIcon />
-            </IconButton>
-          </Toolbar>
-        </AppBar>
-        <Box sx={{ p: 2 }}>
-          {/* Account summary (merged from UserMenu mobile) */}
-          {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <Avatar sx={{ width: 64, height: 64 }}>{userName ? userName.charAt(0).toUpperCase() : <AccountCircleIcon />}</Avatar>
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{userName || 'Tài khoản'}</Typography>
-              <Typography variant="body2" color="text.secondary">{user?.email || ''}</Typography>
-            </Box>
-          </Box>
-
-          <Divider sx={{ mb: 2 }} />
-
-          <List>
-            <ListItem button component="a" href="/jobs" onClick={() => setMobileOpen(false)}>
-              <ListItemText primary="Tìm việc" />
-            </ListItem>
-
-            <ListItem button onClick={() => { handleProfileMobile(); setMobileOpen(false); }}>
-              <ListItemIcon><AccountCircleIcon /></ListItemIcon>
-              <ListItemText primary={user?.profileType === 'employee' || user?.role === 'employee' ? 'Tổng quan' : 'Hồ sơ'} />
-            </ListItem>
-
-            <ListItem button onClick={() => { handleLogoutMobile(); setMobileOpen(false); }}>
-              <ListItemIcon><LogoutIcon /></ListItemIcon>
-              <ListItemText primary="Đăng xuất" />
-            </ListItem>
-          </List>
-        </Box> */}
-      {/* </Dialog> */}
+      {/* ...existing code... */}
     </div>
   );
 }

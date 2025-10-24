@@ -17,6 +17,10 @@ import { useAuth } from '../contexts/AuthContext';
  */
 export default function CandidatesPage() {
   const { user } = useAuth();
+    const [loadingUser, setLoadingUser] = useState(true);
+    useEffect(() => {
+      if (user !== undefined && user !== null) setLoadingUser(false);
+    }, [user]);
   const roleRaw = user?.role || user?.RoleId || user?.roleId || user?.role_id || '';
   const role = (() => {
     if (roleRaw === null || roleRaw === undefined || roleRaw === '') return '';
@@ -116,7 +120,9 @@ export default function CandidatesPage() {
   return (
     <MainLayout role={role} hasSidebar={false}>
       <div className="max-w-6xl mx-auto">
-        {!canViewCandidates ? (
+        {loadingUser ? (
+          <Loading />
+        ) : !canViewCandidates ? (
           <div className="p-6 bg-yellow-50 rounded text-sm text-slate-700">Chức năng tìm ứng viên chỉ dành cho nhà tuyển dụng trả phí (IsPremium). Vui lòng nâng cấp để truy cập.</div>
         ) : (
         <div className="flex gap-6">
