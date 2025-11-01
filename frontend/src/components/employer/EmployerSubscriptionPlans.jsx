@@ -64,10 +64,8 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
           if (Number.isFinite(p) && p > 0) setActivePlanId(p);
         }
       } catch (e) {}
-      const t = setTimeout(() => {
-        try { closePaymentModal(); } catch (e) {}
-      }, 1500);
-      return () => clearTimeout(t);
+      // NOTE: keep the success modal open so the user can read the message and manually close it.
+      // Removing automatic close prevents the popup from disappearing unexpectedly.
     }
     return undefined;
   }, [paymentStep]);
