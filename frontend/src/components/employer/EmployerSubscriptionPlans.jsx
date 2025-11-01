@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import SubscriptionCard from '../employee/SubscriptionCard';
+import { useAuth } from '../../contexts/AuthContext';
 import useSubscriptionPlans from '../../hooks/useSubscriptionPlans';
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from '@mui/material';
 import { formatPrice } from '../../utils/formatPrice';
@@ -12,6 +13,41 @@ import { handleAsync } from '../../utils/HandleAPIResponse';
 // Render employer plans but only those whose numeric `type === 2`.
 export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = () => {} }) {
   const { plans, loading, error } = useSubscriptionPlans(apiUrl);
+  const { user, setUser } = useAuth();
+  const userIsPremium = (() => {
+    try {
+      const raw = user?.IsPremium ?? user?._raw?.IsPremium ?? user?.isPremium ?? user?.is_premium ?? user?.Is_Premium ?? user?.isPremiumFlag;
+      if (raw === true) return true;
+      if (typeof raw === 'string') return String(raw).toLowerCase() === 'true';
+      return Boolean(raw);
+    } catch (e) {
+      return false;
+    }
+  })();
+  const [activePlanId, setActivePlanId] = useState(null);
+
+  // load current user's subscription (if available) to determine which exact plan is active
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if (!user) return;
+        const uid = user.profileId ?? user.employerId ?? user.userId ?? user.id ?? null;
+        if (!uid) return;
+        const { get: apiGet } = await import('../../services/ApiClient');
+        const res = await apiGet(ApiEndpoints.SUBSCRIPTION_PLANS_BY_ID(uid));
+        if (!mounted || !res) return;
+        // attempt to find active plan id in response
+        const raw = res?.data ?? res ?? {};
+        // common shapes: { planId: X }, { data: { planId: X } }, { subscription: { planId: X } }
+        const candidate = raw.planId ?? raw.data?.planId ?? raw.subscription?.planId ?? raw.data?.subscription?.planId ?? raw.plan?.planId ?? null;
+        if (candidate) setActivePlanId(Number(candidate));
+      } catch (err) {
+        // ignore — keep null
+      }
+    })();
+    return () => { mounted = false; };
+  }, [user]);
   const [paymentModal, setPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
@@ -25,30 +61,47 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
         const host = window.location.host;
         if (!e?.origin || !e.origin.endsWith(host)) return;
         const data = e.data || {};
-        if (data?.type === 'payment:completed') {
-          (async () => {
-            try {
-              setPaymentStep('processing');
-              const uid = Number(localStorage.getItem('resolvedUserId') || 0);
-              const pid = Number(selectedPlan?.planId ?? data?.planId ?? 0);
-              if (!Number.isFinite(uid) || uid <= 0) {
-                setPaymentStep('pending');
-                return;
+              if (data?.type === 'payment:completed') {
+                (async () => {
+                  try {
+                    setPaymentStep('processing');
+                    const uid = Number(localStorage.getItem('resolvedUserId') || 0);
+                    const pid = Number(selectedPlan?.planId ?? data?.planId ?? 0);
+                    if (!Number.isFinite(uid) || uid <= 0) {
+                      setPaymentStep('pending');
+                      return;
+                    }
+                    if (!Number.isFinite(pid) || pid <= 0) {
+                      setPaymentStep('pending');
+                      return;
+                    }
+                    // call register endpoint
+                    const params = [`userId=${encodeURIComponent(uid)}`, `planId=${encodeURIComponent(pid)}`];
+                    const registerUrl = `${ApiEndpoints.SUBSCRIPTION_REGISTER}?${params.join('&')}`;
+                    const regRes = await handleAsync(apiPost(registerUrl, {}));
+                    // mark success
+                    setPaymentStep('success');
+                    // update auth user in-memory and cookie so UI reflects premium immediately
+                    try {
+                      if (setUser) {
+                        const updated = { ...(user || {}), IsPremium: true, isPremium: true };
+                        setUser(updated);
+                        // persist user cookie for future reloads
+                        try {
+                          const { setCookie } = await import('../../services/AuthCookie');
+                          setCookie('user', JSON.stringify(updated), 30);
+                        } catch (e) {
+                          // ignore cookie set failures
+                        }
+                      }
+                    } catch (e) {
+                      // ignore
+                    }
+                  } catch (err) {
+                    setPaymentStep('pending');
+                  }
+                })();
               }
-              if (!Number.isFinite(pid) || pid <= 0) {
-                setPaymentStep('pending');
-                return;
-              }
-              // call register endpoint
-              const params = [`userId=${encodeURIComponent(uid)}`, `planId=${encodeURIComponent(pid)}`];
-              const registerUrl = `${ApiEndpoints.SUBSCRIPTION_REGISTER}?${params.join('&')}`;
-              await handleAsync(apiPost(registerUrl, {}));
-              setPaymentStep('success');
-            } catch (err) {
-              setPaymentStep('pending');
-            }
-          })();
-        }
         if (data?.type === 'payment:cancel') {
           setPaymentStep('failed');
         }
@@ -230,7 +283,8 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
               <SubscriptionCard
                 plan={plan}
                 highlighted={plan.type === 'premium' || (plan.id && String(plan.id).includes('premium'))}
-                isActive={false}
+                // prefer exact activePlanId from server when available, otherwise fall back to userIsPremium
+                isActive={activePlanId ? Number(plan.planId ?? plan.id) === Number(activePlanId) : (userIsPremium && (Number(plan.typeNum) === 2 || String(plan.type).toLowerCase() === 'premium'))}
                 onManage={() => {}}
                 onSelect={(p) => openPaymentModal(p)}
               />
