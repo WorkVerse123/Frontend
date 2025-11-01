@@ -38,11 +38,12 @@ export default function useSubscriptionPlans(apiUrl) {
         const period = durationDays === 30 ? ' / tháng' : (durationDays ? ` / ${durationDays} ngày` : (p?.period ?? ''));
         const rawFeatures = p?.features ?? p?.featureList ?? p?.description ?? '';
         const features = Array.isArray(rawFeatures) ? rawFeatures : (typeof rawFeatures === 'string' ? extractListItems(rawFeatures) : []);
+        const description = p?.description ?? p?.desc ?? '';
         let type = p?.type;
         if (typeof p?.type === 'number') {
           type = p.type === 2 ? 'premium' : (p.type === 1 ? 'basic' : String(p.type));
         }
-        return { id, name, price, currency, period, features, type, _raw: p };
+        return { id, name, price, currency, period, durationDays, features, description, type, _raw: p };
       });
     }
 

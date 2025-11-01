@@ -92,7 +92,8 @@ export default function FeaturedJobs({ setIsLoading }) {
           <InlineLoader text="Đang tải việc làm..." />
         ) : (
           jobs
-            .filter(job => job.jobStatus === 'open' || job.jobStatus === 'active')
+            // normalize jobStatus to lower-case so 'Open' and 'open' both match
+            .filter(job => ['open', 'active'].includes(String(job?.jobStatus ?? '').toLowerCase()))
             .map(job => {
               const isPriority = job.isPriority === 1 || job.isPriority === '1' || job.isPriority === true;
               const daysLeft = getDaysLeft(job.jobExpiredAt, job.jobStatus);
@@ -108,7 +109,7 @@ export default function FeaturedJobs({ setIsLoading }) {
                   <div>
                     <div className={isPriority ? 'font-semibold text-yellow-700 flex items-center' : 'font-semibold text-[#2563eb]'}>
                       {job.jobTitle}
-                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs ml-2">{job.jobCategory}</span>
+                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs ml-2">{Array.isArray(job.jobCategory) ? job.jobCategory.join(', ') : job.jobCategory}</span>
                       {isPriority && (
                         <span className="ml-2 px-2 py-1 rounded text-xs font-bold bg-yellow-300 text-yellow-900 border border-yellow-500 hidden sm:inline-block">Ưu tiên</span>
                       )}

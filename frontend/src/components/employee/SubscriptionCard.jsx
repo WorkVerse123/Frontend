@@ -16,6 +16,21 @@ export default function SubscriptionCard({ plan, highlighted = false, onSelect =
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-semibold text-[#042852] truncate">{plan?.name}</h3>
+              {(() => {
+                // Prefer explicit description; otherwise build a short summary from features
+                const rawDesc = plan?.description ?? '';
+                let summary = '';
+                if (rawDesc && String(rawDesc).trim()) summary = String(rawDesc).trim();
+                else {
+                  const rawFeatures = plan?.features ?? '';
+                  if (Array.isArray(rawFeatures)) summary = rawFeatures.slice(0, 2).join('; ');
+                  else if (typeof rawFeatures === 'string') {
+                    const parts = rawFeatures.split(/\r?\n|;|,/).map(s => s.trim()).filter(Boolean);
+                    summary = parts.slice(0, 2).join('; ');
+                  }
+                }
+                return summary ? <p className="text-sm text-gray-500 mt-1 truncate">{summary}</p> : null;
+              })()}
             </div>
             {isActive && (
               <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full whitespace-nowrap">Đang dùng</span>
