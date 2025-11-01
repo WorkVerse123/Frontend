@@ -32,7 +32,9 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
     (async () => {
       try {
         if (!user) return;
-        const uid = user.profileId ?? user.employerId ?? user.userId ?? user.id ?? null;
+        // Prefer explicit UserId claim when present (token may contain UserId and EmployerId separately)
+  const uidRaw = user?.UserId ?? localStorage.getItem('resolvedUserId') ?? user?.profileId ?? user?.userId ?? user?.id ?? null;
+  const uid = uidRaw ? Number(uidRaw) : null;
         if (!uid) return;
         const { get: apiGet } = await import('../../services/ApiClient');
         const res = await apiGet(ApiEndpoints.SUBSCRIPTION_PLANS_BY_ID(uid));
@@ -81,7 +83,8 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
                 (async () => {
                   try {
                     setPaymentStep('processing');
-                    const uid = Number(localStorage.getItem('resolvedUserId') || user?.profileId || user?.employerId || user?.userId || user?.id || 0);
+                    // Prefer token's UserId claim; fallback to resolvedUserId/local profile ids
+                    const uid = Number(user?.UserId ?? localStorage.getItem('resolvedUserId') ?? user?.profileId ?? user?.userId ?? user?.id ?? 0);
                     const pid = Number(selectedPlan?.planId ?? data?.planId ?? 0);
                     if (!Number.isFinite(uid) || uid <= 0) {
                       setPaymentStep('pending');
@@ -260,7 +263,8 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
               try { if (!popup.closed) popup.close(); } catch (e) {}
               // call subscription register to finalize on server and update local user
               try {
-                const uid = Number(localStorage.getItem('resolvedUserId') || user?.profileId || user?.employerId || user?.userId || user?.id || 0);
+                // Prefer token's UserId claim when registering subscription
+                const uid = Number(user?.UserId ?? localStorage.getItem('resolvedUserId') ?? user?.profileId ?? user?.userId ?? user?.id ?? 0);
                 const pidLocal = Number(pid || selectedPlan?.planId || 0);
                 if (Number.isFinite(uid) && uid > 0 && Number.isFinite(pidLocal) && pidLocal > 0) {
                   const params = [`userId=${encodeURIComponent(uid)}`, `planId=${encodeURIComponent(pidLocal)}`];
