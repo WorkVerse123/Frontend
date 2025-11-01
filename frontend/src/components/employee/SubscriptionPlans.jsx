@@ -31,7 +31,7 @@ export default function SubscriptionPlans({ apiUrl = null, onSelect = () => {} }
           (async () => {
             try {
               setPaymentStep('processing');
-              const uid = Number(localStorage.getItem('resolvedUserId') || 0);
+              const uid = Number(localStorage.getItem('resolvedUserId') || user?.profileId || user?.employeeId || user?.userId || user?.id || 0);
               const pid = Number(selectedPlan?.planId ?? data?.planId ?? 0);
               if (!Number.isFinite(uid) || uid <= 0) {
                 setPaymentStep('pending');
@@ -147,6 +147,18 @@ export default function SubscriptionPlans({ apiUrl = null, onSelect = () => {} }
                         if (s === 'completed' || s === 'success' || s === 'paid') {
                           clearInterval(poller);
                           try { if (!popup.closed) popup.close(); } catch (e) {}
+                          // call subscription register to finalize on server and update local user
+                          try {
+                            const uidLocal = Number(localStorage.getItem('resolvedUserId') || user?.profileId || user?.employeeId || user?.userId || user?.id || 0);
+                            const pidLocal = Number(p?.planId ?? p?.id ?? 0);
+                            if (Number.isFinite(uidLocal) && uidLocal > 0 && Number.isFinite(pidLocal) && pidLocal > 0) {
+                              const params = [`userId=${encodeURIComponent(uidLocal)}`, `planId=${encodeURIComponent(pidLocal)}`];
+                              const registerUrl = `${ApiEndpoints.SUBSCRIPTION_REGISTER}?${params.join('&')}`;
+                              await handleAsync(apiPost(registerUrl, {}));
+                            }
+                          } catch (err) {
+                            // ignore
+                          }
                           setPaymentStep('success');
                           // also update user
                           try {

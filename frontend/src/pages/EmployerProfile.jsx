@@ -98,6 +98,15 @@ export default function EmployerProfile() {
 
   if (loading) return <Loading />;
 
+  // compute owner optimistically from auth user and route
+  const isOwnerComputed = Boolean(
+    user?.profileType === 'employer' && (
+      routeId === 'me' ||
+      String(user?.profileId) === String(routeId) ||
+      String(user?.profileId) === String(employer?.employerId)
+    )
+  );
+
   return (
     <MainLayout role={normalizedRole} hasSidebar={false}>
       <Container maxWidth="lg" className="py-6">
@@ -105,7 +114,7 @@ export default function EmployerProfile() {
           <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded">Không thể tải thông tin nhà tuyển dụng. Vui lòng thử lại.</div>
         )}
         {employer ? (
-          <EmployerHeader employer={employer} isOwner={Boolean(user?.profileType === 'employer' && String(user?.profileId) === String(employer.employerId))} onEdit={() => {
+          <EmployerHeader employer={employer} isOwner={isOwnerComputed} onEdit={() => {
             // navigate to the dedicated edit page to avoid duplicate inline editors
             const targetId = employer?.employerId || employer?.EmployerId || (user?.profileType === 'employer' ? user?.profileId : null);
             if (targetId) navigate(`/employer/${targetId}/edit`);

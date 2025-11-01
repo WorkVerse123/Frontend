@@ -54,6 +54,24 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
   const [paymentStep, setPaymentStep] = useState('confirm'); // 'confirm' | 'processing' | 'success' | 'failed' | 'pending'
   const [paymentErrorMsg, setPaymentErrorMsg] = useState('');
 
+  // when payment finishes successfully, show a short success UI then close modal
+  useEffect(() => {
+    if (paymentStep === 'success') {
+      try {
+        // optimistically mark the selected plan as active locally
+        if (selectedPlan) {
+          const p = Number(selectedPlan.planId ?? selectedPlan.id ?? 0);
+          if (Number.isFinite(p) && p > 0) setActivePlanId(p);
+        }
+      } catch (e) {}
+      const t = setTimeout(() => {
+        try { closePaymentModal(); } catch (e) {}
+      }, 1500);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [paymentStep]);
+
   // payment message listener: must be registered unconditionally (hooks order must remain stable)
   useEffect(() => {
     function onMessage(e) {
@@ -65,7 +83,7 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
                 (async () => {
                   try {
                     setPaymentStep('processing');
-                    const uid = Number(localStorage.getItem('resolvedUserId') || 0);
+                    const uid = Number(localStorage.getItem('resolvedUserId') || user?.profileId || user?.employerId || user?.userId || user?.id || 0);
                     const pid = Number(selectedPlan?.planId ?? data?.planId ?? 0);
                     if (!Number.isFinite(uid) || uid <= 0) {
                       setPaymentStep('pending');
@@ -81,6 +99,17 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
                     const regRes = await handleAsync(apiPost(registerUrl, {}));
                     // mark success
                     setPaymentStep('success');
+                    // update auth user in-memory and cookie so UI reflects premium immediately
+                    try {
+                      if (setUser) {
+                        const updated = { ...(user || {}), IsPremium: true, isPremium: true };
+                        setUser(updated);
+                        try {
+                          const { setCookie } = await import('../../services/AuthCookie');
+                          setCookie('user', JSON.stringify(updated), 30);
+                        } catch (e) {}
+                      }
+                    } catch (e) {}
                     // update auth user in-memory and cookie so UI reflects premium immediately
                     try {
                       if (setUser) {
@@ -231,6 +260,26 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
             if (s === 'completed' || s === 'success' || s === 'paid') {
               clearInterval(poller);
               try { if (!popup.closed) popup.close(); } catch (e) {}
+              // call subscription register to finalize on server and update local user
+              try {
+                const uid = Number(localStorage.getItem('resolvedUserId') || user?.profileId || user?.employerId || user?.userId || user?.id || 0);
+                const pidLocal = Number(pid || selectedPlan?.planId || 0);
+                if (Number.isFinite(uid) && uid > 0 && Number.isFinite(pidLocal) && pidLocal > 0) {
+                  const params = [`userId=${encodeURIComponent(uid)}`, `planId=${encodeURIComponent(pidLocal)}`];
+                  const registerUrl = `${ApiEndpoints.SUBSCRIPTION_REGISTER}?${params.join('&')}`;
+                  await handleAsync(apiPost(registerUrl, {}));
+                  // update user in-memory and cookie
+                  try {
+                    if (setUser) {
+                      const updated = { ...(user || {}), IsPremium: true, isPremium: true };
+                      setUser(updated);
+                      try { const { setCookie } = await import('../../services/AuthCookie'); setCookie('user', JSON.stringify(updated), 30); } catch (e) {}
+                    }
+                  } catch (e) {}
+                }
+              } catch (err) {
+                // ignore register errors — still mark success client-side
+              }
               setPaymentStep('success');
               return;
             }
@@ -324,6 +373,17 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
             <div className="text-center py-8">
               <CircularProgress size={48} className="mb-4" />
               <p className="text-gray-600">Đang xử lý thanh toán của bạn...</p>
+            </div>
+          )}
+          {paymentStep === 'success' && (
+            <div className="text-center py-8">
+              <div className="mx-auto w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7.414 7.414a1 1 0 01-1.414 0L3.293 9.414a1 1 0 011.414-1.414L8 11.293l6.293-6.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <p className="text-green-700 font-semibold">Thanh toán thành công! Cảm ơn bạn.</p>
+              <p className="text-gray-600 text-sm mt-2">Đang cập nhật trạng thái, cửa sổ sẽ đóng tự động.</p>
             </div>
           )}
           {paymentStep === 'failed' && (

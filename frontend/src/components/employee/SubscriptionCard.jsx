@@ -78,11 +78,11 @@ export default function SubscriptionCard({ plan, highlighted = false, onSelect =
         </ul>
 
         {/* allow manage button when active, keep CTA visible at bottom */}
-        {isActive && (
+        {/* {isActive && (
           <div className="mt-2">
             <Button variant="outlined" fullWidth onClick={() => onManage(plan)}>Quản lý gói</Button>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
