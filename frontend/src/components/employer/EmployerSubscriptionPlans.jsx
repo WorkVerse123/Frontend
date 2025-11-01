@@ -144,8 +144,8 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
           : String(selectedPlan.features ?? '')
       };
 
-      const paymentRes = await handleAsync(apiPost(ApiEndpoints.PAYMENT_INTENT, paymentIntentData));
-      const paymentData = paymentRes?.data ?? paymentRes;
+  const paymentRes = await handleAsync(apiPost(ApiEndpoints.PAYMENT_INTENT, paymentIntentData));
+  const paymentData = paymentRes?.data ?? paymentRes;
       if (!paymentData || paymentData.success === false) {
         const errMsg = paymentData?.message || 'Tạo liên kết thanh toán thất bại';
         setPaymentErrorMsg(errMsg);
@@ -154,6 +154,7 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
       }
 
       const checkoutUrl = paymentData?.data?.checkoutUrl ?? paymentData?.checkoutUrl ?? null;
+  const serverPaymentId = paymentData?.data?.paymentId ?? paymentData?.data?.id ?? paymentData?.paymentId ?? paymentData?.id ?? null;
       if (!checkoutUrl) {
         const errMsg = 'Không tìm thấy checkoutUrl từ máy chủ.';
         setPaymentErrorMsg(errMsg);
@@ -162,8 +163,40 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
       }
 
       try { popup.location.href = checkoutUrl; try { popup.focus(); } catch (e) {} } catch (e) { try { popup.location = checkoutUrl; } catch (err) { try { if (!popup.closed) popup.close(); } catch (ee) {} throw new Error('Không thể điều hướng tới cổng thanh toán.'); } }
-
-      // optional: start a short polling similar to SubscriptionPanel (omitted here for brevity)
+      // start a short polling as fallback in case postMessage from payment provider is not delivered
+      if (serverPaymentId) {
+        let attempts = 0;
+        const maxAttempts = 60; // poll up to ~2 minutes (60 * 2s)
+        const pollInterval = 2000;
+        const poller = setInterval(async () => {
+          attempts += 1;
+          try {
+            const statusRes = await handleAsync(apiGet(ApiEndpoints.PAYMENT(serverPaymentId)));
+            const statusData = statusRes?.data ?? statusRes;
+            const state = (statusData && (statusData.status ?? statusData.state ?? statusData.paymentStatus)) || (statusData?.data && (statusData.data.status ?? statusData.data.state));
+            const s = state ? String(state).toLowerCase() : null;
+            if (s === 'completed' || s === 'success' || s === 'paid') {
+              clearInterval(poller);
+              try { if (!popup.closed) popup.close(); } catch (e) {}
+              setPaymentStep('success');
+              return;
+            }
+            if (s === 'failed' || s === 'cancelled' || s === 'canceled') {
+              clearInterval(poller);
+              try { if (!popup.closed) popup.close(); } catch (e) {}
+              setPaymentStep('failed');
+              return;
+            }
+          } catch (err) {
+            // ignore transient errors
+          }
+          if (attempts >= maxAttempts) {
+            clearInterval(poller);
+            // give up polling — leave popup open for user and mark pending
+            setPaymentStep('pending');
+          }
+        }, pollInterval);
+      }
     } catch (err) {
       const msg = (err && err.message) ? err.message : 'Lỗi khi xử lý thanh toán.';
       setPaymentErrorMsg(msg);
