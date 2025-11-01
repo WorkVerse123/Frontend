@@ -508,6 +508,7 @@ export default function SubscriptionPanel() {
               </div>
               <h3 className="text-lg font-semibold text-green-600 mb-2">Thanh toán thành công!</h3>
               <p className="text-gray-600">Gói {selectedPlan?.planName} đã được kích hoạt thành công.</p>
+              <p className="text-sm text-blue-700 mt-3 font-medium">Vui lòng đăng nhập lại để được áp dụng gói đăng ký.</p>
             </div>
           )}
 

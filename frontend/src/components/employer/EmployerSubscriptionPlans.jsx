@@ -384,6 +384,7 @@ export default function EmployerSubscriptionPlans({ apiUrl = null, onSelect = ()
               </div>
               <p className="text-green-700 font-semibold">Thanh toán thành công! Cảm ơn bạn.</p>
               <p className="text-gray-600 text-sm mt-2">Đang cập nhật trạng thái, cửa sổ sẽ đóng tự động.</p>
+              <p className="text-sm text-blue-700 mt-3 font-medium">Vui lòng đăng nhập lại để được áp dụng gói đăng ký.</p>
             </div>
           )}
           {paymentStep === 'failed' && (
