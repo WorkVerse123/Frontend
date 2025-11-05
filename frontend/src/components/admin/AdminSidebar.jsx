@@ -12,7 +12,7 @@ export default function AdminSidebar({ active, onChange }) {
     { key: 'overview', label: 'Tổng quan' },
     { key: 'employers', label: 'Nhà tuyển dụng' },
     { key: 'employees', label: 'Ứng viên' },
-    { key: 'income', label: 'Thu nhập' },
+    { key: 'income', label: 'Giao dịch' },
     { key: 'create', label: 'Tạo Staff' },
       { key: 'reports', label: 'Báo cáo & Feedback' },
   ];
