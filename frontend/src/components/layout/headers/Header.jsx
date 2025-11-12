@@ -18,7 +18,7 @@ const ROLE_MAP = {
   '2': 'staff',
   '3': 'employer',
   '4': 'employee',
-  '16': 'finance',
+  '8': 'finance',
 };
 
 function mapRoleIdToName(n) {
