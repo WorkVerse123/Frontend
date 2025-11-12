@@ -139,7 +139,10 @@ export default function LoginForm({ onShowRegister, onForgotPassword }) {
                 navigate('/employer/profile', { state: { forceCreate: true, userId: user.id || user.userId } });
                 return;
             }
-            // Navigate to home (no full reload)
+            if (user && (user.role === 'admin' || user.role === 'staff' || user.role === 'finance')) {
+                navigate('/admin');
+                return;
+            }
             navigate('/');
         } catch (err) {
             const message = err?.response?.data?.message || err?.message || 'Có lỗi khi đăng nhập';

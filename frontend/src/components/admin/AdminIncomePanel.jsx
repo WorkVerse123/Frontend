@@ -118,7 +118,7 @@ export default function AdminIncomePanel({ className = '' }) {
         <thead>
           <tr className="text-left text-xs text-gray-500">
             <th>Ngày</th>
-            <th>Tổng doanh thu</th>
+            <th>Tổng doanh thu theo ngày</th>
             <th>Giao dịch</th>
           </tr>
         </thead>
@@ -126,10 +126,18 @@ export default function AdminIncomePanel({ className = '' }) {
           {(chart?.paymentStats || []).map((r) => (
             <tr key={r.date} className="border-t">
               <td className="py-2">{r.date? (() => { const d = new Date(r.date); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; })() : ''}</td>
-              <td>{r.totalRevenue}</td>
+              <td>{Number(r.totalRevenue ?? r.TotalRevenue ?? 0).toLocaleString('vi-VN')}</td>
               <td>{r.totalTransactions}</td>
             </tr>
           ))}
+          {/* Tổng cộng row */}
+          {(chart?.paymentStats || []).length > 0 && (
+            <tr className="border-t-2 border-gray-400 font-semibold bg-gray-50">
+              <td className="py-2">Tổng cộng</td>
+              <td>{(chart?.paymentStats || []).reduce((sum, r) => sum + Number(r.totalRevenue ?? r.TotalRevenue ?? 0), 0).toLocaleString('vi-VN')}</td>
+              <td>{(chart?.paymentStats || []).reduce((sum, r) => sum + Number(r.totalTransactions ?? r.TotalTransactions ?? 0), 0)}</td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
