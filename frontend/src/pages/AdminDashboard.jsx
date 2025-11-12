@@ -14,7 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  // Check if user has finance role (mapped from RoleId 16 in AuthContext)
+  // Check if user has finance role (mapped from RoleId 8 in AuthContext)
   const isFinanceOnly = user?.role === 'finance';
   
   const [stats, setStats] = useState(null);

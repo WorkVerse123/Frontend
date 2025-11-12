@@ -67,6 +67,19 @@ export default function EmployeeHeader() {
     try { setUser(null); } catch (e) { /* ignore */ }
     navigate('/');
   }
+
+  function handleSubscriptionClick() {
+    const targetPath = '/employee/dashboard';
+    const targetQuery = '?activeTab=subscription';
+    // If already on dashboard, scroll to top and ensure subscription tab is active
+    if (window.location.pathname === targetPath) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Optionally trigger tab change if needed
+    } else {
+      navigate(targetPath + targetQuery);
+    }
+  }
+
   return (
     <div className="flex items-center gap-4">
       <a href="/jobs" className="text-white hover:underline text-lg md:text-base">Tìm việc</a>
@@ -74,7 +87,7 @@ export default function EmployeeHeader() {
         variant="outlined"
         size="small"
         sx={{ color: 'white', borderColor: 'white', ml: 1, display: { xs: 'none', md: 'inline-flex' } }}
-        onClick={() => navigate('/employee/dashboard?activeTab=subscription')}
+        onClick={handleSubscriptionClick}
       >Gói đăng ký</Button>
       <div className="hidden md:flex items-center gap-2">
         <Select value="vi" size="small" displayEmpty sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' } }} MenuProps={{ disableScrollLock: true }}>

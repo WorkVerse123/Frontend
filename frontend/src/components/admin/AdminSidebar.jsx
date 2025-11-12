@@ -12,7 +12,7 @@ export default function AdminSidebar({ active, onChange }) {
   const [expandedIncome, setExpandedIncome] = useState(true); 
   const { user } = useAuth();
   
-  // Check if user has finance role (mapped from RoleId 16 in AuthContext)
+  // Check if user has finance role (mapped from RoleId 8 in AuthContext)
   const isFinanceOnly = user?.role === 'finance'; 
 
   const allItems = [

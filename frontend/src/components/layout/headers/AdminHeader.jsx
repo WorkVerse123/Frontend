@@ -11,6 +11,15 @@ export default function AdminHeader() {
   const { user, setUser } = useAuth();
   const userName = user?.fullName || user?.name || user?.email || user?._raw?.Email || null;
 
+  function handleDashboardClick() {
+    // If already on /admin, scroll to top; otherwise navigate
+    if (window.location.pathname === '/admin') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/admin');
+    }
+  }
+
   function handleProfileMobile() {
     navigate('/admin');
   }
@@ -23,7 +32,7 @@ export default function AdminHeader() {
   }
   return (
     <div className="flex items-center gap-4">
-      <Button variant="contained" color="secondary" size="small" onClick={() => navigate('/admin')}>Dashboard</Button>
+      <Button variant="contained" color="secondary" size="small" onClick={handleDashboardClick}>Dashboard</Button>
       <div className="hidden md:flex items-center gap-2">
         <Select value="vi" size="small" displayEmpty sx={{ color: 'white', '.MuiSelect-icon': { color: 'white' } }} MenuProps={{ disableScrollLock: true }}>
           <MenuItem value="vi">Tiếng Việt</MenuItem>

@@ -106,6 +106,7 @@ export default function LoginForm({ onShowRegister, onForgotPassword }) {
                         case 2: return 'staff';
                         case 3: return 'employer';
                         case 4: return 'employee';
+                        case 8: return 'finance';
                         default: return 'guest';
                     }
                 };
