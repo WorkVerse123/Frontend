@@ -18,6 +18,7 @@ const ROLE_MAP = {
   '2': 'staff',
   '3': 'employer',
   '4': 'employee',
+  '16': 'finance',
 };
 
 function mapRoleIdToName(n) {
@@ -133,6 +134,9 @@ export default function Header({ role = 'guest' }) {
       RoleHeader = <StaffHeader />;
       break;
     case 'admin':
+      RoleHeader = <AdminHeader />;
+      break;
+    case 'finance':
       RoleHeader = <AdminHeader />;
       break;
     default:

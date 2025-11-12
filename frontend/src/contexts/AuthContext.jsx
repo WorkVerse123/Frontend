@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getCookie } from '../services/AuthCookie';
+import { ca } from 'date-fns/locale';
 
 const AuthContext = createContext(null);
 
@@ -49,6 +50,7 @@ function normalizeUser(candidate) {
 			case 2: return 'staff';
 			case 3: return 'employer';
 			case 4: return 'employee';
+			case 8: return 'finance';
 			default: return 'guest';
 		}
 	};

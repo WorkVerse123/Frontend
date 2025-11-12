@@ -226,7 +226,7 @@ export default function OverviewPanel() {
           <tbody>
             {(chart?.jobStats || []).map((r) => (
               <tr key={r.date} className="border-t">
-                <td className="py-2">{r.date}</td>
+                <td className="py-2">{r.date? (() => { const d = new Date(r.date); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; })() : ''}</td>
                 <td>{r.totalJobs}</td>
                 <td>{r.activeJobs}</td>
                 <td>{r.closedJobs}</td>
@@ -237,7 +237,7 @@ export default function OverviewPanel() {
         </table>
       </div>
 
-      <AdminIncomePanel chart={chart} />
+      
     </div>
   );
 }

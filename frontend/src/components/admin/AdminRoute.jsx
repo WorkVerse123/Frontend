@@ -27,10 +27,10 @@ export default function AdminRoute({ children }) {
   }
 
   const role = (user.role || '').toString().toLowerCase();
-  if (role === 'admin' || role === 'staff') {
+  if (role === 'admin' || role === 'staff' || role === 'finance') {
     return children;
   }
 
-  // authenticated but not admin/staff
+  // authenticated but not admin/staff/finance
   return <Navigate to="/" replace />;
 }

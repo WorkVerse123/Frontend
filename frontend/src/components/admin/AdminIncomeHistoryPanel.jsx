@@ -93,14 +93,30 @@ export default function AdminIncomeHistoryPanel({ className = '' }) {
 
   const applyFilters = () => {
     setPage(1);
+    const fromDateISO = fromDateInput?.trim() ? (() => {
+      try {
+        const d = new Date(fromDateInput);
+        return isNaN(d.getTime()) ? null : d.toISOString();
+      } catch (e) {
+        return null;
+      }
+    })() : null;
+    const toDateISO = toDateInput?.trim() ? (() => {
+      try {
+        const d = new Date(toDateInput);
+        return isNaN(d.getTime()) ? null : d.toISOString();
+      } catch (e) {
+        return null;
+      }
+    })() : null;
     setAppliedFilters({
       userId: null,
       planId: null,
       type: parseOrNull(typeInput),
       status: statusInput?.trim() === '' ? null : statusInput.trim(),
       paymentMethod: null,
-      fromDate: fromDateInput?.trim() === '' ? null : new Date(fromDateInput).toISOString(),
-      toDate: toDateInput?.trim() === '' ? null : new Date(toDateInput).toISOString(),
+      fromDate: fromDateISO,
+      toDate: toDateISO,
       minAmount: parseOrNull(minAmountInput),
       maxAmount: parseOrNull(maxAmountInput),
     });
@@ -182,15 +198,15 @@ export default function AdminIncomeHistoryPanel({ className = '' }) {
             {payments.map((p) => (
               <tr key={p.paymentId} className="border-t hover:bg-gray-50">
                 <td className="py-2 pr-4">{p.paymentId}</td>
-                <td className="py-2">{p.paymentDate ? (new Date(p.paymentDate)).toISOString().slice(0,10) : ''}</td>
+                <td className="py-2">{p.paymentDate ? (() => { const d = new Date(p.paymentDate); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; })() : ''}</td>
                 <td className="py-2">{p.user?.userId ?? p.userId}</td>
                 <td className="py-2">{p.plan?.planName ?? p.planId}</td>
                 <td className="py-2 text-center">{typeof p.amount === 'number' ? p.amount.toLocaleString() : p.amount}<span> VND</span></td>
                 <td className="py-2">
                   <span
                     className={`text-sm px-2 py-0.5 rounded-full font-medium
-                      ${p.status === 'pending' ? 'bg-blue-100 text-blue-700' :
-                        p.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      ${p.status === 'Pending' ? 'bg-blue-100 text-blue-700' :
+                        p.status === 'Completed' ? 'bg-green-100 text-green-700' :
                         'bg-red-100 text-red-700'}`}
                   >
                     {p.status}
